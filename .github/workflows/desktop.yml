@@ -1,0 +1,44 @@
+name: Desktop
+
+# Valida o shell Rust/Tauri apenas quando ele muda (compilar Rust é lento).
+on:
+  pull_request:
+    paths:
+      - apps/desktop/**
+      - .github/workflows/desktop.yml
+  push:
+    branches: [main]
+    paths:
+      - apps/desktop/**
+      - .github/workflows/desktop.yml
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Rust (fmt, clippy)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/desktop/src-tauri
+    steps:
+      - uses: actions/checkout@v7
+      - name: Dependências de sistema do Tauri (Linux)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+      - name: Placeholder do frontend (o clippy só precisa que a pasta exista)
+        run: mkdir -p ../../web/dist && echo '<!doctype html>' > ../../web/dist/index.html
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings

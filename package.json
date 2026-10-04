@@ -1,0 +1,40 @@
+{
+  "name": "tabula-rpg",
+  "private": true,
+  "description": "Gerenciador de fichas de RPG de mesa com sincronização em tempo real, local-first e gratuito.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@12.9.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "prepare": "simple-git-hooks",
+    "dev": "pnpm --filter @tabula/web dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "depcheck": "depcruise packages apps/web/src --config .dependency-cruiser.cjs",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm depcheck && pnpm test",
+    "desktop:dev": "pnpm --filter @tabula/desktop tauri dev",
+    "desktop:build": "pnpm --filter @tabula/desktop tauri build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "dependency-cruiser": "^18.5.0",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "simple-git-hooks": "^2.14.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.0"
+  },
+  "simple-git-hooks": {
+    "pre-push": "node scripts/pre-push.mjs"
+  }
+}
