@@ -20,7 +20,7 @@ export {
 
 export * from './campaign/schema';
 
-export type { SheetRepository, TemplateRepository } from './ports';
+export type { DeviceRepository, SheetChanges, SheetRepository, TemplateRepository } from './ports';
 
 export {
   ExportEnvelopeSchema,

@@ -3,11 +3,14 @@ import {
   compileTemplate,
   SystemTemplateSchema,
   type CharacterSheet,
+  type DeviceRepository,
   type Issue,
+  type SheetChanges,
   type SheetRepository,
   type SystemTemplate,
   type TemplateRepository,
 } from '@tabula/domain';
+import type { UpdateSpec } from 'dexie';
 import type { TabulaDatabase } from './database';
 
 /** Tentativa de gravar dados inválidos. Indica um bug: os casos de uso validam antes. */
@@ -87,7 +90,47 @@ export class DexieSheetRepository implements SheetRepository {
     return this.db.sheets.where('templateRef.id').equals(templateId).toArray();
   }
 
+  async update(id: string, changes: SheetChanges): Promise<boolean> {
+    const parsed = SheetChangesSchema.safeParse(changes);
+    if (!parsed.success) {
+      throw new InvalidDataError('Alteração inválida', zodIssues(parsed.error.issues));
+    }
+    const { name, values, updatedAt } = parsed.data;
+    // Caminhos `values.<id>` alteram só aqueles campos. IDs não contêm ".", então são seguros.
+    const spec: Record<string, unknown> = { updatedAt };
+    if (name !== undefined) spec.name = name;
+    for (const [fieldId, value] of Object.entries(values ?? {})) spec[`values.${fieldId}`] = value;
+    const updated = await this.db.sheets.update(id, spec as UpdateSpec<CharacterSheet>);
+    return updated > 0;
+  }
+
   async delete(id: string): Promise<void> {
     await this.db.sheets.delete(id);
+  }
+}
+
+const SheetChangesSchema = CharacterSheetSchema.pick({
+  name: true,
+  values: true,
+  updatedAt: true,
+}).partial({ name: true, values: true });
+
+const DEVICE_ID_KEY = 'deviceId';
+
+export class DexieDeviceRepository implements DeviceRepository {
+  constructor(
+    private readonly db: TabulaDatabase,
+    private readonly generateId: () => string = () => crypto.randomUUID(),
+  ) {}
+
+  getDeviceId(): Promise<string> {
+    // Transação: duas abas abrindo o app ao mesmo tempo não geram IDs diferentes.
+    return this.db.transaction('rw', this.db.settings, async () => {
+      const existing = await this.db.settings.get(DEVICE_ID_KEY);
+      if (typeof existing?.value === 'string') return existing.value;
+      const id = this.generateId();
+      await this.db.settings.put({ key: DEVICE_ID_KEY, value: id });
+      return id;
+    });
   }
 }

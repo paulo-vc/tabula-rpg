@@ -111,7 +111,8 @@
       "key": "for_mod",
       "label": "Mod. Força",
       "type": "computed",
-      "formula": "floor((@for - 10) / 2)"
+      "formula": "floor((@for - 10) / 2)",
+      "signed": true
     },
     {
       "id": "des",
@@ -128,7 +129,8 @@
       "key": "des_mod",
       "label": "Mod. Destreza",
       "type": "computed",
-      "formula": "floor((@des - 10) / 2)"
+      "formula": "floor((@des - 10) / 2)",
+      "signed": true
     },
     {
       "id": "con",
@@ -145,7 +147,8 @@
       "key": "con_mod",
       "label": "Mod. Constituição",
       "type": "computed",
-      "formula": "floor((@con - 10) / 2)"
+      "formula": "floor((@con - 10) / 2)",
+      "signed": true
     },
     {
       "id": "int",
@@ -162,7 +165,8 @@
       "key": "int_mod",
       "label": "Mod. Inteligência",
       "type": "computed",
-      "formula": "floor((@int - 10) / 2)"
+      "formula": "floor((@int - 10) / 2)",
+      "signed": true
     },
     {
       "id": "sab",
@@ -179,7 +183,8 @@
       "key": "sab_mod",
       "label": "Mod. Sabedoria",
       "type": "computed",
-      "formula": "floor((@sab - 10) / 2)"
+      "formula": "floor((@sab - 10) / 2)",
+      "signed": true
     },
     {
       "id": "car",
@@ -196,14 +201,16 @@
       "key": "car_mod",
       "label": "Mod. Carisma",
       "type": "computed",
-      "formula": "floor((@car - 10) / 2)"
+      "formula": "floor((@car - 10) / 2)",
+      "signed": true
     },
     {
       "id": "bonus_prof",
       "key": "bonus_prof",
       "label": "Bônus de proficiência",
       "type": "computed",
-      "formula": "ceil(@nivel / 4) + 1"
+      "formula": "ceil(@nivel / 4) + 1",
+      "signed": true
     },
     {
       "id": "inspiracao",
@@ -222,7 +229,8 @@
       "key": "salv_for",
       "label": "Resistência de Força",
       "type": "computed",
-      "formula": "@for_mod + if(@prof_salv_for, @bonus_prof, 0)"
+      "formula": "@for_mod + if(@prof_salv_for, @bonus_prof, 0)",
+      "signed": true
     },
     {
       "id": "prof_salv_des",
@@ -235,7 +243,8 @@
       "key": "salv_des",
       "label": "Resistência de Destreza",
       "type": "computed",
-      "formula": "@des_mod + if(@prof_salv_des, @bonus_prof, 0)"
+      "formula": "@des_mod + if(@prof_salv_des, @bonus_prof, 0)",
+      "signed": true
     },
     {
       "id": "prof_salv_con",
@@ -248,7 +257,8 @@
       "key": "salv_con",
       "label": "Resistência de Constituição",
       "type": "computed",
-      "formula": "@con_mod + if(@prof_salv_con, @bonus_prof, 0)"
+      "formula": "@con_mod + if(@prof_salv_con, @bonus_prof, 0)",
+      "signed": true
     },
     {
       "id": "prof_salv_int",
@@ -261,7 +271,8 @@
       "key": "salv_int",
       "label": "Resistência de Inteligência",
       "type": "computed",
-      "formula": "@int_mod + if(@prof_salv_int, @bonus_prof, 0)"
+      "formula": "@int_mod + if(@prof_salv_int, @bonus_prof, 0)",
+      "signed": true
     },
     {
       "id": "prof_salv_sab",
@@ -274,7 +285,8 @@
       "key": "salv_sab",
       "label": "Resistência de Sabedoria",
       "type": "computed",
-      "formula": "@sab_mod + if(@prof_salv_sab, @bonus_prof, 0)"
+      "formula": "@sab_mod + if(@prof_salv_sab, @bonus_prof, 0)",
+      "signed": true
     },
     {
       "id": "prof_salv_car",
@@ -287,7 +299,8 @@
       "key": "salv_car",
       "label": "Resistência de Carisma",
       "type": "computed",
-      "formula": "@car_mod + if(@prof_salv_car, @bonus_prof, 0)"
+      "formula": "@car_mod + if(@prof_salv_car, @bonus_prof, 0)",
+      "signed": true
     },
     {
       "id": "prof_acrobacia",
@@ -307,7 +320,8 @@
       "key": "acrobacia",
       "label": "Acrobacia (Des)",
       "type": "computed",
-      "formula": "@des_mod + @bonus_prof * if(@prof_acrobacia, 1 + @esp_acrobacia, 0)"
+      "formula": "@des_mod + @bonus_prof * if(@prof_acrobacia, 1 + @esp_acrobacia, 0)",
+      "signed": true
     },
     {
       "id": "prof_adestrar_animais",
@@ -327,7 +341,8 @@
       "key": "adestrar_animais",
       "label": "Adestrar Animais (Sab)",
       "type": "computed",
-      "formula": "@sab_mod + @bonus_prof * if(@prof_adestrar_animais, 1 + @esp_adestrar_animais, 0)"
+      "formula": "@sab_mod + @bonus_prof * if(@prof_adestrar_animais, 1 + @esp_adestrar_animais, 0)",
+      "signed": true
     },
     {
       "id": "prof_arcanismo",
@@ -347,7 +362,8 @@
       "key": "arcanismo",
       "label": "Arcanismo (Int)",
       "type": "computed",
-      "formula": "@int_mod + @bonus_prof * if(@prof_arcanismo, 1 + @esp_arcanismo, 0)"
+      "formula": "@int_mod + @bonus_prof * if(@prof_arcanismo, 1 + @esp_arcanismo, 0)",
+      "signed": true
     },
     {
       "id": "prof_atletismo",
@@ -367,7 +383,8 @@
       "key": "atletismo",
       "label": "Atletismo (For)",
       "type": "computed",
-      "formula": "@for_mod + @bonus_prof * if(@prof_atletismo, 1 + @esp_atletismo, 0)"
+      "formula": "@for_mod + @bonus_prof * if(@prof_atletismo, 1 + @esp_atletismo, 0)",
+      "signed": true
     },
     {
       "id": "prof_atuacao",
@@ -387,7 +404,8 @@
       "key": "atuacao",
       "label": "Atuação (Car)",
       "type": "computed",
-      "formula": "@car_mod + @bonus_prof * if(@prof_atuacao, 1 + @esp_atuacao, 0)"
+      "formula": "@car_mod + @bonus_prof * if(@prof_atuacao, 1 + @esp_atuacao, 0)",
+      "signed": true
     },
     {
       "id": "prof_enganacao",
@@ -407,7 +425,8 @@
       "key": "enganacao",
       "label": "Enganação (Car)",
       "type": "computed",
-      "formula": "@car_mod + @bonus_prof * if(@prof_enganacao, 1 + @esp_enganacao, 0)"
+      "formula": "@car_mod + @bonus_prof * if(@prof_enganacao, 1 + @esp_enganacao, 0)",
+      "signed": true
     },
     {
       "id": "prof_furtividade",
@@ -427,7 +446,8 @@
       "key": "furtividade",
       "label": "Furtividade (Des)",
       "type": "computed",
-      "formula": "@des_mod + @bonus_prof * if(@prof_furtividade, 1 + @esp_furtividade, 0)"
+      "formula": "@des_mod + @bonus_prof * if(@prof_furtividade, 1 + @esp_furtividade, 0)",
+      "signed": true
     },
     {
       "id": "prof_historia",
@@ -447,7 +467,8 @@
       "key": "historia",
       "label": "História (Int)",
       "type": "computed",
-      "formula": "@int_mod + @bonus_prof * if(@prof_historia, 1 + @esp_historia, 0)"
+      "formula": "@int_mod + @bonus_prof * if(@prof_historia, 1 + @esp_historia, 0)",
+      "signed": true
     },
     {
       "id": "prof_intimidacao",
@@ -467,7 +488,8 @@
       "key": "intimidacao",
       "label": "Intimidação (Car)",
       "type": "computed",
-      "formula": "@car_mod + @bonus_prof * if(@prof_intimidacao, 1 + @esp_intimidacao, 0)"
+      "formula": "@car_mod + @bonus_prof * if(@prof_intimidacao, 1 + @esp_intimidacao, 0)",
+      "signed": true
     },
     {
       "id": "prof_intuicao",
@@ -487,7 +509,8 @@
       "key": "intuicao",
       "label": "Intuição (Sab)",
       "type": "computed",
-      "formula": "@sab_mod + @bonus_prof * if(@prof_intuicao, 1 + @esp_intuicao, 0)"
+      "formula": "@sab_mod + @bonus_prof * if(@prof_intuicao, 1 + @esp_intuicao, 0)",
+      "signed": true
     },
     {
       "id": "prof_investigacao",
@@ -507,7 +530,8 @@
       "key": "investigacao",
       "label": "Investigação (Int)",
       "type": "computed",
-      "formula": "@int_mod + @bonus_prof * if(@prof_investigacao, 1 + @esp_investigacao, 0)"
+      "formula": "@int_mod + @bonus_prof * if(@prof_investigacao, 1 + @esp_investigacao, 0)",
+      "signed": true
     },
     {
       "id": "prof_medicina",
@@ -527,7 +551,8 @@
       "key": "medicina",
       "label": "Medicina (Sab)",
       "type": "computed",
-      "formula": "@sab_mod + @bonus_prof * if(@prof_medicina, 1 + @esp_medicina, 0)"
+      "formula": "@sab_mod + @bonus_prof * if(@prof_medicina, 1 + @esp_medicina, 0)",
+      "signed": true
     },
     {
       "id": "prof_natureza",
@@ -547,7 +572,8 @@
       "key": "natureza",
       "label": "Natureza (Int)",
       "type": "computed",
-      "formula": "@int_mod + @bonus_prof * if(@prof_natureza, 1 + @esp_natureza, 0)"
+      "formula": "@int_mod + @bonus_prof * if(@prof_natureza, 1 + @esp_natureza, 0)",
+      "signed": true
     },
     {
       "id": "prof_percepcao",
@@ -567,7 +593,8 @@
       "key": "percepcao",
       "label": "Percepção (Sab)",
       "type": "computed",
-      "formula": "@sab_mod + @bonus_prof * if(@prof_percepcao, 1 + @esp_percepcao, 0)"
+      "formula": "@sab_mod + @bonus_prof * if(@prof_percepcao, 1 + @esp_percepcao, 0)",
+      "signed": true
     },
     {
       "id": "prof_persuasao",
@@ -587,7 +614,8 @@
       "key": "persuasao",
       "label": "Persuasão (Car)",
       "type": "computed",
-      "formula": "@car_mod + @bonus_prof * if(@prof_persuasao, 1 + @esp_persuasao, 0)"
+      "formula": "@car_mod + @bonus_prof * if(@prof_persuasao, 1 + @esp_persuasao, 0)",
+      "signed": true
     },
     {
       "id": "prof_prestidigitacao",
@@ -607,7 +635,8 @@
       "key": "prestidigitacao",
       "label": "Prestidigitação (Des)",
       "type": "computed",
-      "formula": "@des_mod + @bonus_prof * if(@prof_prestidigitacao, 1 + @esp_prestidigitacao, 0)"
+      "formula": "@des_mod + @bonus_prof * if(@prof_prestidigitacao, 1 + @esp_prestidigitacao, 0)",
+      "signed": true
     },
     {
       "id": "prof_religiao",
@@ -627,7 +656,8 @@
       "key": "religiao",
       "label": "Religião (Int)",
       "type": "computed",
-      "formula": "@int_mod + @bonus_prof * if(@prof_religiao, 1 + @esp_religiao, 0)"
+      "formula": "@int_mod + @bonus_prof * if(@prof_religiao, 1 + @esp_religiao, 0)",
+      "signed": true
     },
     {
       "id": "prof_sobrevivencia",
@@ -647,7 +677,8 @@
       "key": "sobrevivencia",
       "label": "Sobrevivência (Sab)",
       "type": "computed",
-      "formula": "@sab_mod + @bonus_prof * if(@prof_sobrevivencia, 1 + @esp_sobrevivencia, 0)"
+      "formula": "@sab_mod + @bonus_prof * if(@prof_sobrevivencia, 1 + @esp_sobrevivencia, 0)",
+      "signed": true
     },
     {
       "id": "percepcao_passiva",
@@ -670,7 +701,8 @@
       "key": "iniciativa",
       "label": "Iniciativa",
       "type": "computed",
-      "formula": "@des_mod + @bonus_iniciativa"
+      "formula": "@des_mod + @bonus_iniciativa",
+      "signed": true
     },
     {
       "id": "bonus_iniciativa",
@@ -866,7 +898,8 @@
       "key": "ataque_magia",
       "label": "Bônus de ataque com magia",
       "type": "computed",
-      "formula": "@bonus_prof + @mod_conjuracao"
+      "formula": "@bonus_prof + @mod_conjuracao",
+      "signed": true
     },
     {
       "id": "espacos_1",

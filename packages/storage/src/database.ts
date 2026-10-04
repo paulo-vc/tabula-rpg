@@ -1,6 +1,12 @@
 import type { CharacterSheet, SystemTemplate } from '@tabula/domain';
 import { Dexie, type EntityTable } from 'dexie';
 
+/** Par chave/valor de configuração local. */
+export interface Setting {
+  key: string;
+  value: unknown;
+}
+
 export const DEFAULT_DATABASE_NAME = 'tabula';
 
 /**
@@ -12,12 +18,14 @@ export const DEFAULT_DATABASE_NAME = 'tabula';
 export class TabulaDatabase extends Dexie {
   templates!: EntityTable<SystemTemplate, 'id'>;
   sheets!: EntityTable<CharacterSheet, 'id'>;
+  settings!: EntityTable<Setting, 'key'>;
 
   constructor(name: string = DEFAULT_DATABASE_NAME) {
     super(name);
     this.version(1).stores({
       templates: 'id, name',
       sheets: 'id, updatedAt, templateRef.id',
+      settings: 'key',
     });
   }
 }

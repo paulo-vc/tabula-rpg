@@ -24,5 +24,24 @@ export interface SheetRepository {
   list(): Promise<CharacterSheet[]>;
   /** Fichas baseadas em um template, para atualizar todas quando ele mudar. */
   listByTemplate(templateId: string): Promise<CharacterSheet[]>;
+  /**
+   * Altera apenas os campos informados, de forma atômica. Usado na edição campo a campo,
+   * para não regravar a ficha inteira (e não sobrescrever outra edição concorrente).
+   * @returns `false` se a ficha não existe.
+   */
+  update(id: string, changes: SheetChanges): Promise<boolean>;
   delete(id: string): Promise<void>;
+}
+
+export interface SheetChanges {
+  name?: string;
+  /** Valores a substituir, por ID de campo. Os demais campos ficam intactos. */
+  values?: CharacterSheet['values'];
+  updatedAt: number;
+}
+
+/** Configurações e dados do dispositivo local. */
+export interface DeviceRepository {
+  /** ID estável deste dispositivo/usuário local, criado na primeira chamada. */
+  getDeviceId(): Promise<string>;
 }

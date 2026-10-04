@@ -34,7 +34,13 @@ const NumberFieldSchema = z.object({
 
 const TextFieldSchema = z.object({
   ...fieldBase,
-  type: z.enum(['text', 'longtext']),
+  type: z.literal('text'),
+  default: z.string().max(LIMITS.text).optional(),
+});
+
+const LongTextFieldSchema = z.object({
+  ...fieldBase,
+  type: z.literal('longtext'),
   default: z.string().max(LIMITS.text).optional(),
 });
 
@@ -76,12 +82,15 @@ const ComputedFieldSchema = z.object({
   ...fieldBase,
   type: z.literal('computed'),
   formula: FormulaSourceSchema,
+  /** Exibe o sinal também em positivos (ex.: "+3"), como em modificadores. */
+  signed: z.boolean().optional(),
 });
 
 /** Campos permitidos dentro de itens de lista (sem fórmulas nem listas aninhadas). */
 const ListItemFieldSchema = z.discriminatedUnion('type', [
   NumberFieldSchema,
   TextFieldSchema,
+  LongTextFieldSchema,
   BooleanFieldSchema,
   SelectFieldSchema,
   DiceFieldSchema,
@@ -98,6 +107,7 @@ const ListFieldSchema = z.object({
 export const FieldDefSchema = z.discriminatedUnion('type', [
   NumberFieldSchema,
   TextFieldSchema,
+  LongTextFieldSchema,
   BooleanFieldSchema,
   SelectFieldSchema,
   DiceFieldSchema,

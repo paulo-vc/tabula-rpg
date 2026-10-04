@@ -26,6 +26,15 @@ module.exports = {
       to: { path: '^apps/' },
     },
     {
+      name: 'interface-usa-servicos',
+      comment:
+        'Páginas e componentes acessam dados apenas pelos serviços (apps/web/src/app), ' +
+        'nunca pelo banco diretamente. As consultas reativas usam dexie-react-hooks.',
+      severity: 'error',
+      from: { path: '^apps/web/src/(pages|components)/' },
+      to: { path: ['^packages/storage/', 'node_modules/dexie/'] },
+    },
+    {
       name: 'sem-ciclos',
       severity: 'error',
       from: {},

@@ -1,2 +1,7 @@
-export { DEFAULT_DATABASE_NAME, TabulaDatabase } from './database';
-export { DexieSheetRepository, DexieTemplateRepository, InvalidDataError } from './repositories';
+export { DEFAULT_DATABASE_NAME, TabulaDatabase, type Setting } from './database';
+export {
+  DexieDeviceRepository,
+  DexieSheetRepository,
+  DexieTemplateRepository,
+  InvalidDataError,
+} from './repositories';

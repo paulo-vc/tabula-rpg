@@ -1,10 +1,38 @@
-import { FORMAT_VERSION } from '@tabula/domain';
+import { Route, Router, Switch } from 'wouter';
+import { useHashLocation } from 'wouter/use-hash-location';
+import type { Services } from '@/app/services';
+import { ServicesProvider } from '@/app/services-context';
+import { AppShell } from '@/components/AppShell';
+import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { HomePage } from '@/pages/HomePage';
+import { SheetPage } from '@/pages/SheetPage';
+import { SystemsPage } from '@/pages/SystemsPage';
 
-export function App() {
+/**
+ * Rotas com hash (`#/fichas/…`): funcionam sem configuração de servidor, tanto no
+ * GitHub Pages quanto dentro do app desktop.
+ */
+export function App({ services }: { services: Services }) {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-2 bg-zinc-950 text-zinc-100">
-      <h1 className="text-4xl font-bold tracking-tight">Tabula RPG</h1>
-      <p className="text-zinc-400">Fundação do projeto — formato v{FORMAT_VERSION}</p>
-    </main>
+    <ServicesProvider services={services}>
+      <TooltipProvider>
+        <Router hook={useHashLocation}>
+          <AppShell>
+            <Switch>
+              <Route path="/" component={HomePage} />
+              <Route path="/sistemas" component={SystemsPage} />
+              <Route path="/fichas/:id">
+                {(params) => <SheetPage key={params.id} id={params.id} />}
+              </Route>
+              <Route>
+                <p className="text-muted-foreground py-16 text-center">Página não encontrada.</p>
+              </Route>
+            </Switch>
+          </AppShell>
+        </Router>
+        <Toaster richColors position="bottom-center" />
+      </TooltipProvider>
+    </ServicesProvider>
   );
 }

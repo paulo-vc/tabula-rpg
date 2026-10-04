@@ -8,7 +8,12 @@ import {
 import { liveQuery } from 'dexie';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TabulaDatabase } from './database';
-import { DexieSheetRepository, DexieTemplateRepository, InvalidDataError } from './repositories';
+import {
+  DexieDeviceRepository,
+  DexieSheetRepository,
+  DexieTemplateRepository,
+  InvalidDataError,
+} from './repositories';
 
 const template = (overrides: Partial<SystemTemplate> = {}): SystemTemplate => ({
   id: 'meu-sistema',
@@ -137,6 +142,39 @@ describe('DexieSheetRepository', () => {
     expect(snapshots).toEqual([[], ['s1']]);
   });
 
+  it('update altera só os campos informados', async () => {
+    await sheets.save(sheet('s1', 1));
+    expect(await sheets.update('s1', { values: { forca: 5 }, updatedAt: 2 })).toBe(true);
+    expect(await sheets.update('s1', { name: 'Renomeada', updatedAt: 3 })).toBe(true);
+    const saved = await sheets.get('s1');
+    expect(saved).toMatchObject({ name: 'Renomeada', updatedAt: 3, values: { forca: 5 } });
+    expect(saved?.values.vida).toEqual({ current: 10, max: 10 });
+  });
+
+  it('update de campos diferentes em paralelo não se sobrescrevem', async () => {
+    await sheets.save(sheet('s1', 1));
+    await Promise.all([
+      sheets.update('s1', { values: { forca: 7 }, updatedAt: 2 }),
+      sheets.update('s1', { values: { vida: { current: 3, max: 10 } }, updatedAt: 3 }),
+    ]);
+    expect((await sheets.get('s1'))?.values).toMatchObject({
+      forca: 7,
+      vida: { current: 3, max: 10 },
+    });
+  });
+
+  it('update informa quando a ficha não existe', async () => {
+    expect(await sheets.update('fantasma', { name: 'X', updatedAt: 1 })).toBe(false);
+  });
+
+  it('update recusa valores inválidos', async () => {
+    await sheets.save(sheet('s1', 1));
+    await expect(
+      sheets.update('s1', { values: { forca: Number.NaN }, updatedAt: 2 }),
+    ).rejects.toThrow(InvalidDataError);
+    await expect(sheets.update('s1', { name: '', updatedAt: 2 })).rejects.toThrow(InvalidDataError);
+  });
+
   it('dados persistem entre instâncias do banco (reabrir o app)', async () => {
     await sheets.save(sheet('s1', 1));
     db.close();
@@ -144,5 +182,22 @@ describe('DexieSheetRepository', () => {
     expect(await new DexieSheetRepository(reopened).get('s1')).toBeDefined();
     reopened.close();
     await db.open();
+  });
+});
+
+describe('DexieDeviceRepository', () => {
+  it('cria o ID do dispositivo uma vez e o reutiliza', async () => {
+    let calls = 0;
+    const device = new DexieDeviceRepository(db, () => `id-${++calls}`);
+    expect(await device.getDeviceId()).toBe('id-1');
+    expect(await device.getDeviceId()).toBe('id-1');
+    expect(await new DexieDeviceRepository(db, () => 'outro').getDeviceId()).toBe('id-1');
+  });
+
+  it('chamadas simultâneas recebem o mesmo ID', async () => {
+    let calls = 0;
+    const device = new DexieDeviceRepository(db, () => `id-${++calls}`);
+    const ids = await Promise.all([device.getDeviceId(), device.getDeviceId()]);
+    expect(new Set(ids).size).toBe(1);
   });
 });

@@ -32,6 +32,24 @@ Regras de dependência, verificadas no CI por `dependency-cruiser` (`pnpm depche
 - `domain` não depende de nenhum outro pacote do monorepo, nem de React ou IO.
 - Pacotes em `packages/` nunca importam de `apps/`.
 - Ciclos de importação são proibidos.
+- Páginas e componentes do `web` acessam dados só pelos serviços (`apps/web/src/app`), nunca pelo banco diretamente.
+
+### Dentro do `apps/web`
+
+```
+src/
+  app/          Camada de aplicação (casos de uso), sem React:
+                TemplateCatalog (nativos + instalados), SheetService (criar, abrir/migrar,
+                editar, duplicar, excluir), FileService (importar/exportar) e a raiz de
+                composição `createServices`, que liga as portas às implementações.
+  pages/        Telas: lista de fichas, ficha, sistemas.
+  components/   Componentes; `sheet/` renderiza qualquer template a partir do layout.
+  components/ui Componentes base do shadcn/ui.
+```
+
+- **Edição otimista:** o valor e os campos calculados mudam na hora. A gravação no banco espera uma pausa curta, por campo, e é feita também ao sair da página ou esconder a aba. Cliques rápidos (ex.: "+" no HP) nunca se perdem.
+- **Gravação atômica por campo** (`SheetRepository.update`): editar um campo não sobrescreve outro alterado ao mesmo tempo, o que prepara a sincronização da Fase 3.
+- **Rotas com hash** (`#/fichas/…`): funcionam sem configuração de servidor no GitHub Pages e no app desktop. O build usa caminhos relativos e é um PWA instalável e offline (desativado dentro do Tauri).
 
 Infraestrutura (persistência, rede) implementa **portas** (interfaces) definidas no domínio (`TemplateRepository`, `SheetRepository`). Os repositórios validam os dados de novo antes de gravar, como defesa em profundidade. Templates nativos não são gravados no banco: vêm do próprio app, e o banco guarda apenas templates da comunidade e locais (um por `id`, na versão mais recente). Isso permite trocar Dexie, o transporte de sync ou o provedor de relay sem tocar nas regras de negócio.
 
