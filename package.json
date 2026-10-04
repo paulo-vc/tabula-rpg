@@ -9,6 +9,7 @@
     "node": ">=24"
   },
   "scripts": {
+    "prepare": "simple-git-hooks",
     "dev": "pnpm --filter @tabula/web dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
@@ -29,7 +30,11 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
     "prettier": "^3.9.9",
+    "simple-git-hooks": "^2.14.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.0"
+  },
+  "simple-git-hooks": {
+    "pre-push": "node scripts/pre-push.mjs"
   }
 }
