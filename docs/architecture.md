@@ -58,13 +58,17 @@ A sincronização existe apenas enquanto a sessão está aberta. Edições offli
 
 ## Modelo de dados (resumo)
 
-- **Não há diferença estrutural entre template nativo e customizado.** Ambos são `SystemTemplate`, distinguidos por `origin`.
-- **Estrutura ≠ apresentação:** `fields` define o que existe; `layouts` define onde aparece.
-- **Definição ≠ valor:** fichas guardam apenas `values`, indexados por **ID estável de campo** (nunca pelo rótulo).
-- **Campos calculados não são persistidos.** São derivados de fórmulas validadas (sem `eval`, ciclos detectados ao salvar o template).
-- Arquivos exportados usam um envelope versionado (`formatVersion`) e sempre passam por validação Zod antes de entrar no banco.
+Implementado em `packages/domain`:
 
-O schema completo será implementado e documentado na Fase 1, em `packages/domain`.
+- **Não há diferença estrutural entre template nativo e customizado.** Ambos são `SystemTemplate`, distinguidos por `source` (`builtin`, `community`, `local`).
+- **Estrutura ≠ apresentação:** `fields` define o que existe; `layouts` define onde aparece (`full`, `compact` e `gmSummary`, o card do painel do Mestre).
+- **Definição ≠ valor:** fichas guardam apenas `values`, indexados por **ID estável de campo** (nunca pelo rótulo).
+- **Tipos de campo:** `number`, `text`, `longtext`, `boolean`, `select` (simples ou múltiplo), `dice`, `resource` (atual/máximo/temporário, ex.: HP), `computed` e `list` (itens com campos próprios, ex.: inventário).
+- **Campos calculados não são persistidos.** São derivados de [fórmulas](formulas.md) avaliadas por um parser próprio (sem `eval`), em ordem topológica. Ciclos são detectados ao compilar o template.
+- **Compilar uma vez, avaliar muitas:** `compileTemplate` valida as regras semânticas (unicidade, referências, ciclos, layout) e pré-processa as fórmulas. `computeDerived` recalcula a ficha a cada alteração.
+- **Migração sem perda:** ao atualizar o template, `migrateSheet` preserva valores compatíveis, preenche campos novos e guarda os removidos em `orphaned`, restaurando-os se o campo voltar.
+- **Fronteira de confiança:** todo arquivo externo entra por `parseExport`, que verifica tamanho (2 MB), JSON, versão do formato, schema Zod, limites de tamanho, IDs reservados (contra poluição de protótipo) e regras semânticas do template.
+- **Domínio determinístico:** IDs e horários são injetados por quem chama; o domínio não usa `Date.now()`, aleatoriedade ou APIs do navegador/Node.
 
 ## Roadmap
 

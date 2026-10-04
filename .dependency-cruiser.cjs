@@ -11,7 +11,8 @@ module.exports = {
         'O domínio não pode depender de nenhum outro pacote do monorepo, nem de React/IO. ' +
         'Apenas bibliotecas puras explicitamente permitidas (ex.: zod).',
       severity: 'error',
-      from: { path: '^packages/domain' },
+      // Testes podem usar ferramentas de teste (vitest, fast-check); o código de produção não.
+      from: { path: '^packages/domain', pathNot: '\\.test\\.ts$' },
       to: {
         pathNot: ['^packages/domain', 'node_modules/(zod)/'],
         dependencyTypesNot: ['type-only'],
