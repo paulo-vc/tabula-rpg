@@ -20,6 +20,8 @@ export {
 
 export * from './campaign/schema';
 
+export type { SheetRepository, TemplateRepository } from './ports';
+
 export {
   ExportEnvelopeSchema,
   MAX_IMPORT_BYTES,

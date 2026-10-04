@@ -17,10 +17,11 @@ Aplicação para criar e gerenciar fichas de RPG de mesa, com foco na **mesa onl
 
 ```
 packages/
-  domain/      Regras de negócio puras (template, ficha, campanha, fórmulas). TS + Zod. Sem IO.
-  storage/     (Fase 2) Adaptadores de persistência local (Dexie/IndexedDB).
+  domain/      Regras de negócio puras (template, ficha, campanha, fórmulas) e portas
+               de repositório. TS + Zod. Sem IO.
+  storage/     Repositórios em IndexedDB (Dexie) que implementam as portas do domínio.
+  templates/   Templates nativos em JSON (D&D 5e SRD), validados ao carregar.
   sync/        (Fase 3) Yjs + transportes (WebRTC P2P, relay de último recurso).
-  templates/   (Fase 2) Templates nativos em JSON.
 apps/
   web/         Interface React. Também é o frontend do app desktop.
   desktop/     Shell Tauri que empacota o `web` como instalador/executável.
@@ -32,7 +33,7 @@ Regras de dependência, verificadas no CI por `dependency-cruiser` (`pnpm depche
 - Pacotes em `packages/` nunca importam de `apps/`.
 - Ciclos de importação são proibidos.
 
-Infraestrutura (persistência, rede) implementa **portas** (interfaces) definidas no domínio ou nos casos de uso. Isso permite trocar Dexie, o transporte de sync ou o provedor de relay sem tocar nas regras de negócio.
+Infraestrutura (persistência, rede) implementa **portas** (interfaces) definidas no domínio (`TemplateRepository`, `SheetRepository`). Os repositórios validam os dados de novo antes de gravar, como defesa em profundidade. Templates nativos não são gravados no banco: vêm do próprio app, e o banco guarda apenas templates da comunidade e locais (um por `id`, na versão mais recente). Isso permite trocar Dexie, o transporte de sync ou o provedor de relay sem tocar nas regras de negócio.
 
 ## Stack
 

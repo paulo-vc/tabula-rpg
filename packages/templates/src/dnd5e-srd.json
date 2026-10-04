@@ -1,0 +1,1678 @@
+{
+  "id": "dnd5e-srd",
+  "version": "1.0.0",
+  "name": "D&D 5ª Edição (SRD 5.1)",
+  "description": "Ficha para personagens de D&D 5ª edição. This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode. Termos traduzidos para o português e organizados como ficha pelo projeto Tabula RPG.",
+  "author": "Tabula RPG",
+  "license": "CC-BY-4.0",
+  "language": "pt-BR",
+  "tags": ["fantasia", "d20", "dnd"],
+  "source": "builtin",
+  "fields": [
+    {
+      "id": "nome",
+      "key": "nome",
+      "label": "Nome do personagem",
+      "type": "text"
+    },
+    {
+      "id": "classe",
+      "key": "classe",
+      "label": "Classe",
+      "type": "text"
+    },
+    {
+      "id": "nivel",
+      "key": "nivel",
+      "label": "Nível",
+      "type": "number",
+      "default": 1,
+      "min": 1,
+      "max": 20,
+      "integer": true
+    },
+    {
+      "id": "raca",
+      "key": "raca",
+      "label": "Raça",
+      "type": "text"
+    },
+    {
+      "id": "antecedente",
+      "key": "antecedente",
+      "label": "Antecedente",
+      "type": "text"
+    },
+    {
+      "id": "alinhamento",
+      "key": "alinhamento",
+      "label": "Alinhamento",
+      "type": "select",
+      "options": [
+        {
+          "value": "lb",
+          "label": "Leal e Bom"
+        },
+        {
+          "value": "nb",
+          "label": "Neutro e Bom"
+        },
+        {
+          "value": "cb",
+          "label": "Caótico e Bom"
+        },
+        {
+          "value": "ln",
+          "label": "Leal e Neutro"
+        },
+        {
+          "value": "n",
+          "label": "Neutro"
+        },
+        {
+          "value": "cn",
+          "label": "Caótico e Neutro"
+        },
+        {
+          "value": "lm",
+          "label": "Leal e Mau"
+        },
+        {
+          "value": "nm",
+          "label": "Neutro e Mau"
+        },
+        {
+          "value": "cm",
+          "label": "Caótico e Mau"
+        }
+      ]
+    },
+    {
+      "id": "xp",
+      "key": "xp",
+      "label": "Experiência",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "for",
+      "key": "for",
+      "label": "Força",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 30,
+      "integer": true
+    },
+    {
+      "id": "for_mod",
+      "key": "for_mod",
+      "label": "Mod. Força",
+      "type": "computed",
+      "formula": "floor((@for - 10) / 2)"
+    },
+    {
+      "id": "des",
+      "key": "des",
+      "label": "Destreza",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 30,
+      "integer": true
+    },
+    {
+      "id": "des_mod",
+      "key": "des_mod",
+      "label": "Mod. Destreza",
+      "type": "computed",
+      "formula": "floor((@des - 10) / 2)"
+    },
+    {
+      "id": "con",
+      "key": "con",
+      "label": "Constituição",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 30,
+      "integer": true
+    },
+    {
+      "id": "con_mod",
+      "key": "con_mod",
+      "label": "Mod. Constituição",
+      "type": "computed",
+      "formula": "floor((@con - 10) / 2)"
+    },
+    {
+      "id": "int",
+      "key": "int",
+      "label": "Inteligência",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 30,
+      "integer": true
+    },
+    {
+      "id": "int_mod",
+      "key": "int_mod",
+      "label": "Mod. Inteligência",
+      "type": "computed",
+      "formula": "floor((@int - 10) / 2)"
+    },
+    {
+      "id": "sab",
+      "key": "sab",
+      "label": "Sabedoria",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 30,
+      "integer": true
+    },
+    {
+      "id": "sab_mod",
+      "key": "sab_mod",
+      "label": "Mod. Sabedoria",
+      "type": "computed",
+      "formula": "floor((@sab - 10) / 2)"
+    },
+    {
+      "id": "car",
+      "key": "car",
+      "label": "Carisma",
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 30,
+      "integer": true
+    },
+    {
+      "id": "car_mod",
+      "key": "car_mod",
+      "label": "Mod. Carisma",
+      "type": "computed",
+      "formula": "floor((@car - 10) / 2)"
+    },
+    {
+      "id": "bonus_prof",
+      "key": "bonus_prof",
+      "label": "Bônus de proficiência",
+      "type": "computed",
+      "formula": "ceil(@nivel / 4) + 1"
+    },
+    {
+      "id": "inspiracao",
+      "key": "inspiracao",
+      "label": "Inspiração",
+      "type": "boolean"
+    },
+    {
+      "id": "prof_salv_for",
+      "key": "prof_salv_for",
+      "label": "Proficiente em resistência de Força",
+      "type": "boolean"
+    },
+    {
+      "id": "salv_for",
+      "key": "salv_for",
+      "label": "Resistência de Força",
+      "type": "computed",
+      "formula": "@for_mod + if(@prof_salv_for, @bonus_prof, 0)"
+    },
+    {
+      "id": "prof_salv_des",
+      "key": "prof_salv_des",
+      "label": "Proficiente em resistência de Destreza",
+      "type": "boolean"
+    },
+    {
+      "id": "salv_des",
+      "key": "salv_des",
+      "label": "Resistência de Destreza",
+      "type": "computed",
+      "formula": "@des_mod + if(@prof_salv_des, @bonus_prof, 0)"
+    },
+    {
+      "id": "prof_salv_con",
+      "key": "prof_salv_con",
+      "label": "Proficiente em resistência de Constituição",
+      "type": "boolean"
+    },
+    {
+      "id": "salv_con",
+      "key": "salv_con",
+      "label": "Resistência de Constituição",
+      "type": "computed",
+      "formula": "@con_mod + if(@prof_salv_con, @bonus_prof, 0)"
+    },
+    {
+      "id": "prof_salv_int",
+      "key": "prof_salv_int",
+      "label": "Proficiente em resistência de Inteligência",
+      "type": "boolean"
+    },
+    {
+      "id": "salv_int",
+      "key": "salv_int",
+      "label": "Resistência de Inteligência",
+      "type": "computed",
+      "formula": "@int_mod + if(@prof_salv_int, @bonus_prof, 0)"
+    },
+    {
+      "id": "prof_salv_sab",
+      "key": "prof_salv_sab",
+      "label": "Proficiente em resistência de Sabedoria",
+      "type": "boolean"
+    },
+    {
+      "id": "salv_sab",
+      "key": "salv_sab",
+      "label": "Resistência de Sabedoria",
+      "type": "computed",
+      "formula": "@sab_mod + if(@prof_salv_sab, @bonus_prof, 0)"
+    },
+    {
+      "id": "prof_salv_car",
+      "key": "prof_salv_car",
+      "label": "Proficiente em resistência de Carisma",
+      "type": "boolean"
+    },
+    {
+      "id": "salv_car",
+      "key": "salv_car",
+      "label": "Resistência de Carisma",
+      "type": "computed",
+      "formula": "@car_mod + if(@prof_salv_car, @bonus_prof, 0)"
+    },
+    {
+      "id": "prof_acrobacia",
+      "key": "prof_acrobacia",
+      "label": "Proficiente em Acrobacia",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_acrobacia",
+      "key": "esp_acrobacia",
+      "label": "Especialista em Acrobacia",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "acrobacia",
+      "key": "acrobacia",
+      "label": "Acrobacia (Des)",
+      "type": "computed",
+      "formula": "@des_mod + @bonus_prof * if(@prof_acrobacia, 1 + @esp_acrobacia, 0)"
+    },
+    {
+      "id": "prof_adestrar_animais",
+      "key": "prof_adestrar_animais",
+      "label": "Proficiente em Adestrar Animais",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_adestrar_animais",
+      "key": "esp_adestrar_animais",
+      "label": "Especialista em Adestrar Animais",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "adestrar_animais",
+      "key": "adestrar_animais",
+      "label": "Adestrar Animais (Sab)",
+      "type": "computed",
+      "formula": "@sab_mod + @bonus_prof * if(@prof_adestrar_animais, 1 + @esp_adestrar_animais, 0)"
+    },
+    {
+      "id": "prof_arcanismo",
+      "key": "prof_arcanismo",
+      "label": "Proficiente em Arcanismo",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_arcanismo",
+      "key": "esp_arcanismo",
+      "label": "Especialista em Arcanismo",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "arcanismo",
+      "key": "arcanismo",
+      "label": "Arcanismo (Int)",
+      "type": "computed",
+      "formula": "@int_mod + @bonus_prof * if(@prof_arcanismo, 1 + @esp_arcanismo, 0)"
+    },
+    {
+      "id": "prof_atletismo",
+      "key": "prof_atletismo",
+      "label": "Proficiente em Atletismo",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_atletismo",
+      "key": "esp_atletismo",
+      "label": "Especialista em Atletismo",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "atletismo",
+      "key": "atletismo",
+      "label": "Atletismo (For)",
+      "type": "computed",
+      "formula": "@for_mod + @bonus_prof * if(@prof_atletismo, 1 + @esp_atletismo, 0)"
+    },
+    {
+      "id": "prof_atuacao",
+      "key": "prof_atuacao",
+      "label": "Proficiente em Atuação",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_atuacao",
+      "key": "esp_atuacao",
+      "label": "Especialista em Atuação",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "atuacao",
+      "key": "atuacao",
+      "label": "Atuação (Car)",
+      "type": "computed",
+      "formula": "@car_mod + @bonus_prof * if(@prof_atuacao, 1 + @esp_atuacao, 0)"
+    },
+    {
+      "id": "prof_enganacao",
+      "key": "prof_enganacao",
+      "label": "Proficiente em Enganação",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_enganacao",
+      "key": "esp_enganacao",
+      "label": "Especialista em Enganação",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "enganacao",
+      "key": "enganacao",
+      "label": "Enganação (Car)",
+      "type": "computed",
+      "formula": "@car_mod + @bonus_prof * if(@prof_enganacao, 1 + @esp_enganacao, 0)"
+    },
+    {
+      "id": "prof_furtividade",
+      "key": "prof_furtividade",
+      "label": "Proficiente em Furtividade",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_furtividade",
+      "key": "esp_furtividade",
+      "label": "Especialista em Furtividade",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "furtividade",
+      "key": "furtividade",
+      "label": "Furtividade (Des)",
+      "type": "computed",
+      "formula": "@des_mod + @bonus_prof * if(@prof_furtividade, 1 + @esp_furtividade, 0)"
+    },
+    {
+      "id": "prof_historia",
+      "key": "prof_historia",
+      "label": "Proficiente em História",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_historia",
+      "key": "esp_historia",
+      "label": "Especialista em História",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "historia",
+      "key": "historia",
+      "label": "História (Int)",
+      "type": "computed",
+      "formula": "@int_mod + @bonus_prof * if(@prof_historia, 1 + @esp_historia, 0)"
+    },
+    {
+      "id": "prof_intimidacao",
+      "key": "prof_intimidacao",
+      "label": "Proficiente em Intimidação",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_intimidacao",
+      "key": "esp_intimidacao",
+      "label": "Especialista em Intimidação",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "intimidacao",
+      "key": "intimidacao",
+      "label": "Intimidação (Car)",
+      "type": "computed",
+      "formula": "@car_mod + @bonus_prof * if(@prof_intimidacao, 1 + @esp_intimidacao, 0)"
+    },
+    {
+      "id": "prof_intuicao",
+      "key": "prof_intuicao",
+      "label": "Proficiente em Intuição",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_intuicao",
+      "key": "esp_intuicao",
+      "label": "Especialista em Intuição",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "intuicao",
+      "key": "intuicao",
+      "label": "Intuição (Sab)",
+      "type": "computed",
+      "formula": "@sab_mod + @bonus_prof * if(@prof_intuicao, 1 + @esp_intuicao, 0)"
+    },
+    {
+      "id": "prof_investigacao",
+      "key": "prof_investigacao",
+      "label": "Proficiente em Investigação",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_investigacao",
+      "key": "esp_investigacao",
+      "label": "Especialista em Investigação",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "investigacao",
+      "key": "investigacao",
+      "label": "Investigação (Int)",
+      "type": "computed",
+      "formula": "@int_mod + @bonus_prof * if(@prof_investigacao, 1 + @esp_investigacao, 0)"
+    },
+    {
+      "id": "prof_medicina",
+      "key": "prof_medicina",
+      "label": "Proficiente em Medicina",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_medicina",
+      "key": "esp_medicina",
+      "label": "Especialista em Medicina",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "medicina",
+      "key": "medicina",
+      "label": "Medicina (Sab)",
+      "type": "computed",
+      "formula": "@sab_mod + @bonus_prof * if(@prof_medicina, 1 + @esp_medicina, 0)"
+    },
+    {
+      "id": "prof_natureza",
+      "key": "prof_natureza",
+      "label": "Proficiente em Natureza",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_natureza",
+      "key": "esp_natureza",
+      "label": "Especialista em Natureza",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "natureza",
+      "key": "natureza",
+      "label": "Natureza (Int)",
+      "type": "computed",
+      "formula": "@int_mod + @bonus_prof * if(@prof_natureza, 1 + @esp_natureza, 0)"
+    },
+    {
+      "id": "prof_percepcao",
+      "key": "prof_percepcao",
+      "label": "Proficiente em Percepção",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_percepcao",
+      "key": "esp_percepcao",
+      "label": "Especialista em Percepção",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "percepcao",
+      "key": "percepcao",
+      "label": "Percepção (Sab)",
+      "type": "computed",
+      "formula": "@sab_mod + @bonus_prof * if(@prof_percepcao, 1 + @esp_percepcao, 0)"
+    },
+    {
+      "id": "prof_persuasao",
+      "key": "prof_persuasao",
+      "label": "Proficiente em Persuasão",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_persuasao",
+      "key": "esp_persuasao",
+      "label": "Especialista em Persuasão",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "persuasao",
+      "key": "persuasao",
+      "label": "Persuasão (Car)",
+      "type": "computed",
+      "formula": "@car_mod + @bonus_prof * if(@prof_persuasao, 1 + @esp_persuasao, 0)"
+    },
+    {
+      "id": "prof_prestidigitacao",
+      "key": "prof_prestidigitacao",
+      "label": "Proficiente em Prestidigitação",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_prestidigitacao",
+      "key": "esp_prestidigitacao",
+      "label": "Especialista em Prestidigitação",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "prestidigitacao",
+      "key": "prestidigitacao",
+      "label": "Prestidigitação (Des)",
+      "type": "computed",
+      "formula": "@des_mod + @bonus_prof * if(@prof_prestidigitacao, 1 + @esp_prestidigitacao, 0)"
+    },
+    {
+      "id": "prof_religiao",
+      "key": "prof_religiao",
+      "label": "Proficiente em Religião",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_religiao",
+      "key": "esp_religiao",
+      "label": "Especialista em Religião",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "religiao",
+      "key": "religiao",
+      "label": "Religião (Int)",
+      "type": "computed",
+      "formula": "@int_mod + @bonus_prof * if(@prof_religiao, 1 + @esp_religiao, 0)"
+    },
+    {
+      "id": "prof_sobrevivencia",
+      "key": "prof_sobrevivencia",
+      "label": "Proficiente em Sobrevivência",
+      "type": "boolean"
+    },
+    {
+      "id": "esp_sobrevivencia",
+      "key": "esp_sobrevivencia",
+      "label": "Especialista em Sobrevivência",
+      "type": "boolean",
+      "description": "Dobra o bônus de proficiência. Só tem efeito se houver proficiência."
+    },
+    {
+      "id": "sobrevivencia",
+      "key": "sobrevivencia",
+      "label": "Sobrevivência (Sab)",
+      "type": "computed",
+      "formula": "@sab_mod + @bonus_prof * if(@prof_sobrevivencia, 1 + @esp_sobrevivencia, 0)"
+    },
+    {
+      "id": "percepcao_passiva",
+      "key": "percepcao_passiva",
+      "label": "Sabedoria (Percepção) passiva",
+      "type": "computed",
+      "formula": "10 + @percepcao"
+    },
+    {
+      "id": "ca",
+      "key": "ca",
+      "label": "Classe de Armadura",
+      "type": "number",
+      "default": 10,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "iniciativa",
+      "key": "iniciativa",
+      "label": "Iniciativa",
+      "type": "computed",
+      "formula": "@des_mod + @bonus_iniciativa"
+    },
+    {
+      "id": "bonus_iniciativa",
+      "key": "bonus_iniciativa",
+      "label": "Bônus extra de iniciativa",
+      "type": "number",
+      "default": 0,
+      "integer": true
+    },
+    {
+      "id": "deslocamento",
+      "key": "deslocamento",
+      "label": "Deslocamento (m)",
+      "type": "number",
+      "default": 9,
+      "min": 0
+    },
+    {
+      "id": "hp",
+      "key": "hp",
+      "label": "Pontos de Vida",
+      "type": "resource",
+      "default": 10
+    },
+    {
+      "id": "dados_vida",
+      "key": "dados_vida",
+      "label": "Dados de Vida",
+      "type": "dice",
+      "default": "1d8"
+    },
+    {
+      "id": "dados_vida_restantes",
+      "key": "dados_vida_restantes",
+      "label": "Dados de Vida restantes",
+      "type": "resource",
+      "default": 1
+    },
+    {
+      "id": "sucessos_morte",
+      "key": "sucessos_morte",
+      "label": "Testes contra a morte: sucessos",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 3,
+      "integer": true
+    },
+    {
+      "id": "falhas_morte",
+      "key": "falhas_morte",
+      "label": "Testes contra a morte: falhas",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 3,
+      "integer": true
+    },
+    {
+      "id": "condicoes",
+      "key": "condicoes",
+      "label": "Condições",
+      "type": "select",
+      "multiple": true,
+      "options": [
+        {
+          "value": "agarrado",
+          "label": "Agarrado"
+        },
+        {
+          "value": "amedrontado",
+          "label": "Amedrontado"
+        },
+        {
+          "value": "atordoado",
+          "label": "Atordoado"
+        },
+        {
+          "value": "caido",
+          "label": "Caído"
+        },
+        {
+          "value": "cego",
+          "label": "Cego"
+        },
+        {
+          "value": "contido",
+          "label": "Contido"
+        },
+        {
+          "value": "enfeiticado",
+          "label": "Enfeitiçado"
+        },
+        {
+          "value": "envenenado",
+          "label": "Envenenado"
+        },
+        {
+          "value": "incapacitado",
+          "label": "Incapacitado"
+        },
+        {
+          "value": "inconsciente",
+          "label": "Inconsciente"
+        },
+        {
+          "value": "invisivel",
+          "label": "Invisível"
+        },
+        {
+          "value": "paralisado",
+          "label": "Paralisado"
+        },
+        {
+          "value": "petrificado",
+          "label": "Petrificado"
+        },
+        {
+          "value": "surdo",
+          "label": "Surdo"
+        }
+      ]
+    },
+    {
+      "id": "exaustao",
+      "key": "exaustao",
+      "label": "Exaustão",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 6,
+      "integer": true
+    },
+    {
+      "id": "ataques",
+      "key": "ataques",
+      "label": "Ataques",
+      "type": "list",
+      "maxItems": 30,
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Nome",
+          "type": "text"
+        },
+        {
+          "id": "bonus",
+          "key": "bonus",
+          "label": "Bônus de ataque",
+          "type": "number",
+          "default": 0,
+          "integer": true
+        },
+        {
+          "id": "dano",
+          "key": "dano",
+          "label": "Dano",
+          "type": "dice"
+        },
+        {
+          "id": "tipo",
+          "key": "tipo",
+          "label": "Tipo de dano",
+          "type": "text"
+        },
+        {
+          "id": "notas",
+          "key": "notas",
+          "label": "Notas",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "mod_conjuracao",
+      "key": "mod_conjuracao",
+      "label": "Modificador de conjuração",
+      "type": "number",
+      "default": 0,
+      "integer": true,
+      "description": "Modificador do atributo de conjuração da sua classe (ex.: Inteligência para magos, Carisma para bardos)."
+    },
+    {
+      "id": "cd_magia",
+      "key": "cd_magia",
+      "label": "CD de resistência de magia",
+      "type": "computed",
+      "formula": "8 + @bonus_prof + @mod_conjuracao"
+    },
+    {
+      "id": "ataque_magia",
+      "key": "ataque_magia",
+      "label": "Bônus de ataque com magia",
+      "type": "computed",
+      "formula": "@bonus_prof + @mod_conjuracao"
+    },
+    {
+      "id": "espacos_1",
+      "key": "espacos_1",
+      "label": "Espaços de magia de 1º nível",
+      "type": "resource",
+      "default": 0
+    },
+    {
+      "id": "espacos_2",
+      "key": "espacos_2",
+      "label": "Espaços de magia de 2º nível",
+      "type": "resource",
+      "default": 0
+    },
+    {
+      "id": "espacos_3",
+      "key": "espacos_3",
+      "label": "Espaços de magia de 3º nível",
+      "type": "resource",
+      "default": 0
+    },
+    {
+      "id": "espacos_4",
+      "key": "espacos_4",
+      "label": "Espaços de magia de 4º nível",
+      "type": "resource",
+      "default": 0
+    },
+    {
+      "id": "espacos_5",
+      "key": "espacos_5",
+      "label": "Espaços de magia de 5º nível",
+      "type": "resource",
+      "default": 0
+    },
+    {
+      "id": "espacos_6",
+      "key": "espacos_6",
+      "label": "Espaços de magia de 6º nível",
+      "type": "resource",
+      "default": 0
+    },
+    {
+      "id": "espacos_7",
+      "key": "espacos_7",
+      "label": "Espaços de magia de 7º nível",
+      "type": "resource",
+      "default": 0
+    },
+    {
+      "id": "espacos_8",
+      "key": "espacos_8",
+      "label": "Espaços de magia de 8º nível",
+      "type": "resource",
+      "default": 0
+    },
+    {
+      "id": "espacos_9",
+      "key": "espacos_9",
+      "label": "Espaços de magia de 9º nível",
+      "type": "resource",
+      "default": 0
+    },
+    {
+      "id": "magias",
+      "key": "magias",
+      "label": "Magias",
+      "type": "list",
+      "maxItems": 200,
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Nome",
+          "type": "text"
+        },
+        {
+          "id": "nivel",
+          "key": "nivel",
+          "label": "Nível",
+          "type": "number",
+          "default": 0,
+          "min": 0,
+          "max": 9,
+          "integer": true
+        },
+        {
+          "id": "preparada",
+          "key": "preparada",
+          "label": "Preparada",
+          "type": "boolean"
+        },
+        {
+          "id": "notas",
+          "key": "notas",
+          "label": "Notas",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "pc",
+      "key": "pc",
+      "label": "Peças de cobre",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "pp",
+      "key": "pp",
+      "label": "Peças de prata",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "pe",
+      "key": "pe",
+      "label": "Peças de electro",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "po",
+      "key": "po",
+      "label": "Peças de ouro",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "pl",
+      "key": "pl",
+      "label": "Peças de platina",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "equipamento",
+      "key": "equipamento",
+      "label": "Equipamento",
+      "type": "list",
+      "maxItems": 200,
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Item",
+          "type": "text"
+        },
+        {
+          "id": "qtd",
+          "key": "qtd",
+          "label": "Qtd.",
+          "type": "number",
+          "default": 1,
+          "min": 0,
+          "integer": true
+        },
+        {
+          "id": "peso",
+          "key": "peso",
+          "label": "Peso (kg)",
+          "type": "number",
+          "default": 0,
+          "min": 0
+        },
+        {
+          "id": "equipado",
+          "key": "equipado",
+          "label": "Equipado",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "id": "personalidade",
+      "key": "personalidade",
+      "label": "Traços de personalidade",
+      "type": "longtext"
+    },
+    {
+      "id": "ideais",
+      "key": "ideais",
+      "label": "Ideais",
+      "type": "longtext"
+    },
+    {
+      "id": "vinculos",
+      "key": "vinculos",
+      "label": "Vínculos",
+      "type": "longtext"
+    },
+    {
+      "id": "defeitos",
+      "key": "defeitos",
+      "label": "Defeitos",
+      "type": "longtext"
+    },
+    {
+      "id": "caracteristicas",
+      "key": "caracteristicas",
+      "label": "Características e talentos",
+      "type": "longtext"
+    },
+    {
+      "id": "proficiencias_idiomas",
+      "key": "proficiencias_idiomas",
+      "label": "Outras proficiências e idiomas",
+      "type": "longtext"
+    },
+    {
+      "id": "anotacoes",
+      "key": "anotacoes",
+      "label": "Anotações",
+      "type": "longtext"
+    }
+  ],
+  "layouts": {
+    "full": [
+      {
+        "kind": "section",
+        "title": "Personagem",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "nome",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "classe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "nivel"
+          },
+          {
+            "kind": "field",
+            "fieldId": "raca"
+          },
+          {
+            "kind": "field",
+            "fieldId": "antecedente"
+          },
+          {
+            "kind": "field",
+            "fieldId": "alinhamento"
+          },
+          {
+            "kind": "field",
+            "fieldId": "xp"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Atributos",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "for"
+          },
+          {
+            "kind": "field",
+            "fieldId": "for_mod"
+          },
+          {
+            "kind": "field",
+            "fieldId": "des"
+          },
+          {
+            "kind": "field",
+            "fieldId": "des_mod"
+          },
+          {
+            "kind": "field",
+            "fieldId": "con"
+          },
+          {
+            "kind": "field",
+            "fieldId": "con_mod"
+          },
+          {
+            "kind": "field",
+            "fieldId": "int"
+          },
+          {
+            "kind": "field",
+            "fieldId": "int_mod"
+          },
+          {
+            "kind": "field",
+            "fieldId": "sab"
+          },
+          {
+            "kind": "field",
+            "fieldId": "sab_mod"
+          },
+          {
+            "kind": "field",
+            "fieldId": "car"
+          },
+          {
+            "kind": "field",
+            "fieldId": "car_mod"
+          },
+          {
+            "kind": "field",
+            "fieldId": "bonus_prof"
+          },
+          {
+            "kind": "field",
+            "fieldId": "inspiracao"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Testes de resistência",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "prof_salv_for"
+          },
+          {
+            "kind": "field",
+            "fieldId": "salv_for"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_salv_des"
+          },
+          {
+            "kind": "field",
+            "fieldId": "salv_des"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_salv_con"
+          },
+          {
+            "kind": "field",
+            "fieldId": "salv_con"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_salv_int"
+          },
+          {
+            "kind": "field",
+            "fieldId": "salv_int"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_salv_sab"
+          },
+          {
+            "kind": "field",
+            "fieldId": "salv_sab"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_salv_car"
+          },
+          {
+            "kind": "field",
+            "fieldId": "salv_car"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Perícias",
+        "columns": 3,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "prof_acrobacia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_acrobacia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "acrobacia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_adestrar_animais"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_adestrar_animais"
+          },
+          {
+            "kind": "field",
+            "fieldId": "adestrar_animais"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_arcanismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_arcanismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "arcanismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_atletismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_atletismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "atletismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_atuacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_atuacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "atuacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_enganacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_enganacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "enganacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_furtividade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_furtividade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "furtividade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_historia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_historia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "historia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_intimidacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_intimidacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "intimidacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_intuicao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_intuicao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "intuicao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_investigacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_investigacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "investigacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_medicina"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_medicina"
+          },
+          {
+            "kind": "field",
+            "fieldId": "medicina"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_natureza"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_natureza"
+          },
+          {
+            "kind": "field",
+            "fieldId": "natureza"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_percepcao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_percepcao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "percepcao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_persuasao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_persuasao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "persuasao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_prestidigitacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_prestidigitacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prestidigitacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_religiao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_religiao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "religiao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_sobrevivencia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esp_sobrevivencia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "sobrevivencia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "percepcao_passiva",
+            "span": 3
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Combate",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "ca"
+          },
+          {
+            "kind": "field",
+            "fieldId": "iniciativa"
+          },
+          {
+            "kind": "field",
+            "fieldId": "bonus_iniciativa"
+          },
+          {
+            "kind": "field",
+            "fieldId": "deslocamento"
+          },
+          {
+            "kind": "field",
+            "fieldId": "hp",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "dados_vida"
+          },
+          {
+            "kind": "field",
+            "fieldId": "dados_vida_restantes"
+          },
+          {
+            "kind": "field",
+            "fieldId": "sucessos_morte"
+          },
+          {
+            "kind": "field",
+            "fieldId": "falhas_morte"
+          },
+          {
+            "kind": "field",
+            "fieldId": "condicoes",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "exaustao"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Ataques",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "ataques"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Conjuração",
+        "columns": 3,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "mod_conjuracao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "cd_magia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "ataque_magia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "espacos_1"
+          },
+          {
+            "kind": "field",
+            "fieldId": "espacos_2"
+          },
+          {
+            "kind": "field",
+            "fieldId": "espacos_3"
+          },
+          {
+            "kind": "field",
+            "fieldId": "espacos_4"
+          },
+          {
+            "kind": "field",
+            "fieldId": "espacos_5"
+          },
+          {
+            "kind": "field",
+            "fieldId": "espacos_6"
+          },
+          {
+            "kind": "field",
+            "fieldId": "espacos_7"
+          },
+          {
+            "kind": "field",
+            "fieldId": "espacos_8"
+          },
+          {
+            "kind": "field",
+            "fieldId": "espacos_9"
+          },
+          {
+            "kind": "field",
+            "fieldId": "magias",
+            "span": 3
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Equipamento",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "pc"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pp"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "po"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pl"
+          },
+          {
+            "kind": "field",
+            "fieldId": "equipamento",
+            "span": 4
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Personalidade e características",
+        "columns": 2,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "personalidade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "ideais"
+          },
+          {
+            "kind": "field",
+            "fieldId": "vinculos"
+          },
+          {
+            "kind": "field",
+            "fieldId": "defeitos"
+          },
+          {
+            "kind": "field",
+            "fieldId": "caracteristicas",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "proficiencias_idiomas",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "anotacoes",
+            "span": 2
+          }
+        ]
+      }
+    ],
+    "gmSummary": ["hp", "ca", "condicoes", "exaustao", "percepcao_passiva", "cd_magia"]
+  }
+}

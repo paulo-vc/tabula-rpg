@@ -1,0 +1,148 @@
+import 'fake-indexeddb/auto';
+import {
+  compileTemplate,
+  createSheet,
+  type CharacterSheet,
+  type SystemTemplate,
+} from '@tabula/domain';
+import { liveQuery } from 'dexie';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TabulaDatabase } from './database';
+import { DexieSheetRepository, DexieTemplateRepository, InvalidDataError } from './repositories';
+
+const template = (overrides: Partial<SystemTemplate> = {}): SystemTemplate => ({
+  id: 'meu-sistema',
+  version: '1.0.0',
+  name: 'Meu Sistema',
+  source: 'local',
+  fields: [
+    { id: 'vida', key: 'vida', label: 'Vida', type: 'resource', default: 10 },
+    { id: 'forca', key: 'forca', label: 'Força', type: 'number', default: 1 },
+  ],
+  layouts: { full: [{ kind: 'field', fieldId: 'vida' }] },
+  ...overrides,
+});
+
+function sheet(id: string, updatedAt: number, base = template()): CharacterSheet {
+  const compiled = compileTemplate(base);
+  if (!compiled.ok) throw new Error('template de teste inválido');
+  return {
+    ...createSheet(compiled.value, { id, name: `Ficha ${id}`, ownerId: 'u1', now: 0 }),
+    updatedAt,
+  };
+}
+
+let db: TabulaDatabase;
+let templates: DexieTemplateRepository;
+let sheets: DexieSheetRepository;
+
+beforeEach(() => {
+  db = new TabulaDatabase(`teste-${crypto.randomUUID()}`);
+  templates = new DexieTemplateRepository(db);
+  sheets = new DexieSheetRepository(db);
+});
+
+afterEach(async () => {
+  await db.delete();
+});
+
+describe('DexieTemplateRepository', () => {
+  it('salva, lê, lista por nome e apaga', async () => {
+    await templates.save(template({ id: 'b', name: 'Zumbis' }));
+    await templates.save(template({ id: 'a', name: 'Arcano' }));
+
+    expect(await templates.get('a')).toMatchObject({ name: 'Arcano' });
+    expect((await templates.list()).map((t) => t.name)).toEqual(['Arcano', 'Zumbis']);
+
+    await templates.delete('a');
+    expect(await templates.get('a')).toBeUndefined();
+  });
+
+  it('substitui a versão anterior do mesmo template', async () => {
+    await templates.save(template());
+    await templates.save(template({ version: '1.1.0' }));
+    expect(await templates.list()).toHaveLength(1);
+    expect((await templates.get('meu-sistema'))?.version).toBe('1.1.0');
+  });
+
+  it('descarta propriedades desconhecidas ao gravar', async () => {
+    await templates.save({ ...template(), extra: 'lixo' } as SystemTemplate);
+    expect(await templates.get('meu-sistema')).not.toHaveProperty('extra');
+  });
+
+  it('recusa template que não passa no schema', async () => {
+    await expect(templates.save(template({ version: 'um' }))).rejects.toThrow(InvalidDataError);
+  });
+
+  it('recusa template com erro semântico (ex.: ciclo de fórmulas)', async () => {
+    const cyclic = template({
+      fields: [{ id: 'a', key: 'a', label: 'A', type: 'computed', formula: '@a + 1' }],
+      layouts: { full: [] },
+    });
+    await expect(templates.save(cyclic)).rejects.toMatchObject({
+      issues: [{ code: 'dependencia-circular' }],
+    });
+  });
+
+  it('não grava templates nativos', async () => {
+    await expect(templates.save(template({ source: 'builtin' }))).rejects.toMatchObject({
+      issues: [{ code: 'template-nativo' }],
+    });
+  });
+});
+
+describe('DexieSheetRepository', () => {
+  it('salva, lê e apaga', async () => {
+    await sheets.save(sheet('s1', 1));
+    expect(await sheets.get('s1')).toMatchObject({ name: 'Ficha s1', values: { forca: 1 } });
+    await sheets.delete('s1');
+    expect(await sheets.get('s1')).toBeUndefined();
+  });
+
+  it('lista da alteração mais recente para a mais antiga', async () => {
+    await sheets.save(sheet('antiga', 100));
+    await sheets.save(sheet('nova', 300));
+    await sheets.save(sheet('meio', 200));
+    expect((await sheets.list()).map((s) => s.id)).toEqual(['nova', 'meio', 'antiga']);
+  });
+
+  it('lista as fichas de um template', async () => {
+    await sheets.save(sheet('s1', 1));
+    await sheets.save(sheet('s2', 2, template({ id: 'outro' })));
+    expect((await sheets.listByTemplate('meu-sistema')).map((s) => s.id)).toEqual(['s1']);
+  });
+
+  it('recusa ficha inválida', async () => {
+    const invalid = { ...sheet('s1', 1), name: '' };
+    await expect(sheets.save(invalid)).rejects.toThrow(InvalidDataError);
+    expect(await sheets.get('s1')).toBeUndefined();
+  });
+
+  it('notifica consultas reativas quando os dados mudam', async () => {
+    const snapshots: string[][] = [];
+    const subscription = liveQuery(() => sheets.list()).subscribe((list) =>
+      snapshots.push(list.map((s) => s.id)),
+    );
+    const waitFor = async (length: number) => {
+      for (let i = 0; i < 100 && snapshots.length < length; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+    };
+
+    await waitFor(1);
+    await sheets.save(sheet('s1', 1));
+    await waitFor(2);
+    subscription.unsubscribe();
+
+    expect(snapshots).toEqual([[], ['s1']]);
+  });
+
+  it('dados persistem entre instâncias do banco (reabrir o app)', async () => {
+    await sheets.save(sheet('s1', 1));
+    db.close();
+    const reopened = new TabulaDatabase(db.name);
+    expect(await new DexieSheetRepository(reopened).get('s1')).toBeDefined();
+    reopened.close();
+    await db.open();
+  });
+});
