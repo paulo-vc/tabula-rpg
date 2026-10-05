@@ -1,5 +1,10 @@
 packages:
   - packages/*
   - apps/*
+  - tools/*
 allowBuilds:
   simple-git-hooks: false
+minimumReleaseAgeExclude:
+  - '@trystero-p2p/core@0.26.0'
+  - '@trystero-p2p/nostr@0.26.0'
+  - trystero@0.26.0

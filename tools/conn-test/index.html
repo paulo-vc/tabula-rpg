@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teste de conexão — Tabula RPG</title>
+  </head>
+  <body>
+    <main>
+      <h1>Teste de conexão</h1>
+      <p class="muted">
+        Este teste ajuda o Tabula RPG a descobrir se jogadores conseguem se conectar diretamente,
+        sem servidor. Nenhum endereço IP é incluído no resultado.
+      </p>
+
+      <section>
+        <h2>1. Sobre você</h2>
+        <label>Seu nome <input id="name" maxlength="40" autocomplete="nickname" /></label>
+        <label>
+          Sua internet
+          <select id="network">
+            <option value="">Escolha…</option>
+            <option>Fibra/cabo (Wi-Fi de casa)</option>
+            <option>Fibra/cabo (cabo de rede)</option>
+            <option>Celular 4G/5G</option>
+            <option>Rádio/satélite</option>
+            <option>Rede de trabalho/escola</option>
+            <option>Outra</option>
+          </select>
+        </label>
+      </section>
+
+      <section>
+        <h2>2. Diagnóstico da sua rede</h2>
+        <p id="nat-status" class="muted">Analisando…</p>
+      </section>
+
+      <section>
+        <h2>3. Teste com outras pessoas</h2>
+        <p class="muted">
+          Uma pessoa cria a sala e passa o código. Todos entram e esperam cerca de 30 segundos.
+        </p>
+        <div class="row">
+          <button id="create" type="button">Criar sala</button>
+          <span class="muted">ou</span>
+          <input id="code" placeholder="Código, ex.: K7QM-XR4P" autocomplete="off" />
+          <button id="join" type="button">Entrar</button>
+        </div>
+        <div id="room" hidden>
+          <p>
+            Sala <strong id="room-code"></strong> —
+            <span id="room-status">procurando participantes…</span>
+          </p>
+          <ul id="peers"></ul>
+          <button id="leave" type="button" class="secondary">Sair da sala</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>4. Enviar o resultado</h2>
+        <pre id="report"></pre>
+        <button id="copy" type="button">Copiar resultado</button>
+        <span id="copied" class="muted" hidden>Copiado! Cole no chat do grupo.</span>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
