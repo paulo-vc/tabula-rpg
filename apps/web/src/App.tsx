@@ -5,7 +5,10 @@ import { ServicesProvider } from '@/app/services-context';
 import { AppShell } from '@/components/AppShell';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { CampaignPage } from '@/pages/CampaignPage';
+import { CampaignsPage } from '@/pages/CampaignsPage';
 import { HomePage } from '@/pages/HomePage';
+import { InvitePage } from '@/pages/InvitePage';
 import { SheetPage } from '@/pages/SheetPage';
 import { SystemsPage } from '@/pages/SystemsPage';
 
@@ -22,6 +25,13 @@ export function App({ services }: { services: Services }) {
             <Switch>
               <Route path="/" component={HomePage} />
               <Route path="/sistemas" component={SystemsPage} />
+              <Route path="/campanhas" component={CampaignsPage} />
+              <Route path="/campanhas/:id">
+                {(params) => <CampaignPage key={params.id} id={params.id} />}
+              </Route>
+              <Route path="/convite/:code">
+                {(params) => <InvitePage key={params.code} code={params.code} />}
+              </Route>
               <Route path="/fichas/:id">
                 {(params) => <SheetPage key={params.id} id={params.id} />}
               </Route>

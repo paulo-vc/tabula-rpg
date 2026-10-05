@@ -68,12 +68,16 @@ Infraestrutura (persistência, rede) implementa **portas** (interfaces) definida
 
 ## Sincronização (resumo)
 
-Topologia em estrela: jogadores conectam-se **somente ao Mestre**, que atua como host da sessão. O app tenta, em ordem e sem que o usuário escolha nada:
-
-1. **WebRTC direto** (inclui IPv6 e hole punching via STUN público).
-2. **Relay de último recurso**, apenas para a conexão que falhou, com payload criptografado de ponta a ponta. O provedor fica atrás da porta `SyncTransport` e pode ser trocado.
+Topologia em estrela: jogadores conectam-se **somente ao Mestre**, que atua como host da sessão. A conexão é **WebRTC direto** (inclui IPv6 e hole punching via STUN público), com sinalização por relays Nostr públicos. Não há relay na v0.1 ([ADR 0008](adr/0008-lancar-sem-relay.md)): o teste em redes reais não teve nenhuma falha. O transporte fica atrás da porta `SyncTransport`, e um relay pode ser acrescentado depois sem mudar o resto do app.
 
 A sincronização existe apenas enquanto a sessão está aberta. Edições offline são mescladas na reconexão (CRDT). Detalhes e alternativas descartadas estão na [ADR 0004](adr/0004-sincronizacao.md).
+
+### Campanhas e convites
+
+- Cada dispositivo guarda **a sua cópia** da campanha. O Mestre a cria; o jogador a recebe pelo convite. O papel é derivado de `gmId` comparado ao ID do dispositivo.
+- A campanha tem um **segredo de 128 bits** que cifrará a sessão. O convite (id, nome, Mestre, sistema e segredo) vai codificado em base64url **depois do `#`** do link, a parte que os navegadores nunca enviam a servidores.
+- O link usa o endereço público do app (`VITE_PUBLIC_URL` no build, ou o endereço atual quando é um site). No app desktop não há endereço público, e o convite é compartilhado como **código** para colar em "Entrar com convite".
+- O jogador vincula uma ficha do **sistema da campanha** (existente ou nova). Versões diferentes do mesmo sistema são aceitas, porque a migração resolve ao abrir a ficha.
 
 ## Modelo de dados (resumo)
 

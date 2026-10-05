@@ -1,6 +1,6 @@
 # 0004 — Sincronização P2P com relay de último recurso
 
-- **Status:** Aceita. O uso do relay será confirmado com dados do protótipo de teste de conexão (Fase 3).
+- **Status:** Aceita. O relay de último recurso foi **adiado** pela [ADR 0008](0008-lancar-sem-relay.md), com base no teste de conexão.
 - **Data:** 2026-10-04
 
 ## Contexto

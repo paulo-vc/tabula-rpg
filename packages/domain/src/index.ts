@@ -19,8 +19,24 @@ export {
 } from './sheet/migrate';
 
 export * from './campaign/schema';
+export {
+  createCampaign,
+  inviteFor,
+  joinCampaign,
+  linkedSheetId,
+  linkSheet,
+  roleOf,
+  type CampaignRole,
+  type NewCampaignInput,
+} from './campaign/operations';
 
-export type { DeviceRepository, SheetChanges, SheetRepository, TemplateRepository } from './ports';
+export type {
+  CampaignRepository,
+  DeviceRepository,
+  SheetChanges,
+  SheetRepository,
+  TemplateRepository,
+} from './ports';
 
 export {
   ExportEnvelopeSchema,

@@ -1,7 +1,10 @@
 import {
+  CampaignSchema,
   CharacterSheetSchema,
   compileTemplate,
   SystemTemplateSchema,
+  type Campaign,
+  type CampaignRepository,
   type CharacterSheet,
   type DeviceRepository,
   type Issue,
@@ -115,7 +118,32 @@ const SheetChangesSchema = CharacterSheetSchema.pick({
   updatedAt: true,
 }).partial({ name: true, values: true });
 
+export class DexieCampaignRepository implements CampaignRepository {
+  constructor(private readonly db: TabulaDatabase) {}
+
+  async save(campaign: Campaign): Promise<void> {
+    const parsed = CampaignSchema.safeParse(campaign);
+    if (!parsed.success) {
+      throw new InvalidDataError('Campanha inválida', zodIssues(parsed.error.issues));
+    }
+    await this.db.campaigns.put(parsed.data);
+  }
+
+  get(id: string): Promise<Campaign | undefined> {
+    return this.db.campaigns.get(id);
+  }
+
+  list(): Promise<Campaign[]> {
+    return this.db.campaigns.orderBy('updatedAt').reverse().toArray();
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.db.campaigns.delete(id);
+  }
+}
+
 const DEVICE_ID_KEY = 'deviceId';
+const DISPLAY_NAME_KEY = 'displayName';
 
 export class DexieDeviceRepository implements DeviceRepository {
   constructor(
@@ -132,5 +160,14 @@ export class DexieDeviceRepository implements DeviceRepository {
       await this.db.settings.put({ key: DEVICE_ID_KEY, value: id });
       return id;
     });
+  }
+
+  async getDisplayName(): Promise<string | undefined> {
+    const setting = await this.db.settings.get(DISPLAY_NAME_KEY);
+    return typeof setting?.value === 'string' ? setting.value : undefined;
+  }
+
+  async setDisplayName(name: string): Promise<void> {
+    await this.db.settings.put({ key: DISPLAY_NAME_KEY, value: name.trim().slice(0, 100) });
   }
 }

@@ -1,3 +1,4 @@
+import type { Campaign } from './campaign/schema';
 import type { CharacterSheet } from './sheet/schema';
 import type { SystemTemplate } from './template/schema';
 
@@ -40,8 +41,21 @@ export interface SheetChanges {
   updatedAt: number;
 }
 
+/** Campanhas deste dispositivo (como Mestre ou como jogador). */
+export interface CampaignRepository {
+  /** Salva ou substitui a campanha com o mesmo `id`. */
+  save(campaign: Campaign): Promise<void>;
+  get(id: string): Promise<Campaign | undefined>;
+  /** Ordenadas da alteração mais recente para a mais antiga. */
+  list(): Promise<Campaign[]>;
+  delete(id: string): Promise<void>;
+}
+
 /** Configurações e dados do dispositivo local. */
 export interface DeviceRepository {
   /** ID estável deste dispositivo/usuário local, criado na primeira chamada. */
   getDeviceId(): Promise<string>;
+  /** Nome de exibição usado na última vez (para preencher formulários). */
+  getDisplayName(): Promise<string | undefined>;
+  setDisplayName(name: string): Promise<void>;
 }

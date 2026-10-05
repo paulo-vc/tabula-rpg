@@ -1,14 +1,16 @@
 import 'fake-indexeddb/auto';
 import {
   compileTemplate,
+  createCampaign,
   createSheet,
   type CharacterSheet,
   type SystemTemplate,
 } from '@tabula/domain';
-import { liveQuery } from 'dexie';
+import { Dexie, liveQuery } from 'dexie';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TabulaDatabase } from './database';
 import {
+  DexieCampaignRepository,
   DexieDeviceRepository,
   DexieSheetRepository,
   DexieTemplateRepository,
@@ -199,5 +201,68 @@ describe('DexieDeviceRepository', () => {
     const device = new DexieDeviceRepository(db, () => `id-${++calls}`);
     const ids = await Promise.all([device.getDeviceId(), device.getDeviceId()]);
     expect(new Set(ids).size).toBe(1);
+  });
+});
+
+describe('DexieCampaignRepository', () => {
+  const campaign = (id: string, updatedAt: number) => ({
+    ...createCampaign({
+      id,
+      name: `Campanha ${id}`,
+      template: template(),
+      gm: { userId: 'u1', displayName: 'Mestre' },
+      secret: 'AAAAAAAAAAAAAAAAAAAAAA',
+      now: 0,
+    }),
+    updatedAt,
+  });
+
+  it('salva, lista da mais recente para a mais antiga e apaga', async () => {
+    const campaigns = new DexieCampaignRepository(db);
+    await campaigns.save(campaign('a', 1));
+    await campaigns.save(campaign('b', 2));
+    expect((await campaigns.list()).map((c) => c.id)).toEqual(['b', 'a']);
+    await campaigns.delete('a');
+    expect(await campaigns.get('a')).toBeUndefined();
+  });
+
+  it('recusa campanha inválida (ex.: segredo malformado)', async () => {
+    const campaigns = new DexieCampaignRepository(db);
+    await expect(campaigns.save({ ...campaign('a', 1), secret: 'curto' })).rejects.toThrow(
+      InvalidDataError,
+    );
+  });
+});
+
+describe('DexieDeviceRepository: nome de exibição', () => {
+  it('guarda o último nome usado', async () => {
+    const device = new DexieDeviceRepository(db);
+    expect(await device.getDisplayName()).toBeUndefined();
+    await device.setDisplayName('  Paulo  ');
+    expect(await device.getDisplayName()).toBe('Paulo');
+  });
+});
+
+describe('migração do banco', () => {
+  it('atualiza um banco da versão 1 para a 2 sem perder fichas', async () => {
+    const name = `v1-${crypto.randomUUID()}`;
+    const v1 = new Dexie(name);
+    v1.version(1).stores({
+      templates: 'id, name',
+      sheets: 'id, updatedAt, templateRef.id',
+      settings: 'key',
+    });
+    await v1.table('sheets').put(sheet('antiga', 1));
+    v1.close();
+
+    const current = new TabulaDatabase(name);
+    try {
+      expect(await new DexieSheetRepository(current).get('antiga')).toBeDefined();
+      expect(await new DexieCampaignRepository(current).list()).toEqual([]);
+      expect(current.verno).toBe(2);
+    } finally {
+      current.close();
+      await Dexie.delete(name);
+    }
   });
 });

@@ -1,4 +1,4 @@
-import type { CharacterSheet, SystemTemplate } from '@tabula/domain';
+import type { Campaign, CharacterSheet, SystemTemplate } from '@tabula/domain';
 import { Dexie, type EntityTable } from 'dexie';
 
 /** Par chave/valor de configuração local. */
@@ -19,6 +19,7 @@ export class TabulaDatabase extends Dexie {
   templates!: EntityTable<SystemTemplate, 'id'>;
   sheets!: EntityTable<CharacterSheet, 'id'>;
   settings!: EntityTable<Setting, 'key'>;
+  campaigns!: EntityTable<Campaign, 'id'>;
 
   constructor(name: string = DEFAULT_DATABASE_NAME) {
     super(name);
@@ -26,6 +27,10 @@ export class TabulaDatabase extends Dexie {
       templates: 'id, name',
       sheets: 'id, updatedAt, templateRef.id',
       settings: 'key',
+    });
+    // v2 (Fase 3): campanhas. Só acrescenta uma tabela; os dados existentes não mudam.
+    this.version(2).stores({
+      campaigns: 'id, updatedAt',
     });
   }
 }

@@ -34,6 +34,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavLink href="/" also="/fichas/*">
               Fichas
             </NavLink>
+            <NavLink href="/campanhas" also="/campanhas/*">
+              Campanhas
+            </NavLink>
             <NavLink href="/sistemas">Sistemas</NavLink>
           </nav>
         </div>
