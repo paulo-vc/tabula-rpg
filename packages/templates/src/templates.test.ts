@@ -2,6 +2,7 @@ import {
   compileTemplate,
   computeDerived,
   createSheet,
+  migrateSheet,
   type CompiledTemplate,
   type LayoutNode,
   type SystemTemplate,
@@ -100,5 +101,76 @@ describe('D&D 5e (SRD)', () => {
       const { computed } = computeDerived(compiled, { nivel: index + 1 });
       expect(computed.bonus_prof).toEqual({ ok: true, value: bonus });
     });
+  });
+});
+
+describe('D&D 5e: fórmulas avançadas (1.1.0)', () => {
+  const template = getBuiltinTemplate('dnd5e-srd');
+  if (!template) throw new Error('template ausente');
+  const compiled = compile(template);
+  const base = createSheet(compiled, { id: 's', name: 'Teste', ownerId: 'u', now: 0 }).values;
+  const calc = (values: Record<string, unknown>) => {
+    const { computed } = computeDerived(compiled, { ...base, ...values } as never);
+    return (id: string) => {
+      const result = computed[id];
+      return result?.ok ? result.value : result;
+    };
+  };
+  const item = (id: string, values: Record<string, unknown>) => ({ id, values });
+
+  it('CA total soma a base, os itens equipados e os efeitos de CA ativos', () => {
+    const value = calc({
+      ca: 16,
+      equipamento: [
+        item('escudo', { nome: 'Escudo', bonus_ca: 2, equipado: true }),
+        item('anel', { nome: 'Anel de Proteção', bonus_ca: 1, equipado: false }),
+      ],
+      efeitos: [
+        item('e1', { nome: 'Escudo da Fé', alvo: 'ca', valor: 2, ativo: true }),
+        item('e2', { nome: 'Bênção (resist.)', alvo: 'resistencias', valor: 1, ativo: true }),
+        item('e3', { nome: 'Antigo', alvo: 'ca', valor: 5, ativo: false }),
+      ],
+    });
+    expect(value('ca_total')).toBe(20); // 16 + 2 (escudo) + 2 (Escudo da Fé)
+    expect(value('salv_for')).toBe(1); // 0 + efeito de resistência
+    expect(value('atletismo')).toBe(0); // efeito de resistência não afeta perícia
+  });
+
+  it('CD de magia usa o atributo de conjuração escolhido', () => {
+    const value = calc({ nivel: 5, int: 18, sab: 12, atributo_conjuracao: 'int' });
+    expect(value('mod_conjuracao')).toBe(4);
+    expect(value('cd_magia')).toBe(15); // 8 + 3 + 4
+    expect(value('ataque_magia')).toBe(7);
+    expect(calc({ nivel: 5, int: 18, sab: 12, atributo_conjuracao: 'sab' })('cd_magia')).toBe(12);
+    expect(calc({ nivel: 5 })('cd_magia')).toBe(11); // nenhum escolhido: só 8 + proficiência
+  });
+
+  it('carga, capacidade e magias preparadas', () => {
+    const value = calc({
+      for: 15,
+      equipamento: [item('corda', { qtd: 1, peso: 5 }), item('racao', { qtd: 10, peso: 1 })],
+      magias: [
+        item('m1', { nome: 'Mísseis Mágicos', preparada: true }),
+        item('m2', { nome: 'Escudo', preparada: true }),
+        item('m3', { nome: 'Sono', preparada: false }),
+      ],
+    });
+    expect(value('carga')).toBe(15);
+    expect(value('capacidade_carga')).toBe(102);
+    expect(value('magias_preparadas')).toBe(2);
+  });
+
+  it('migra uma ficha da 1.0.0: valores mantidos, o modificador digitado vira calculado', () => {
+    const old = {
+      ...createSheet(compiled, { id: 's', name: 'Antiga', ownerId: 'u', now: 0 }),
+      templateRef: { id: 'dnd5e-srd', version: '1.0.0', source: 'builtin' as const },
+    };
+    old.values = { ...old.values, for: 17, mod_conjuracao: 3 } as never;
+    delete (old.values as Record<string, unknown>).atributo_conjuracao;
+    const { sheet, report } = migrateSheet(old, compiled, 1);
+    expect(sheet.templateRef.version).toBe('1.1.0');
+    expect(sheet.values.for).toBe(17);
+    expect(report.orphaned).toEqual(['mod_conjuracao']); // guardado, não perdido
+    expect(sheet.orphaned).toEqual({ mod_conjuracao: 3 });
   });
 });

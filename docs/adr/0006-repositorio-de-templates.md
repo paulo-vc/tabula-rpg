@@ -1,6 +1,6 @@
 # 0006 — Repositório de templates estilo plugins do Obsidian
 
-- **Status:** Aceita (implementação na Fase 4)
+- **Status:** Aceita (implementação na Fase 5; as fórmulas avançadas vieram antes, para estabilizar a linguagem)
 - **Data:** 2026-10-04
 
 ## Contexto

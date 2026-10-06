@@ -50,7 +50,12 @@ const BooleanFieldSchema = z.object({
   default: z.boolean().optional(),
 });
 
-const SelectOptionSchema = z.object({ value: IdSchema, label: LabelSchema });
+const SelectOptionSchema = z.object({
+  value: IdSchema,
+  label: LabelSchema,
+  /** Valor da opção em fórmulas (`@tamanho` vale o número da opção marcada; soma, se múltipla). */
+  number: FiniteNumberSchema.optional(),
+});
 
 const SelectFieldSchema = z.object({
   ...fieldBase,
@@ -122,7 +127,10 @@ export type FieldType = FieldDef['type'];
 export type FieldOf<T extends FieldType> = Extract<FieldDef, { type: T }>;
 
 /** Tipos cujo valor pode ser usado em fórmulas. */
-export const NUMERIC_FIELD_TYPES = ['number', 'boolean', 'resource', 'computed'] as const;
+export const NUMERIC_FIELD_TYPES = ['number', 'boolean', 'resource', 'computed', 'select'] as const;
+
+/** Tipos de campo de item de lista que valem um número em `sum()`/`count()`. */
+export const NUMERIC_ITEM_FIELD_TYPES = ['number', 'boolean', 'select'] as const;
 
 // ---------- Layout ----------
 

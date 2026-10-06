@@ -114,12 +114,13 @@ Implementado em `packages/domain`:
 
 ## Roadmap
 
-| Fase  | Entrega                                                                                                   |
-| ----- | --------------------------------------------------------------------------------------------------------- |
-| **0** | Fundação: monorepo, CI, regras de arquitetura, shell Tauri, pipeline de release, ADRs                     |
-| **1** | Domínio: schemas Zod, avaliador de fórmulas, validação, testes                                            |
-| **2** | Fichas locais: persistência, renderização a partir do template, D&D 5e (SRD), import/export               |
-| **3** | **Mesa + sync em tempo real** (protótipo de teste de conexão primeiro). Primeira versão pública: **v0.1** |
-| **4** | Repositório de templates da comunidade, com instalação dentro do app                                      |
-| **5** | Criador visual de sistemas, com "Publicar na comunidade"                                                  |
-| **6** | Mesa avançada: Mestre edita fichas, campos secretos, rolagens, log da sessão                              |
+| Fase  | Entrega                                                                                                                  |
+| ----- | ------------------------------------------------------------------------------------------------------------------------ |
+| **0** | Fundação: monorepo, CI, regras de arquitetura, shell Tauri, pipeline de release, ADRs                                    |
+| **1** | Domínio: schemas Zod, avaliador de fórmulas, validação, testes                                                           |
+| **2** | Fichas locais: persistência, renderização a partir do template, D&D 5e (SRD), import/export                              |
+| **3** | **Mesa + sync em tempo real** (protótipo de teste de conexão primeiro). Primeira versão pública: **v0.1**                |
+| **4** | Fórmulas avançadas: somas e contagens em listas, seleções com valor numérico, `is()`, efeitos temporários (D&D 5e 1.1.0) |
+| **5** | Repositório de templates da comunidade, com instalação dentro do app                                                     |
+| **6** | Criador visual de sistemas, com "Publicar na comunidade"                                                                 |
+| **7** | Mesa avançada: Mestre edita fichas, campos secretos, rolagens, log da sessão                                             |

@@ -101,7 +101,8 @@ describe('compileTemplate', () => {
       (t) => Object.assign(field(t, 'f_ca'), { formula: '10 + @sab_mod' }),
     ],
     ['referencia-nao-numerica', (t) => Object.assign(field(t, 'f_ca'), { formula: '@nome + 1' })],
-    ['referencia-nao-numerica', (t) => Object.assign(field(t, 'f_ca'), { formula: '@inventario' })],
+    ['lista-fora-de-agregacao', (t) => Object.assign(field(t, 'f_ca'), { formula: '@inventario' })],
+    ['propriedade-invalida', (t) => Object.assign(field(t, 'f_ca'), { formula: '@hp.atual' })],
     ['propriedade-invalida', (t) => Object.assign(field(t, 'f_ca'), { formula: '@for.max' })],
     [
       'dependencia-circular',

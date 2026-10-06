@@ -8,6 +8,8 @@ export function printFormula(node: FormulaNode): string {
   switch (node.type) {
     case 'number':
       return String(node.value);
+    case 'string':
+      return `"${node.value.replace(/["\\]/g, '\\$&')}"`;
     case 'ref':
       return node.prop ? `@${node.key}.${node.prop}` : `@${node.key}`;
     case 'unary':

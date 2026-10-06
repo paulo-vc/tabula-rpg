@@ -117,7 +117,7 @@ describe('fórmulas: erros de sintaxe', () => {
     ['floor(1, 2)', 'aridade-invalida', 0],
     ['clamp(1)', 'aridade-invalida', 0],
     ['max()', 'aridade-invalida', 0],
-    ['@hp.atual', 'propriedade-desconhecida', 0],
+    ['is(@a, "sem fim)', 'texto-invalido', 7],
     ['@For', 'caractere-invalido', 0],
     ['floor', 'fim-inesperado', 5],
     ['constructor(1)', 'funcao-desconhecida', 0],
@@ -189,6 +189,23 @@ const { node: nodeArb } = fc.letrec<{ node: FormulaNode }>((tie) => ({
     fc
       .tuple(tie('node'), tie('node'), tie('node'))
       .map((args) => ({ type: 'call' as const, fn: 'if' as const, args })),
+    // is() com textos arbitrários (inclusive aspas e barras invertidas, que precisam de escape).
+    fc
+      .tuple(
+        keyArb,
+        fc.string({ maxLength: 12 }).filter((text) => !text.includes('\n')),
+      )
+      .map(([key, value]) => ({
+        type: 'call' as const,
+        fn: 'is' as const,
+        args: [
+          { type: 'ref' as const, key },
+          { type: 'string' as const, value },
+        ],
+      })),
+    fc
+      .array(tie('node'), { minLength: 1, maxLength: 1 })
+      .map((args) => ({ type: 'call' as const, fn: 'sum' as const, args })),
   ),
 }));
 

@@ -1,6 +1,6 @@
 {
   "id": "dnd5e-srd",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "D&D 5ª Edição (SRD 5.1)",
   "description": "Ficha para personagens de D&D 5ª edição. This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode. Termos traduzidos para o português e organizados como ficha pelo projeto Tabula RPG.",
   "author": "Tabula RPG",
@@ -229,7 +229,7 @@
       "key": "salv_for",
       "label": "Resistência de Força",
       "type": "computed",
-      "formula": "@for_mod + if(@prof_salv_for, @bonus_prof, 0)",
+      "formula": "@for_mod + if(@prof_salv_for, @bonus_prof, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"resistencias\"))",
       "signed": true
     },
     {
@@ -243,7 +243,7 @@
       "key": "salv_des",
       "label": "Resistência de Destreza",
       "type": "computed",
-      "formula": "@des_mod + if(@prof_salv_des, @bonus_prof, 0)",
+      "formula": "@des_mod + if(@prof_salv_des, @bonus_prof, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"resistencias\"))",
       "signed": true
     },
     {
@@ -257,7 +257,7 @@
       "key": "salv_con",
       "label": "Resistência de Constituição",
       "type": "computed",
-      "formula": "@con_mod + if(@prof_salv_con, @bonus_prof, 0)",
+      "formula": "@con_mod + if(@prof_salv_con, @bonus_prof, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"resistencias\"))",
       "signed": true
     },
     {
@@ -271,7 +271,7 @@
       "key": "salv_int",
       "label": "Resistência de Inteligência",
       "type": "computed",
-      "formula": "@int_mod + if(@prof_salv_int, @bonus_prof, 0)",
+      "formula": "@int_mod + if(@prof_salv_int, @bonus_prof, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"resistencias\"))",
       "signed": true
     },
     {
@@ -285,7 +285,7 @@
       "key": "salv_sab",
       "label": "Resistência de Sabedoria",
       "type": "computed",
-      "formula": "@sab_mod + if(@prof_salv_sab, @bonus_prof, 0)",
+      "formula": "@sab_mod + if(@prof_salv_sab, @bonus_prof, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"resistencias\"))",
       "signed": true
     },
     {
@@ -299,7 +299,7 @@
       "key": "salv_car",
       "label": "Resistência de Carisma",
       "type": "computed",
-      "formula": "@car_mod + if(@prof_salv_car, @bonus_prof, 0)",
+      "formula": "@car_mod + if(@prof_salv_car, @bonus_prof, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"resistencias\"))",
       "signed": true
     },
     {
@@ -320,7 +320,7 @@
       "key": "acrobacia",
       "label": "Acrobacia (Des)",
       "type": "computed",
-      "formula": "@des_mod + @bonus_prof * if(@prof_acrobacia, 1 + @esp_acrobacia, 0)",
+      "formula": "@des_mod + @bonus_prof * if(@prof_acrobacia, 1 + @esp_acrobacia, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -341,7 +341,7 @@
       "key": "adestrar_animais",
       "label": "Adestrar Animais (Sab)",
       "type": "computed",
-      "formula": "@sab_mod + @bonus_prof * if(@prof_adestrar_animais, 1 + @esp_adestrar_animais, 0)",
+      "formula": "@sab_mod + @bonus_prof * if(@prof_adestrar_animais, 1 + @esp_adestrar_animais, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -362,7 +362,7 @@
       "key": "arcanismo",
       "label": "Arcanismo (Int)",
       "type": "computed",
-      "formula": "@int_mod + @bonus_prof * if(@prof_arcanismo, 1 + @esp_arcanismo, 0)",
+      "formula": "@int_mod + @bonus_prof * if(@prof_arcanismo, 1 + @esp_arcanismo, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -383,7 +383,7 @@
       "key": "atletismo",
       "label": "Atletismo (For)",
       "type": "computed",
-      "formula": "@for_mod + @bonus_prof * if(@prof_atletismo, 1 + @esp_atletismo, 0)",
+      "formula": "@for_mod + @bonus_prof * if(@prof_atletismo, 1 + @esp_atletismo, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -404,7 +404,7 @@
       "key": "atuacao",
       "label": "Atuação (Car)",
       "type": "computed",
-      "formula": "@car_mod + @bonus_prof * if(@prof_atuacao, 1 + @esp_atuacao, 0)",
+      "formula": "@car_mod + @bonus_prof * if(@prof_atuacao, 1 + @esp_atuacao, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -425,7 +425,7 @@
       "key": "enganacao",
       "label": "Enganação (Car)",
       "type": "computed",
-      "formula": "@car_mod + @bonus_prof * if(@prof_enganacao, 1 + @esp_enganacao, 0)",
+      "formula": "@car_mod + @bonus_prof * if(@prof_enganacao, 1 + @esp_enganacao, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -446,7 +446,7 @@
       "key": "furtividade",
       "label": "Furtividade (Des)",
       "type": "computed",
-      "formula": "@des_mod + @bonus_prof * if(@prof_furtividade, 1 + @esp_furtividade, 0)",
+      "formula": "@des_mod + @bonus_prof * if(@prof_furtividade, 1 + @esp_furtividade, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -467,7 +467,7 @@
       "key": "historia",
       "label": "História (Int)",
       "type": "computed",
-      "formula": "@int_mod + @bonus_prof * if(@prof_historia, 1 + @esp_historia, 0)",
+      "formula": "@int_mod + @bonus_prof * if(@prof_historia, 1 + @esp_historia, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -488,7 +488,7 @@
       "key": "intimidacao",
       "label": "Intimidação (Car)",
       "type": "computed",
-      "formula": "@car_mod + @bonus_prof * if(@prof_intimidacao, 1 + @esp_intimidacao, 0)",
+      "formula": "@car_mod + @bonus_prof * if(@prof_intimidacao, 1 + @esp_intimidacao, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -509,7 +509,7 @@
       "key": "intuicao",
       "label": "Intuição (Sab)",
       "type": "computed",
-      "formula": "@sab_mod + @bonus_prof * if(@prof_intuicao, 1 + @esp_intuicao, 0)",
+      "formula": "@sab_mod + @bonus_prof * if(@prof_intuicao, 1 + @esp_intuicao, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -530,7 +530,7 @@
       "key": "investigacao",
       "label": "Investigação (Int)",
       "type": "computed",
-      "formula": "@int_mod + @bonus_prof * if(@prof_investigacao, 1 + @esp_investigacao, 0)",
+      "formula": "@int_mod + @bonus_prof * if(@prof_investigacao, 1 + @esp_investigacao, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -551,7 +551,7 @@
       "key": "medicina",
       "label": "Medicina (Sab)",
       "type": "computed",
-      "formula": "@sab_mod + @bonus_prof * if(@prof_medicina, 1 + @esp_medicina, 0)",
+      "formula": "@sab_mod + @bonus_prof * if(@prof_medicina, 1 + @esp_medicina, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -572,7 +572,7 @@
       "key": "natureza",
       "label": "Natureza (Int)",
       "type": "computed",
-      "formula": "@int_mod + @bonus_prof * if(@prof_natureza, 1 + @esp_natureza, 0)",
+      "formula": "@int_mod + @bonus_prof * if(@prof_natureza, 1 + @esp_natureza, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -593,7 +593,7 @@
       "key": "percepcao",
       "label": "Percepção (Sab)",
       "type": "computed",
-      "formula": "@sab_mod + @bonus_prof * if(@prof_percepcao, 1 + @esp_percepcao, 0)",
+      "formula": "@sab_mod + @bonus_prof * if(@prof_percepcao, 1 + @esp_percepcao, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -614,7 +614,7 @@
       "key": "persuasao",
       "label": "Persuasão (Car)",
       "type": "computed",
-      "formula": "@car_mod + @bonus_prof * if(@prof_persuasao, 1 + @esp_persuasao, 0)",
+      "formula": "@car_mod + @bonus_prof * if(@prof_persuasao, 1 + @esp_persuasao, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -635,7 +635,7 @@
       "key": "prestidigitacao",
       "label": "Prestidigitação (Des)",
       "type": "computed",
-      "formula": "@des_mod + @bonus_prof * if(@prof_prestidigitacao, 1 + @esp_prestidigitacao, 0)",
+      "formula": "@des_mod + @bonus_prof * if(@prof_prestidigitacao, 1 + @esp_prestidigitacao, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -656,7 +656,7 @@
       "key": "religiao",
       "label": "Religião (Int)",
       "type": "computed",
-      "formula": "@int_mod + @bonus_prof * if(@prof_religiao, 1 + @esp_religiao, 0)",
+      "formula": "@int_mod + @bonus_prof * if(@prof_religiao, 1 + @esp_religiao, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -677,7 +677,7 @@
       "key": "sobrevivencia",
       "label": "Sobrevivência (Sab)",
       "type": "computed",
-      "formula": "@sab_mod + @bonus_prof * if(@prof_sobrevivencia, 1 + @esp_sobrevivencia, 0)",
+      "formula": "@sab_mod + @bonus_prof * if(@prof_sobrevivencia, 1 + @esp_sobrevivencia, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
       "signed": true
     },
     {
@@ -688,20 +688,29 @@
       "formula": "10 + @percepcao"
     },
     {
+      "id": "ca_total",
+      "key": "ca_total",
+      "label": "Classe de Armadura",
+      "type": "computed",
+      "formula": "@ca + sum(@equipamento.bonus_ca * @equipamento.equipado) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"ca\"))",
+      "description": "CA base + bônus dos itens equipados + efeitos ativos."
+    },
+    {
       "id": "ca",
       "key": "ca",
-      "label": "Classe de Armadura",
+      "label": "CA base (armadura)",
       "type": "number",
       "default": 10,
       "min": 0,
-      "integer": true
+      "integer": true,
+      "description": "CA da armadura (ou 10 + Destreza sem armadura). Escudos e itens mágicos entram pelo Equipamento, com Bônus de CA e Equipado."
     },
     {
       "id": "iniciativa",
       "key": "iniciativa",
       "label": "Iniciativa",
       "type": "computed",
-      "formula": "@des_mod + @bonus_iniciativa",
+      "formula": "@des_mod + @bonus_iniciativa + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"iniciativa\"))",
       "signed": true
     },
     {
@@ -878,13 +887,25 @@
       ]
     },
     {
-      "id": "mod_conjuracao",
-      "key": "mod_conjuracao",
-      "label": "Modificador de conjuração",
-      "type": "number",
-      "default": 0,
-      "integer": true,
-      "description": "Modificador do atributo de conjuração da sua classe (ex.: Inteligência para magos, Carisma para bardos)."
+      "id": "atributo_conjuracao",
+      "key": "atributo_conjuracao",
+      "label": "Atributo de conjuração",
+      "type": "select",
+      "options": [
+        {
+          "value": "int",
+          "label": "Inteligência"
+        },
+        {
+          "value": "sab",
+          "label": "Sabedoria"
+        },
+        {
+          "value": "car",
+          "label": "Carisma"
+        }
+      ],
+      "description": "Inteligência para magos, Sabedoria para clérigos e druidas, Carisma para bardos, feiticeiros, bruxos e paladinos."
     },
     {
       "id": "cd_magia",
@@ -899,6 +920,21 @@
       "label": "Bônus de ataque com magia",
       "type": "computed",
       "formula": "@bonus_prof + @mod_conjuracao",
+      "signed": true
+    },
+    {
+      "id": "magias_preparadas",
+      "key": "magias_preparadas",
+      "label": "Magias preparadas",
+      "type": "computed",
+      "formula": "count(@magias.preparada)"
+    },
+    {
+      "id": "mod_conjuracao",
+      "key": "mod_conjuracao",
+      "label": "Mod. de conjuração",
+      "type": "computed",
+      "formula": "is(@atributo_conjuracao, \"int\") * @int_mod + is(@atributo_conjuracao, \"sab\") * @sab_mod + is(@atributo_conjuracao, \"car\") * @car_mod",
       "signed": true
     },
     {
@@ -1077,10 +1113,86 @@
           "min": 0
         },
         {
+          "id": "bonus_ca",
+          "key": "bonus_ca",
+          "label": "Bônus de CA",
+          "type": "number",
+          "default": 0,
+          "integer": true
+        },
+        {
           "id": "equipado",
           "key": "equipado",
           "label": "Equipado",
           "type": "boolean"
+        }
+      ]
+    },
+    {
+      "id": "carga",
+      "key": "carga",
+      "label": "Peso carregado (kg)",
+      "type": "computed",
+      "formula": "sum(@equipamento.peso * @equipamento.qtd)"
+    },
+    {
+      "id": "capacidade_carga",
+      "key": "capacidade_carga",
+      "label": "Capacidade de carga (kg)",
+      "type": "computed",
+      "formula": "round(@for * 6.8)",
+      "description": "Força × 15 libras (≈ 6,8 kg), pela regra do SRD."
+    },
+    {
+      "id": "efeitos",
+      "key": "efeitos",
+      "label": "Efeitos temporários",
+      "type": "list",
+      "maxItems": 30,
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Efeito",
+          "type": "text"
+        },
+        {
+          "id": "alvo",
+          "key": "alvo",
+          "label": "Afeta",
+          "type": "select",
+          "options": [
+            {
+              "value": "ca",
+              "label": "Classe de Armadura"
+            },
+            {
+              "value": "iniciativa",
+              "label": "Iniciativa"
+            },
+            {
+              "value": "resistencias",
+              "label": "Testes de resistência"
+            },
+            {
+              "value": "pericias",
+              "label": "Perícias"
+            }
+          ]
+        },
+        {
+          "id": "valor",
+          "key": "valor",
+          "label": "Valor",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "id": "ativo",
+          "key": "ativo",
+          "label": "Ativo",
+          "type": "boolean",
+          "default": true
         }
       ]
     },
@@ -1518,6 +1630,10 @@
         "children": [
           {
             "kind": "field",
+            "fieldId": "ca_total"
+          },
+          {
+            "kind": "field",
             "fieldId": "ca"
           },
           {
@@ -1566,6 +1682,18 @@
       },
       {
         "kind": "section",
+        "title": "Efeitos temporários",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "efeitos",
+            "span": 1
+          }
+        ]
+      },
+      {
+        "kind": "section",
         "title": "Ataques",
         "columns": 1,
         "children": [
@@ -1582,6 +1710,10 @@
         "children": [
           {
             "kind": "field",
+            "fieldId": "atributo_conjuracao"
+          },
+          {
+            "kind": "field",
             "fieldId": "mod_conjuracao"
           },
           {
@@ -1591,6 +1723,10 @@
           {
             "kind": "field",
             "fieldId": "ataque_magia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "magias_preparadas"
           },
           {
             "kind": "field",
@@ -1662,6 +1798,14 @@
           },
           {
             "kind": "field",
+            "fieldId": "carga"
+          },
+          {
+            "kind": "field",
+            "fieldId": "capacidade_carga"
+          },
+          {
+            "kind": "field",
             "fieldId": "equipamento",
             "span": 4
           }
@@ -1706,6 +1850,6 @@
         ]
       }
     ],
-    "gmSummary": ["hp", "ca", "condicoes", "exaustao", "percepcao_passiva", "cd_magia"]
+    "gmSummary": ["hp", "ca_total", "condicoes", "exaustao", "percepcao_passiva", "cd_magia"]
   }
 }

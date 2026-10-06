@@ -4,6 +4,7 @@ import type { FormulaNode, FormulaRef } from './ast';
 export function collectRefs(node: FormulaNode, into: FormulaRef[] = []): FormulaRef[] {
   switch (node.type) {
     case 'number':
+    case 'string':
       break;
     case 'ref':
       into.push(node);

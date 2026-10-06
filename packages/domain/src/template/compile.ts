@@ -1,9 +1,9 @@
 import { collectRefs, parseFormula, type FormulaNode } from '../formula';
 import { topologicalSort } from '../graph/topological-sort';
+import { checkFormula } from './check-formula';
 import { err, ok, type Issue, type Result } from '../result';
 import { LIMITS } from '../schema/primitives';
 import {
-  NUMERIC_FIELD_TYPES,
   type FieldDef,
   type LayoutNode,
   type ListItemFieldDef,
@@ -142,27 +142,6 @@ function validateLayout(
   visit(nodes, path, 1);
 }
 
-function referenceIssue(
-  ref: { key: string; prop?: string | undefined },
-  target: FieldDef | undefined,
-): { code: string; message: string } | undefined {
-  const name = ref.prop ? `@${ref.key}.${ref.prop}` : `@${ref.key}`;
-  if (!target) return { code: 'referencia-desconhecida', message: `Campo inexistente: ${name}` };
-  if (!(NUMERIC_FIELD_TYPES as readonly string[]).includes(target.type)) {
-    return {
-      code: 'referencia-nao-numerica',
-      message: `${name} não é numérico e não pode ser usado em fórmulas`,
-    };
-  }
-  if (ref.prop && target.type !== 'resource') {
-    return {
-      code: 'propriedade-invalida',
-      message: `.${ref.prop} só pode ser usado em recursos (ex.: @hp.max)`,
-    };
-  }
-  return undefined;
-}
-
 /**
  * Valida as regras que o schema sozinho não expressa (unicidade, referências, ciclos, layout)
  * e pré-processa as fórmulas. Assume um template que já passou por `SystemTemplateSchema`.
@@ -210,16 +189,10 @@ export function compileTemplate(template: SystemTemplate): Result<CompiledTempla
       );
       return;
     }
+    const problems = checkFormula(parsed.value, fieldsByKey);
+    for (const problem of problems) issues.push(issue(problem.code, source.path, problem.message));
+    if (problems.length > 0) return;
     const refs = collectRefs(parsed.value);
-    let valid = true;
-    for (const ref of refs) {
-      const problem = referenceIssue(ref, fieldsByKey.get(ref.key));
-      if (problem) {
-        issues.push(issue(problem.code, source.path, problem.message));
-        valid = false;
-      }
-    }
-    if (!valid) return;
 
     const compiled: CompiledFormula = {
       fieldId: field.id,
@@ -231,7 +204,12 @@ export function compileTemplate(template: SystemTemplate): Result<CompiledTempla
     // Só `@campo_calculado` e `@recurso.max` (com fórmula) são nós; o resto é entrada.
     dependencies.set(
       node,
-      refs.map((ref) => nodeName(ref.key, ref.prop === 'max' ? 'max' : 'value')),
+      refs.map((ref) =>
+        nodeName(
+          ref.key,
+          ref.prop === 'max' && fieldsByKey.get(ref.key)?.type === 'resource' ? 'max' : 'value',
+        ),
+      ),
     );
   });
 

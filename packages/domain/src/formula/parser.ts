@@ -1,12 +1,10 @@
 import { err, ok, type Result } from '../result';
 import {
   FUNCTIONS,
-  REF_PROPERTIES,
   type BinaryOperator,
   type FormulaError,
   type FormulaNode,
   type FunctionName,
-  type RefProperty,
 } from './ast';
 
 /** Limites contra arquivos importados maliciosos ou degenerados. */
@@ -15,6 +13,7 @@ export const MAX_FORMULA_DEPTH = 32;
 
 type Token =
   | { kind: 'number'; value: number; position: number }
+  | { kind: 'string'; value: string; position: number }
   | { kind: 'ref'; key: string; prop: string | undefined; position: number }
   | { kind: 'ident'; name: string; position: number }
   | { kind: 'op'; op: BinaryOperator; position: number }
@@ -35,7 +34,16 @@ const WHITESPACE = /\s+/y;
 const TOKEN_PATTERNS: [RegExp, (match: RegExpExecArray, position: number) => Token][] = [
   [/\d+(?:\.\d+)?/y, (m, position) => ({ kind: 'number', value: Number(m[0]), position })],
   [
-    /@([a-z][a-z0-9_]*)(?:\.([a-z]+))?/y,
+    // Texto entre aspas (só `\"` e `\\` como escapes), usado em `is(@campo, "opção")`.
+    /"((?:[^"\\\n]|\\["\\]){0,100})"/y,
+    (m, position) => ({
+      kind: 'string',
+      value: (m[1] as string).replace(/\\(["\\])/g, '$1'),
+      position,
+    }),
+  ],
+  [
+    /@([a-z][a-z0-9_]*)(?:\.([a-z][a-z0-9_]*))?/y,
     (m, position) => ({ kind: 'ref', key: m[1] as string, prop: m[2], position }),
   ],
   [/[a-z]+/y, (m, position) => ({ kind: 'ident', name: m[0], position })],
@@ -62,6 +70,9 @@ function tokenize(source: string): Token[] {
       tokens.push(build(match, position));
       position = pattern.lastIndex;
       continue outer;
+    }
+    if (source[position] === '"') {
+      fail('texto-invalido', 'Texto sem aspas de fechamento (ou longo demais)', position);
     }
     fail('caractere-invalido', `Caractere inválido: "${source[position]}"`, position);
   }
@@ -148,6 +159,8 @@ class Parser {
     switch (token.kind) {
       case 'number':
         return { type: 'number', value: token.value };
+      case 'string':
+        return { type: 'string', value: token.value };
       case 'ref':
         return this.ref(token);
       case 'ident':
@@ -169,15 +182,10 @@ class Parser {
   }
 
   private ref(token: Extract<Token, { kind: 'ref' }>): FormulaNode {
-    if (token.prop === undefined) return { type: 'ref', key: token.key };
-    if (!(REF_PROPERTIES as readonly string[]).includes(token.prop)) {
-      fail(
-        'propriedade-desconhecida',
-        `Propriedade desconhecida ".${token.prop}" (use ${REF_PROPERTIES.map((p) => `.${p}`).join(' ou ')})`,
-        token.position,
-      );
-    }
-    return { type: 'ref', key: token.key, prop: token.prop as RefProperty };
+    // Se a propriedade existe depende do campo: verificado ao compilar o template.
+    return token.prop === undefined
+      ? { type: 'ref', key: token.key }
+      : { type: 'ref', key: token.key, prop: token.prop };
   }
 
   private call(token: Extract<Token, { kind: 'ident' }>): FormulaNode {
