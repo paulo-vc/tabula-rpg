@@ -53,13 +53,14 @@ export function createServices(
   const catalog = new TemplateCatalog(templateRepository, BUILTIN_TEMPLATES);
   const sheets = new SheetService(sheetRepository, catalog, device, clock, ids);
   const sessionStates = new DexieSessionStateRepository(db);
+  const files = new FileService(sheetRepository, templateRepository, catalog, clock, ids);
   return {
     catalog,
     device,
     sheetRepository,
     campaignRepository,
     sheets,
-    files: new FileService(sheetRepository, templateRepository, catalog, clock, ids),
+    files,
     session: new LiveSessionManager(
       campaignRepository,
       sheetRepository,
@@ -67,6 +68,8 @@ export function createServices(
       device,
       createTransport,
       clock,
+      catalog,
+      files,
     ),
     campaigns: new CampaignService(
       campaignRepository,

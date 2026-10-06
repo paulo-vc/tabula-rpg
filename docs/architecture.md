@@ -88,6 +88,7 @@ A sincronização existe apenas enquanto a sessão está aberta. Edições offli
 - **Jogador:** "Entrar na sessão" usa a ficha vinculada. Qualquer alteração na ficha, em qualquer tela, segue para o Mestre (consulta reativa do Dexie → `SessionClient.update`).
 - **Transporte real:** `@tabula/sync/webrtc` (Trystero + relays Nostr públicos). Sala = ID da campanha; senha = segredo da campanha.
 - **Falha de conexão direta:** o app explica em linguagem clara (rede de empresa/escola, 4G dos dois lados) e sugere trocar de rede. Não há relay (ADR 0008).
+- **Envio do sistema:** quem ainda não tem o sistema da campanha (e, por isso, ainda não tem ficha) clica em "Receber do Mestre". Um fluxo curto (`fetchTemplate`) entra na sala, pede o sistema (`TEMPLATE_REQUEST`) e o recebe (`TEMPLATE`), que passa pela mesma validação de um arquivo importado: schema, ciclos de fórmula, e não substituir nativo nem rebaixar versão (`FileService.installTemplate`). O Mestre responde no máximo uma vez por conexão a cada participante, e sistemas nativos não são enviados.
 - **Continuidade:** o estado da sessão é salvo (com pausa de 2 s, ao encerrar e ao esconder a aba) e restaurado na próxima sessão. Recarregar a página **retoma a sessão** automaticamente (`sessionStorage`, só naquela aba).
 
 ### Campanhas e convites

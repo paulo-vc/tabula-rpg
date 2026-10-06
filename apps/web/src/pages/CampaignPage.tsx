@@ -3,7 +3,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import {
   ArrowLeftIcon,
   CopyIcon,
+  DownloadIcon,
   FileUpIcon,
+  LoaderCircleIcon,
   LogOutIcon,
   ScrollTextIcon,
   Trash2Icon,
@@ -273,19 +275,7 @@ function SheetChooser({
     }
   };
 
-  if (!hasTemplate) {
-    return (
-      <div className="space-y-2 text-sm">
-        <p>
-          O sistema <strong>{campaign.templateName}</strong> não está instalado neste dispositivo.
-          Peça ao Mestre o arquivo do sistema (Sistemas → Exportar) e importe-o.
-        </p>
-        <Button variant="outline" size="sm" onClick={onImport}>
-          <FileUpIcon /> Importar sistema
-        </Button>
-      </div>
-    );
-  }
+  if (!hasTemplate) return <MissingTemplate campaign={campaign} onImport={onImport} />;
 
   return (
     <div className="space-y-4">
@@ -371,6 +361,73 @@ function DangerZone({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+const RECEIPT_FAILURE: Record<'mestre-ausente' | 'falha-de-conexao' | 'campanha-ausente', string> =
+  {
+    'mestre-ausente':
+      'O Mestre não respondeu. Peça para ele abrir a sessão da campanha e tente de novo.',
+    'falha-de-conexao':
+      'A conexão direta com o Mestre não abriu (redes de empresa/escola ou 4G dos dois lados costumam bloquear). Tentem outra rede ou importe o arquivo do sistema.',
+    'campanha-ausente': 'Campanha não encontrada.',
+  };
+
+/** O sistema da campanha não está instalado: recebe do Mestre (ou importa o arquivo). */
+function MissingTemplate({ campaign, onImport }: { campaign: Campaign; onImport: () => void }) {
+  const { session } = useServices();
+  const [waiting, setWaiting] = useState<AbortController | null>(null);
+
+  const receive = async () => {
+    const controller = new AbortController();
+    setWaiting(controller);
+    try {
+      const result = await session.receiveTemplate(campaign.id, controller.signal);
+      if (result.ok) {
+        toast.success(`Sistema "${campaign.templateName}" recebido do Mestre`);
+      } else if ('reason' in result) {
+        if (result.reason !== 'cancelado') {
+          toast.error('Não foi possível receber o sistema', {
+            description: RECEIPT_FAILURE[result.reason],
+          });
+        }
+      } else {
+        toast.error('Não foi possível instalar o sistema', {
+          description: result.issues[0]?.message,
+        });
+      }
+    } finally {
+      setWaiting(null);
+    }
+  };
+
+  return (
+    <div className="space-y-3 text-sm">
+      <p>
+        O sistema <strong>{campaign.templateName}</strong> ainda não está neste dispositivo. Receba
+        direto do Mestre enquanto a sessão dele estiver aberta.
+      </p>
+      {waiting ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span role="status" className="text-muted-foreground flex items-center gap-2">
+            <LoaderCircleIcon className="size-4 animate-spin" />
+            Aguardando o Mestre…
+          </span>
+          <Button size="sm" variant="ghost" onClick={() => waiting.abort()}>
+            Cancelar
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={receive}>
+            <DownloadIcon /> Receber do Mestre
+          </Button>
+          <Button variant="outline" size="sm" onClick={onImport}>
+            <FileUpIcon /> Importar arquivo
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

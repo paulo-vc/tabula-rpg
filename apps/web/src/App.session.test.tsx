@@ -126,3 +126,30 @@ describe('jogadora', () => {
     expect(await screen.findByRole('button', { name: 'Entrar na sessão' })).toBeDisabled();
   });
 });
+
+describe('sistema que a jogadora não tem', () => {
+  it('recebe do Mestre pela interface e já pode criar a ficha', async () => {
+    await gm.files.installTemplate({
+      id: 'caixa-preta',
+      version: '1.0.0',
+      name: 'Caixa Preta',
+      source: 'local',
+      fields: [{ id: 'pv', key: 'pv', label: 'PV', type: 'resource', default: 6 }],
+      layouts: { full: [] },
+    });
+    const campaign = await gm.campaigns.create({
+      name: 'Mesa caseira',
+      templateId: 'caixa-preta',
+      gmName: 'Paulo',
+    });
+    await player.campaigns.join(inviteFor(campaign), 'Ana');
+    await gm.session.startAsGameMaster(campaign.id);
+
+    const user = renderApp(player, `#/campanhas/${campaign.id}`);
+    await user.click(await screen.findByRole('button', { name: 'Receber do Mestre' }));
+    expect(screen.getByText('Aguardando o Mestre…')).toBeInTheDocument();
+
+    await until(() => expect(screen.getByLabelText('Crie sua ficha')).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: 'Receber do Mestre' })).not.toBeInTheDocument();
+  });
+});

@@ -79,29 +79,35 @@ export class FileService {
     return { filename: `${slugify(template.name)}.sistema.json`, content };
   }
 
+  /**
+   * Instala um sistema vindo de fora (arquivo importado ou enviado pelo Mestre). Nunca
+   * substitui um sistema nativo nem rebaixa um sistema instalado para versão anterior.
+   */
+  async installTemplate(incoming: SystemTemplate): Promise<ImportResult> {
+    const template = asInstalled(incoming);
+    if (this.catalog.isBuiltin(template.id)) {
+      return failure(
+        'template-nativo',
+        `"${template.name}" já vem com o app e não pode ser substituído.`,
+      );
+    }
+    const current = await this.templates.get(template.id);
+    if (current && checkCompatibility(current, template).kind === 'versao-anterior') {
+      return failure(
+        'versao-anterior',
+        `Você já tem uma versão mais nova de "${template.name}" (${current.version}).`,
+      );
+    }
+    await this.templates.save(template);
+    return { ok: true, kind: 'template', template };
+  }
+
   async import(text: string): Promise<ImportResult> {
     const parsed = parseExport(text);
     if (!parsed.ok) return { ok: false, issues: parsed.error };
     const envelope = parsed.value;
 
-    if (envelope.kind === 'tabula/template') {
-      const template = asInstalled(envelope.payload);
-      if (this.catalog.isBuiltin(template.id)) {
-        return failure(
-          'template-nativo',
-          `"${template.name}" já vem com o app e não pode ser substituído.`,
-        );
-      }
-      const current = await this.templates.get(template.id);
-      if (current && checkCompatibility(current, template).kind === 'versao-anterior') {
-        return failure(
-          'versao-anterior',
-          `Você já tem uma versão mais nova de "${template.name}" (${current.version}).`,
-        );
-      }
-      await this.templates.save(template);
-      return { ok: true, kind: 'template', template };
-    }
+    if (envelope.kind === 'tabula/template') return this.installTemplate(envelope.payload);
 
     // Ficha: garante que o sistema dela esteja disponível.
     const sheetData = envelope.payload;

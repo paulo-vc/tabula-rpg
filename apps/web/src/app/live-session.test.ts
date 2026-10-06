@@ -162,3 +162,83 @@ describe('sessão ao vivo', () => {
     expect(await gmDb.sessionStates.where('campaignId').equals(campaign.id).count()).toBe(0);
   });
 });
+
+describe('envio do sistema pelo Mestre', () => {
+  const homebrew = {
+    id: 'caixa-preta',
+    version: '1.0.0',
+    name: 'Caixa Preta',
+    source: 'local' as const,
+    fields: [
+      { id: 'vigor', key: 'vigor', label: 'Vigor', type: 'number' as const, default: 2 },
+      { id: 'pv', key: 'pv', label: 'PV', type: 'resource' as const, default: 6 },
+    ],
+    layouts: { full: [], gmSummary: ['pv'] },
+  };
+
+  async function homebrewTable() {
+    expect(await gm.files.installTemplate(homebrew)).toMatchObject({ ok: true });
+    const campaign = await gm.campaigns.create({
+      name: 'Mesa caseira',
+      templateId: 'caixa-preta',
+      gmName: 'Paulo',
+    });
+    await player.campaigns.join(inviteFor(campaign), 'Ana');
+    return campaign;
+  }
+
+  /** Resolve a promessa processando a rede simulada enquanto isso. */
+  async function whileNetworking<T>(promise: Promise<T>): Promise<T> {
+    let done = false;
+    void promise.then(() => (done = true));
+    for (let i = 0; i < 200 && !done; i++) {
+      await network.settle();
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    return promise;
+  }
+
+  it('a jogadora recebe o sistema, cria a ficha e entra na sessão', async () => {
+    const campaign = await homebrewTable();
+    expect(await player.campaigns.createLinkedSheet(campaign.id, 'Lia')).toMatchObject({
+      ok: false,
+      error: { code: 'sistema-ausente' },
+    });
+
+    await gm.session.startAsGameMaster(campaign.id);
+    const receipt = await whileNetworking(player.session.receiveTemplate(campaign.id));
+    expect(receipt).toMatchObject({ ok: true, kind: 'template', template: { id: 'caixa-preta' } });
+    expect(await player.catalog.get('caixa-preta')).toMatchObject({
+      name: 'Caixa Preta',
+      source: 'local',
+    });
+
+    const created = await player.campaigns.createLinkedSheet(campaign.id, 'Lia');
+    expect(created.ok).toBe(true);
+    await player.session.joinAsPlayer(campaign.id);
+    await eventually(() =>
+      expect(gmPlayers()[0]).toMatchObject({
+        online: true,
+        sheet: { values: { pv: { current: 6, max: 6 } } },
+      }),
+    );
+  });
+
+  it('o pedido pode ser cancelado enquanto espera o Mestre', async () => {
+    const campaign = await homebrewTable();
+    const controller = new AbortController();
+    const pending = player.session.receiveTemplate(campaign.id, controller.signal);
+    controller.abort();
+    expect(await pending).toEqual({ ok: false, reason: 'cancelado' });
+    expect(await player.catalog.get('caixa-preta')).toBeUndefined();
+  });
+
+  it('sistemas nativos não são enviados (todos já têm)', async () => {
+    const { campaign } = await setUpTable(); // D&D, nativo
+    await gm.session.startAsGameMaster(campaign.id);
+    const controller = new AbortController();
+    const pending = whileNetworking(player.session.receiveTemplate(campaign.id, controller.signal));
+    setTimeout(() => controller.abort(), 100);
+    expect(await pending).toEqual({ ok: false, reason: 'cancelado' });
+  });
+});

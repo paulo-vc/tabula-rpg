@@ -1,4 +1,10 @@
-import { IdSchema, LabelSchema } from '@tabula/domain';
+import {
+  compileTemplate,
+  IdSchema,
+  LabelSchema,
+  SystemTemplateSchema,
+  type SystemTemplate,
+} from '@tabula/domain';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 import { z } from 'zod';
@@ -9,6 +15,8 @@ import { z } from 'zod';
  *   HELLO   [0][json]                 apresentação (papel, usuário, ficha)
  *   SYNC    [1][sheetId][y-protocols] sincronização Yjs de UMA ficha
  *   REJECT  [2][json]                 o Mestre recusou o jogador (motivo)
+ *   TEMPLATE_REQUEST [3][json]        pede o sistema da campanha ao Mestre
+ *   TEMPLATE         [4][json]        o sistema (validado como um arquivo importado)
  *
  * Topologia em estrela: jogadores só conversam com o Mestre; cada ficha é um documento
  * separado, sincronizado apenas entre o dono e o Mestre (jogadores não recebem as fichas
@@ -19,7 +27,7 @@ export const PROTOCOL_VERSION = 1;
 /** Mensagens maiores são descartadas (proteção contra participantes maliciosos). */
 export const MAX_MESSAGE_BYTES = 512 * 1024;
 
-const MessageType = { Hello: 0, Sync: 1, Reject: 2 } as const;
+const MessageType = { Hello: 0, Sync: 1, Reject: 2, TemplateRequest: 3, Template: 4 } as const;
 
 const base = {
   protocol: z.literal(PROTOCOL_VERSION),
@@ -49,7 +57,32 @@ export type Reject = z.infer<typeof RejectSchema>;
 export type IncomingMessage =
   | { type: 'hello'; hello: Hello }
   | { type: 'sync'; sheetId: string; decoder: decoding.Decoder }
-  | { type: 'reject'; reject: Reject };
+  | { type: 'reject'; reject: Reject }
+  | { type: 'template-request'; request: TemplateRequest }
+  | { type: 'template'; template: SystemTemplate };
+
+/** Pedido do sistema da campanha (quem ainda não o tem instalado, nem ficha). */
+export const TemplateRequestSchema = z.object({
+  protocol: z.literal(PROTOCOL_VERSION),
+  campaignId: IdSchema,
+  templateId: IdSchema,
+});
+export type TemplateRequest = z.infer<typeof TemplateRequestSchema>;
+
+export function encodeTemplateRequest(request: TemplateRequest): Uint8Array {
+  return encodeJson(MessageType.TemplateRequest, request);
+}
+
+export function encodeTemplate(template: SystemTemplate): Uint8Array {
+  return encodeJson(MessageType.Template, template);
+}
+
+function encodeJson(type: number, value: unknown): Uint8Array {
+  const encoder = encoding.createEncoder();
+  encoding.writeVarUint(encoder, type);
+  encoding.writeVarString(encoder, JSON.stringify(value));
+  return encoding.toUint8Array(encoder);
+}
 
 export function encodeHello(hello: Hello): Uint8Array {
   const encoder = encoding.createEncoder();
@@ -90,6 +123,16 @@ export function decodeMessage(data: Uint8Array): IncomingMessage | null {
   try {
     const decoder = decoding.createDecoder(data);
     switch (decoding.readVarUint(decoder)) {
+      case MessageType.TemplateRequest: {
+        const request = TemplateRequestSchema.safeParse(parseJson(decoding.readVarString(decoder)));
+        return request.success ? { type: 'template-request', request: request.data } : null;
+      }
+      case MessageType.Template: {
+        // Vem de outro participante: mesma validação de um arquivo importado (schema e regras).
+        const template = SystemTemplateSchema.safeParse(parseJson(decoding.readVarString(decoder)));
+        if (!template.success || !compileTemplate(template.data).ok) return null;
+        return { type: 'template', template: template.data };
+      }
       case MessageType.Hello: {
         const hello = HelloSchema.safeParse(parseJson(decoding.readVarString(decoder)));
         return hello.success ? { type: 'hello', hello: hello.data } : null;

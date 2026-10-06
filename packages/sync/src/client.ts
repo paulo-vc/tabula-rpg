@@ -165,7 +165,7 @@ export class SessionClient {
       return;
     }
 
-    if (message.sheetId !== this.latest.id) return;
+    if (message.type !== 'sync' || message.sheetId !== this.latest.id) return;
     const reply = syncEncoder(this.latest.id);
     const headerLength = encoding.length(reply);
     let messageType: number;

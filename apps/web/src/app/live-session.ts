@@ -12,6 +12,7 @@ import {
   type SheetRepository,
 } from '@tabula/domain';
 import {
+  fetchTemplate,
   SessionClient,
   SessionHost,
   type ClientStatus,
@@ -20,6 +21,8 @@ import {
   type SyncTransport,
 } from '@tabula/sync';
 import { liveQuery, type Subscription } from 'dexie';
+import type { TemplateCatalog } from './catalog';
+import type { FileService, ImportResult } from './files';
 import type { Clock } from './sheets';
 
 /** Estado da sessão ao vivo deste dispositivo (no máximo uma por vez). */
@@ -33,6 +36,11 @@ export type LiveSession =
       status: ClientStatus;
       connectionFailures: number;
     };
+
+/** Resultado de pedir o sistema ao Mestre: instalado, recusado pela instalação, ou sem resposta. */
+export type TemplateReceipt =
+  | ImportResult
+  | { ok: false; reason: 'mestre-ausente' | 'falha-de-conexao' | 'cancelado' | 'campanha-ausente' };
 
 export type TransportFactory = (room: { roomId: string; secret: string }) => SyncTransport;
 
@@ -61,6 +69,8 @@ export class LiveSessionManager {
     private readonly device: DeviceRepository,
     private readonly createTransport: TransportFactory,
     private readonly clock: Clock,
+    private readonly catalog: TemplateCatalog,
+    private readonly files: FileService,
   ) {}
 
   getSnapshot = (): LiveSession => this.snapshot;
@@ -89,6 +99,10 @@ export class LiveSessionManager {
       });
     }
 
+    // O sistema vai junto para quem ainda não o tem (exceto nativos: todos já têm).
+    const template = this.catalog.isBuiltin(campaign.templateRef.id)
+      ? undefined
+      : await this.catalog.get(campaign.templateRef.id);
     const host = new SessionHost(
       this.transportFor(campaign),
       {
@@ -96,6 +110,7 @@ export class LiveSessionManager {
         gmId: campaign.gmId,
         gmName: campaign.gmName,
         templateId: campaign.templateRef.id,
+        ...(template ? { template } : {}),
       },
       saved,
     );
@@ -194,6 +209,22 @@ export class LiveSessionManager {
     client.start();
     publish();
     return ok(undefined);
+  }
+
+  /**
+   * Pede ao Mestre o sistema da campanha e o instala. Funciona quando o Mestre está com a
+   * sessão aberta; espera por ele até o tempo limite.
+   */
+  async receiveTemplate(campaignId: string, signal?: AbortSignal): Promise<TemplateReceipt> {
+    const campaign = await this.campaigns.get(campaignId);
+    if (!campaign) return { ok: false, reason: 'campanha-ausente' };
+    const result = await fetchTemplate(this.transportFor(campaign), {
+      campaign: { id: campaign.id, gmId: campaign.gmId },
+      templateId: campaign.templateRef.id,
+      ...(signal ? { signal } : {}),
+    });
+    if (!result.ok) return result;
+    return this.files.installTemplate(result.template);
   }
 
   /** Encerra a sessão atual, salvando o estado para continuar depois. */

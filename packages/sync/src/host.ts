@@ -1,4 +1,4 @@
-import { LIMITS } from '@tabula/domain';
+import { LIMITS, type SystemTemplate } from '@tabula/domain';
 import * as encoding from 'lib0/encoding';
 import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
@@ -6,6 +6,7 @@ import {
   decodeMessage,
   encodeHello,
   encodeReject,
+  encodeTemplate,
   PROTOCOL_VERSION,
   syncEncoder,
   type Hello,
@@ -19,6 +20,8 @@ export interface HostCampaign {
   gmId: string;
   gmName: string;
   templateId: string;
+  /** O sistema da campanha, enviado a quem pedir (jogador que ainda não o tem instalado). */
+  template?: SystemTemplate;
 }
 
 /** Um jogador da sessão, do ponto de vista do Mestre. */
@@ -54,6 +57,8 @@ interface Entry {
 export class SessionHost {
   private readonly entries = new Map<string, Entry>();
   private readonly sheetOfPeer = new Map<string, string>();
+  /** Quem já recebeu o sistema nesta conexão (evita reenviar sem parar a quem insiste). */
+  private readonly templateSent = new Set<string>();
   private readonly listeners = new Set<() => void>();
   private stopped = false;
   private failures = 0;
@@ -77,7 +82,10 @@ export class SessionHost {
   start(): void {
     this.transport.setHandlers({
       onPeerJoin: (peerId) => this.send(peerId, encodeHello(this.hello())),
-      onPeerLeave: (peerId) => this.detach(peerId),
+      onPeerLeave: (peerId) => {
+        this.templateSent.delete(peerId);
+        this.detach(peerId);
+      },
       onMessage: (peerId, data) => this.receive(peerId, data),
       onConnectionFailure: () => {
         this.failures++;
@@ -155,6 +163,13 @@ export class SessionHost {
     if (!message) return;
     if (message.type === 'hello' && message.hello.role === 'jogador') {
       this.admit(peerId, message.hello);
+    } else if (message.type === 'template-request') {
+      const { template } = this.campaign;
+      const { request } = message;
+      if (!template || this.templateSent.has(peerId)) return;
+      if (request.campaignId !== this.campaign.id || request.templateId !== template.id) return;
+      this.templateSent.add(peerId);
+      this.send(peerId, encodeTemplate(template));
     } else if (message.type === 'sync') {
       const sheetId = this.sheetOfPeer.get(peerId);
       const entry = sheetId === undefined ? undefined : this.entries.get(sheetId);
