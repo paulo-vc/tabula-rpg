@@ -21,7 +21,7 @@ packages/
                de repositório. TS + Zod. Sem IO.
   storage/     Repositórios em IndexedDB (Dexie) que implementam as portas do domínio.
   templates/   Templates nativos em JSON (D&D 5e SRD), validados ao carregar.
-  sync/        (Fase 3) Yjs + transportes (WebRTC P2P, relay de último recurso).
+  sync/        Motor da sessão: Yjs + protocolo Mestre/jogador sobre a porta SyncTransport.
 apps/
   web/         Interface React. Também é o frontend do app desktop.
   desktop/     Shell Tauri que empacota o `web` como instalador/executável.
@@ -71,6 +71,15 @@ Infraestrutura (persistência, rede) implementa **portas** (interfaces) definida
 Topologia em estrela: jogadores conectam-se **somente ao Mestre**, que atua como host da sessão. A conexão é **WebRTC direto** (inclui IPv6 e hole punching via STUN público), com sinalização por relays Nostr públicos. Não há relay na v0.1 ([ADR 0008](adr/0008-lancar-sem-relay.md)): o teste em redes reais não teve nenhuma falha. O transporte fica atrás da porta `SyncTransport`, e um relay pode ser acrescentado depois sem mudar o resto do app.
 
 A sincronização existe apenas enquanto a sessão está aberta. Edições offline são mescladas na reconexão (CRDT). Detalhes e alternativas descartadas estão na [ADR 0004](adr/0004-sincronizacao.md).
+
+### Motor da sessão (`packages/sync`)
+
+- **Um documento Yjs por ficha**, sincronizado só entre o dono e o Mestre (`SessionClient` e `SessionHost`). Jogadores não recebem as fichas uns dos outros.
+- **Protocolo binário** (lib0 + y-protocols): `HELLO` (papel, usuário, ficha), `SYNC` (por ficha) e `REJECT` (motivo). Tudo o que chega é validado; mensagens malformadas, grandes demais (> 512 KB) ou fora do schema são ignoradas sem quebrar a sessão.
+- **O Mestre recusa** fichas de outro sistema, a tentativa de assumir a ficha de outro jogador e a entrada além do limite de jogadores.
+- **Regra de correção:** a ficha local é a fonte da verdade do jogador, e o documento só recebe **a diferença**, **depois** de conhecer o estado mais recente (estado salvo ou a primeira troca com o Mestre). Escritas concorrentes no Yjs são desempatadas pelo ID aleatório do cliente; sem essa regra, um valor antigo venceria o novo em ~50% dos casos ao recarregar a página. Um teste de propriedade com sequências aleatórias de edições, quedas e reinícios garante a convergência.
+- **Persistência entre sessões:** os dois lados exportam o estado do documento (`exportState`) para continuar de onde pararam.
+- **Modelo de confiança (v0.1):** quem tem o convite entra na sala, porque o segredo cifra a troca de dados de conexão. O jogador só aceita como Mestre quem se apresenta com o `gmId` da campanha, mas essa identidade é declarada, não provada criptograficamente: alguém com o convite poderia se passar pelo Mestre. É aceitável entre amigos; uma assinatura do Mestre (chave pública no convite) fica para uma fase futura.
 
 ### Campanhas e convites
 

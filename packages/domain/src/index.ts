@@ -1,6 +1,6 @@
 export { FORMAT_VERSION } from './format';
 export * from './result';
-export { IdSchema, KeySchema, LIMITS, SemVerSchema } from './schema/primitives';
+export { IdSchema, KeySchema, LabelSchema, LIMITS, SemVerSchema } from './schema/primitives';
 
 export * from './formula';
 
