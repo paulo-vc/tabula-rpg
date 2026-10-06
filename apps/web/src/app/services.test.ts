@@ -15,7 +15,10 @@ beforeEach(() => {
   db = new TabulaDatabase(`teste-${crypto.randomUUID()}`);
   clock = 1_000;
   nextId = 0;
-  services = createServices(db, { now: () => clock }, { newId: () => `id${++nextId}` });
+  services = createServices(db, {
+    clock: { now: () => clock },
+    ids: { newId: () => `id${++nextId}` },
+  });
 });
 
 afterEach(async () => {

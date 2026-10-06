@@ -59,3 +59,23 @@ export interface DeviceRepository {
   getDisplayName(): Promise<string | undefined>;
   setDisplayName(name: string): Promise<void>;
 }
+
+/**
+ * Estado da sessão ao vivo guardado entre sessões (bytes opacos do motor de sincronização),
+ * para continuar de onde parou. Um registro por ficha, do lado do Mestre e do jogador.
+ */
+export interface SessionStateRecord {
+  campaignId: string;
+  /** `mestre:<sheetId>` ou `jogador:<sheetId>`. */
+  key: string;
+  userId?: string;
+  displayName?: string;
+  state: Uint8Array;
+  updatedAt: number;
+}
+
+export interface SessionStateRepository {
+  list(campaignId: string): Promise<SessionStateRecord[]>;
+  save(records: SessionStateRecord[]): Promise<void>;
+  deleteCampaign(campaignId: string): Promise<void>;
+}

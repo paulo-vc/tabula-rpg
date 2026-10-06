@@ -46,6 +46,7 @@ export class SessionClient {
   private current: ClientStatus = { state: 'procurando-mestre' };
   private readonly listeners = new Set<() => void>();
   private stopped = false;
+  private failures = 0;
 
   constructor(
     private readonly transport: SyncTransport,
@@ -83,7 +84,19 @@ export class SessionClient {
         if (this.current.state !== 'recusado') this.setStatus({ state: 'procurando-mestre' });
       },
       onMessage: (peerId, data) => this.receive(peerId, data),
+      onConnectionFailure: () => {
+        this.failures++;
+        for (const listener of this.listeners) listener();
+      },
     });
+  }
+
+  /**
+   * Quantas conexões diretas falharam. Enquanto o Mestre não aparece, um valor maior que
+   * zero indica rede restritiva (não adianta só esperar).
+   */
+  connectionFailures(): number {
+    return this.failures;
   }
 
   async stop(): Promise<void> {

@@ -8,6 +8,11 @@ export interface TransportHandlers {
   onPeerLeave: (peerId: string) => void;
   /** Mensagem recebida de outro participante. Conteúdo NÃO confiável. */
   onMessage: (peerId: string, data: Uint8Array) => void;
+  /**
+   * Dois participantes se encontraram, mas a conexão direta não abriu (rede restritiva).
+   * Sem relay (ADR 0008), a interface deve explicar isso ao usuário.
+   */
+  onConnectionFailure?: (peerId: string) => void;
 }
 
 export interface SyncTransport {

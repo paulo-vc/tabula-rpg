@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TabulaDatabase } from './database';
 import {
   DexieCampaignRepository,
+  DexieSessionStateRepository,
   DexieDeviceRepository,
   DexieSheetRepository,
   DexieTemplateRepository,
@@ -259,10 +260,73 @@ describe('migração do banco', () => {
     try {
       expect(await new DexieSheetRepository(current).get('antiga')).toBeDefined();
       expect(await new DexieCampaignRepository(current).list()).toEqual([]);
-      expect(current.verno).toBe(2);
+      expect(current.verno).toBe(3);
     } finally {
       current.close();
       await Dexie.delete(name);
     }
+  });
+});
+
+describe('migração do banco v2 → v3', () => {
+  it('mantém campanhas e fichas ao acrescentar o estado da sessão', async () => {
+    const name = `v2-${crypto.randomUUID()}`;
+    const v2 = new Dexie(name);
+    v2.version(1).stores({
+      templates: 'id, name',
+      sheets: 'id, updatedAt, templateRef.id',
+      settings: 'key',
+    });
+    v2.version(2).stores({ campaigns: 'id, updatedAt' });
+    const campaign = createCampaign({
+      id: 'c1',
+      name: 'Campanha antiga',
+      template: template(),
+      gm: { userId: 'u1', displayName: 'Mestre' },
+      secret: 'AAAAAAAAAAAAAAAAAAAAAA',
+      now: 0,
+    });
+    await v2.table('campaigns').put(campaign);
+    await v2.table('sheets').put(sheet('s1', 1));
+    await v2.table('settings').put({ key: 'deviceId', value: 'u1' });
+    v2.close();
+
+    const current = new TabulaDatabase(name);
+    try {
+      expect(await new DexieCampaignRepository(current).get('c1')).toEqual(campaign);
+      expect(await new DexieSheetRepository(current).get('s1')).toBeDefined();
+      expect(await new DexieDeviceRepository(current).getDeviceId()).toBe('u1');
+      expect(await new DexieSessionStateRepository(current).list('c1')).toEqual([]);
+    } finally {
+      current.close();
+      await Dexie.delete(name);
+    }
+  });
+});
+
+describe('DexieSessionStateRepository', () => {
+  const record = (campaignId: string, key: string, byte: number) => ({
+    campaignId,
+    key,
+    state: new Uint8Array([byte, 2, 3]),
+    updatedAt: 1,
+  });
+
+  it('guarda bytes por campanha, substitui pela chave e apaga por campanha', async () => {
+    const states = new DexieSessionStateRepository(db);
+    await states.save([
+      record('c1', 'mestre:s1', 1),
+      record('c1', 'mestre:s2', 1),
+      record('c2', 'jogador:s9', 1),
+    ]);
+    await states.save([record('c1', 'mestre:s1', 9)]);
+
+    const c1 = await states.list('c1');
+    expect(c1).toHaveLength(2);
+    expect([...(c1.find((r) => r.key === 'mestre:s1')?.state ?? [])]).toEqual([9, 2, 3]);
+
+    await states.deleteCampaign('c1');
+    expect(await states.list('c1')).toEqual([]);
+    expect(await states.list('c2')).toHaveLength(1);
   });
 });

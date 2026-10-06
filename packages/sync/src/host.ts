@@ -56,6 +56,7 @@ export class SessionHost {
   private readonly sheetOfPeer = new Map<string, string>();
   private readonly listeners = new Set<() => void>();
   private stopped = false;
+  private failures = 0;
 
   constructor(
     private readonly transport: SyncTransport,
@@ -78,7 +79,16 @@ export class SessionHost {
       onPeerJoin: (peerId) => this.send(peerId, encodeHello(this.hello())),
       onPeerLeave: (peerId) => this.detach(peerId),
       onMessage: (peerId, data) => this.receive(peerId, data),
+      onConnectionFailure: () => {
+        this.failures++;
+        this.notify();
+      },
     });
+  }
+
+  /** Quantas conexões diretas falharam nesta sessão (alguém não conseguiu entrar). */
+  connectionFailures(): number {
+    return this.failures;
   }
 
   async stop(): Promise<void> {

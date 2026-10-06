@@ -16,6 +16,8 @@ jobs:
   quality:
     name: Qualidade (lint, tipos, arquitetura, testes, build)
     runs-on: ubuntu-latest
+    # Um teste travado não pode consumir horas da cota gratuita de Actions.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6

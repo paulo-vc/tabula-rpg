@@ -1,5 +1,5 @@
-import type { Campaign, CharacterSheet, SystemTemplate } from '@tabula/domain';
-import { Dexie, type EntityTable } from 'dexie';
+import type { Campaign, CharacterSheet, SessionStateRecord, SystemTemplate } from '@tabula/domain';
+import { Dexie, type EntityTable, type Table } from 'dexie';
 
 /** Par chave/valor de configuração local. */
 export interface Setting {
@@ -20,6 +20,7 @@ export class TabulaDatabase extends Dexie {
   sheets!: EntityTable<CharacterSheet, 'id'>;
   settings!: EntityTable<Setting, 'key'>;
   campaigns!: EntityTable<Campaign, 'id'>;
+  sessionStates!: Table<SessionStateRecord, [string, string]>;
 
   constructor(name: string = DEFAULT_DATABASE_NAME) {
     super(name);
@@ -31,6 +32,10 @@ export class TabulaDatabase extends Dexie {
     // v2 (Fase 3): campanhas. Só acrescenta uma tabela; os dados existentes não mudam.
     this.version(2).stores({
       campaigns: 'id, updatedAt',
+    });
+    // v3 (Fase 3d): estado da sessão ao vivo, para continuar de onde parou.
+    this.version(3).stores({
+      sessionStates: '[campaignId+key], campaignId',
     });
   }
 }

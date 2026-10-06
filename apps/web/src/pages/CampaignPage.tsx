@@ -8,7 +8,6 @@ import {
   ScrollTextIcon,
   Trash2Icon,
   TriangleAlertIcon,
-  UsersIcon,
 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
@@ -16,6 +15,7 @@ import { Link, useLocation } from 'wouter';
 import { encodeInvite } from '@/app/invite-link';
 import { useServices } from '@/app/services-context';
 import { useDeviceId } from '@/components/use-device';
+import { GameMasterSession, PlayerSession } from '@/components/live/SessionPanels';
 import { useImport } from '@/components/use-import';
 import {
   AlertDialog,
@@ -143,20 +143,7 @@ function GameMasterView({ campaign }: { campaign: Campaign }) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <h2>Jogadores</h2>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-muted-foreground flex flex-col items-center gap-2 py-6 text-center text-sm">
-            <UsersIcon className="size-8" />
-            Os jogadores e as fichas deles aparecerão aqui quando a sessão ao vivo estiver
-            disponível.
-          </div>
-        </CardContent>
-      </Card>
+      <GameMasterSession campaign={campaign} />
 
       <DangerZone
         campaign={campaign}
@@ -232,6 +219,8 @@ function PlayerView({ campaign, userId }: { campaign: Campaign; userId: string }
           )}
         </CardContent>
       </Card>
+
+      <PlayerSession campaign={campaign} hasSheet={Boolean(linked)} />
 
       <DangerZone
         campaign={campaign}

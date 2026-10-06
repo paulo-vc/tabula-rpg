@@ -12,6 +12,7 @@ import {
   type DeviceRepository,
   type Issue,
   type Result,
+  type SessionStateRepository,
   type SheetRepository,
 } from '@tabula/domain';
 import type { TemplateCatalog } from './catalog';
@@ -25,6 +26,7 @@ const failure = (code: string, message: string): { ok: false; error: Issue } =>
 export class CampaignService {
   constructor(
     private readonly campaigns: CampaignRepository,
+    private readonly sessionStates: SessionStateRepository,
     private readonly sheetRepository: SheetRepository,
     private readonly sheets: SheetService,
     private readonly catalog: TemplateCatalog,
@@ -105,8 +107,9 @@ export class CampaignService {
   }
 
   /** Apaga a campanha deste dispositivo (o Mestre encerra; o jogador sai). Fichas ficam. */
-  delete(campaignId: string): Promise<void> {
-    return this.campaigns.delete(campaignId);
+  async delete(campaignId: string): Promise<void> {
+    await this.sessionStates.deleteCampaign(campaignId);
+    await this.campaigns.delete(campaignId);
   }
 
   /** Este dispositivo como membro da campanha. */

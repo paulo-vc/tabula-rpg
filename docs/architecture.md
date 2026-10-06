@@ -81,6 +81,15 @@ A sincronização existe apenas enquanto a sessão está aberta. Edições offli
 - **Persistência entre sessões:** os dois lados exportam o estado do documento (`exportState`) para continuar de onde pararam.
 - **Modelo de confiança (v0.1):** quem tem o convite entra na sala, porque o segredo cifra a troca de dados de conexão. O jogador só aceita como Mestre quem se apresenta com o `gmId` da campanha, mas essa identidade é declarada, não provada criptograficamente: alguém com o convite poderia se passar pelo Mestre. É aceitável entre amigos; uma assinatura do Mestre (chave pública no convite) fica para uma fase futura.
 
+### Sessão ao vivo (`apps/web`)
+
+- `LiveSessionManager` (camada de aplicação) liga o motor ao banco e ao transporte. Há **uma sessão por vez** por dispositivo, e ela continua ativa ao navegar entre telas, com um indicador no cabeçalho.
+- **Mestre:** "Iniciar sessão" abre a sala. O painel mostra um card por jogador com os campos do `gmSummary` do template (PV com barra, CA, condições…), atualizado em tempo real, e indica quem está online.
+- **Jogador:** "Entrar na sessão" usa a ficha vinculada. Qualquer alteração na ficha, em qualquer tela, segue para o Mestre (consulta reativa do Dexie → `SessionClient.update`).
+- **Transporte real:** `@tabula/sync/webrtc` (Trystero + relays Nostr públicos). Sala = ID da campanha; senha = segredo da campanha.
+- **Falha de conexão direta:** o app explica em linguagem clara (rede de empresa/escola, 4G dos dois lados) e sugere trocar de rede. Não há relay (ADR 0008).
+- **Continuidade:** o estado da sessão é salvo (com pausa de 2 s, ao encerrar e ao esconder a aba) e restaurado na próxima sessão. Recarregar a página **retoma a sessão** automaticamente (`sessionStorage`, só naquela aba).
+
 ### Campanhas e convites
 
 - Cada dispositivo guarda **a sua cópia** da campanha. O Mestre a cria; o jogador a recebe pelo convite. O papel é derivado de `gmId` comparado ao ID do dispositivo.

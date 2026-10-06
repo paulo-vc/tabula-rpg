@@ -8,6 +8,8 @@ import {
   type CharacterSheet,
   type DeviceRepository,
   type Issue,
+  type SessionStateRecord,
+  type SessionStateRepository,
   type SheetChanges,
   type SheetRepository,
   type SystemTemplate,
@@ -139,6 +141,22 @@ export class DexieCampaignRepository implements CampaignRepository {
 
   async delete(id: string): Promise<void> {
     await this.db.campaigns.delete(id);
+  }
+}
+
+export class DexieSessionStateRepository implements SessionStateRepository {
+  constructor(private readonly db: TabulaDatabase) {}
+
+  list(campaignId: string): Promise<SessionStateRecord[]> {
+    return this.db.sessionStates.where('campaignId').equals(campaignId).toArray();
+  }
+
+  async save(records: SessionStateRecord[]): Promise<void> {
+    await this.db.sessionStates.bulkPut(records);
+  }
+
+  async deleteCampaign(campaignId: string): Promise<void> {
+    await this.db.sessionStates.where('campaignId').equals(campaignId).delete();
   }
 }
 

@@ -33,6 +33,8 @@ export {
 export type {
   CampaignRepository,
   DeviceRepository,
+  SessionStateRecord,
+  SessionStateRepository,
   SheetChanges,
   SheetRepository,
   TemplateRepository,

@@ -214,6 +214,9 @@ importers:
       '@tabula/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+      '@tabula/sync':
+        specifier: workspace:*
+        version: link:../../packages/sync
       '@tabula/templates':
         specifier: workspace:*
         version: link:../../packages/templates
@@ -346,6 +349,9 @@ importers:
       lib0:
         specifier: ^0.2.119
         version: 0.2.119
+      trystero:
+        specifier: 0.26.0
+        version: 0.26.0
       y-protocols:
         specifier: ^1.0.7
         version: 1.0.7(yjs@13.6.33)
