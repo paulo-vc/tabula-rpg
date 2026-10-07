@@ -1,0 +1,936 @@
+{
+  "id": "dualidade",
+  "version": "1.0.0",
+  "name": "Dualidade",
+  "description": "Ficha compatível com o sistema Daggerheart™: traços, Evasão, limiares de dano, Esperança, Estresse, armas e cartas de domínio. Ficha não oficial da comunidade. This product includes materials from the Daggerheart System Reference Document 1.0, © Critical Role, LLC, under the terms of the Darrington Press Community Gaming License. More information at www.daggerheart.com. Darrington Press™ and the Darrington Press authorized work logo are trademarks of Critical Role, LLC and used with permission.",
+  "author": "Tabula RPG",
+  "license": "DPCGL",
+  "language": "pt-BR",
+  "tags": ["fantasia", "narrativo", "compatível com Daggerheart"],
+  "source": "community",
+  "fields": [
+    {
+      "id": "nome",
+      "key": "nome",
+      "label": "Nome do personagem",
+      "type": "text"
+    },
+    {
+      "id": "pronomes",
+      "key": "pronomes",
+      "label": "Pronomes",
+      "type": "text"
+    },
+    {
+      "id": "nivel",
+      "key": "nivel",
+      "label": "Nível",
+      "type": "number",
+      "default": 1,
+      "min": 1,
+      "max": 10,
+      "integer": true
+    },
+    {
+      "id": "classe",
+      "key": "classe",
+      "label": "Classe",
+      "type": "text"
+    },
+    {
+      "id": "subclasse",
+      "key": "subclasse",
+      "label": "Subclasse",
+      "type": "text"
+    },
+    {
+      "id": "ancestralidade",
+      "key": "ancestralidade",
+      "label": "Ancestralidade",
+      "type": "text"
+    },
+    {
+      "id": "comunidade",
+      "key": "comunidade",
+      "label": "Comunidade",
+      "type": "text"
+    },
+    {
+      "id": "patamar",
+      "key": "patamar",
+      "label": "Patamar",
+      "type": "computed",
+      "formula": "if(@nivel >= 8, 4, if(@nivel >= 5, 3, if(@nivel >= 2, 2, 1)))",
+      "description": "1 no nível 1; 2 nos níveis 2–4; 3 nos 5–7; 4 nos 8–10."
+    },
+    {
+      "id": "proficiencia",
+      "key": "proficiencia",
+      "label": "Proficiência",
+      "type": "number",
+      "default": 1,
+      "min": 1,
+      "max": 6,
+      "integer": true,
+      "description": "Quantos dados de dano a arma rola."
+    },
+    {
+      "id": "agilidade_base",
+      "key": "agilidade_base",
+      "label": "Agilidade",
+      "type": "number",
+      "default": 0,
+      "min": -5,
+      "max": 10,
+      "integer": true
+    },
+    {
+      "id": "agilidade",
+      "key": "agilidade",
+      "label": "Agilidade (total)",
+      "type": "computed",
+      "formula": "@agilidade_base + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"testes\"))",
+      "signed": true
+    },
+    {
+      "id": "forca_base",
+      "key": "forca_base",
+      "label": "Força",
+      "type": "number",
+      "default": 0,
+      "min": -5,
+      "max": 10,
+      "integer": true
+    },
+    {
+      "id": "forca",
+      "key": "forca",
+      "label": "Força (total)",
+      "type": "computed",
+      "formula": "@forca_base + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"testes\"))",
+      "signed": true
+    },
+    {
+      "id": "acuidade_base",
+      "key": "acuidade_base",
+      "label": "Acuidade",
+      "type": "number",
+      "default": 0,
+      "min": -5,
+      "max": 10,
+      "integer": true
+    },
+    {
+      "id": "acuidade",
+      "key": "acuidade",
+      "label": "Acuidade (total)",
+      "type": "computed",
+      "formula": "@acuidade_base + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"testes\"))",
+      "signed": true
+    },
+    {
+      "id": "instinto_base",
+      "key": "instinto_base",
+      "label": "Instinto",
+      "type": "number",
+      "default": 0,
+      "min": -5,
+      "max": 10,
+      "integer": true
+    },
+    {
+      "id": "instinto",
+      "key": "instinto",
+      "label": "Instinto (total)",
+      "type": "computed",
+      "formula": "@instinto_base + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"testes\"))",
+      "signed": true
+    },
+    {
+      "id": "presenca_base",
+      "key": "presenca_base",
+      "label": "Presença",
+      "type": "number",
+      "default": 0,
+      "min": -5,
+      "max": 10,
+      "integer": true
+    },
+    {
+      "id": "presenca",
+      "key": "presenca",
+      "label": "Presença (total)",
+      "type": "computed",
+      "formula": "@presenca_base + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"testes\"))",
+      "signed": true
+    },
+    {
+      "id": "conhecimento_base",
+      "key": "conhecimento_base",
+      "label": "Conhecimento",
+      "type": "number",
+      "default": 0,
+      "min": -5,
+      "max": 10,
+      "integer": true
+    },
+    {
+      "id": "conhecimento",
+      "key": "conhecimento",
+      "label": "Conhecimento (total)",
+      "type": "computed",
+      "formula": "@conhecimento_base + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"testes\"))",
+      "signed": true
+    },
+    {
+      "id": "evasao",
+      "key": "evasao",
+      "label": "Evasão",
+      "type": "computed",
+      "formula": "@evasao_base + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"evasao\"))",
+      "description": "A CD dos ataques contra você."
+    },
+    {
+      "id": "evasao_base",
+      "key": "evasao_base",
+      "label": "Evasão da classe",
+      "type": "number",
+      "default": 10,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "armadura",
+      "key": "armadura",
+      "label": "Pontuação de armadura",
+      "type": "computed",
+      "formula": "@armadura_base + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"armadura\"))"
+    },
+    {
+      "id": "armadura_base",
+      "key": "armadura_base",
+      "label": "Armadura vestida",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "espacos_armadura",
+      "key": "espacos_armadura",
+      "label": "Espaços de armadura",
+      "type": "resource",
+      "default": 0,
+      "max": "@armadura",
+      "description": "Marque um para reduzir a gravidade de um dano."
+    },
+    {
+      "id": "limiar_maior",
+      "key": "limiar_maior",
+      "label": "Limiar maior",
+      "type": "computed",
+      "formula": "@limiar_maior_base + @nivel + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"limiares\"))",
+      "description": "Dano a partir deste valor marca 2 PV."
+    },
+    {
+      "id": "limiar_grave",
+      "key": "limiar_grave",
+      "label": "Limiar grave",
+      "type": "computed",
+      "formula": "@limiar_grave_base + @nivel + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"limiares\"))",
+      "description": "Dano a partir deste valor marca 3 PV."
+    },
+    {
+      "id": "limiar_maior_base",
+      "key": "limiar_maior_base",
+      "label": "Limiar maior da armadura",
+      "type": "number",
+      "default": 5,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "limiar_grave_base",
+      "key": "limiar_grave_base",
+      "label": "Limiar grave da armadura",
+      "type": "number",
+      "default": 11,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "pv",
+      "key": "pv",
+      "label": "Pontos de Vida",
+      "type": "resource",
+      "default": 6,
+      "max": "@pv_max",
+      "description": "Na Dualidade os PV são marcados: o atual é quanto ainda resta."
+    },
+    {
+      "id": "pv_max",
+      "key": "pv_max",
+      "label": "PV máximos",
+      "type": "number",
+      "default": 6,
+      "min": 1,
+      "max": 12,
+      "integer": true
+    },
+    {
+      "id": "estresse",
+      "key": "estresse",
+      "label": "Estresse",
+      "type": "resource",
+      "default": 0,
+      "max": "@estresse_max"
+    },
+    {
+      "id": "estresse_max",
+      "key": "estresse_max",
+      "label": "Estresse máximo",
+      "type": "number",
+      "default": 6,
+      "min": 1,
+      "max": 12,
+      "integer": true
+    },
+    {
+      "id": "esperanca",
+      "key": "esperanca",
+      "label": "Esperança",
+      "type": "resource",
+      "default": 2,
+      "max": "6"
+    },
+    {
+      "id": "condicoes",
+      "key": "condicoes",
+      "label": "Condições",
+      "type": "select",
+      "multiple": true,
+      "options": [
+        {
+          "value": "escondido",
+          "label": "Escondido"
+        },
+        {
+          "value": "contido",
+          "label": "Contido"
+        },
+        {
+          "value": "vulneravel",
+          "label": "Vulnerável"
+        }
+      ]
+    },
+    {
+      "id": "experiencias",
+      "key": "experiencias",
+      "label": "Experiências",
+      "type": "list",
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Experiência",
+          "type": "text"
+        },
+        {
+          "id": "bonus",
+          "key": "bonus",
+          "label": "Bônus",
+          "type": "number",
+          "default": 2,
+          "integer": true
+        }
+      ]
+    },
+    {
+      "id": "armas",
+      "key": "armas",
+      "label": "Armas",
+      "type": "list",
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Arma",
+          "type": "text"
+        },
+        {
+          "id": "traco",
+          "key": "traco",
+          "label": "Traço",
+          "type": "select",
+          "options": [
+            {
+              "value": "agilidade",
+              "label": "Agilidade"
+            },
+            {
+              "value": "forca",
+              "label": "Força"
+            },
+            {
+              "value": "acuidade",
+              "label": "Acuidade"
+            },
+            {
+              "value": "instinto",
+              "label": "Instinto"
+            },
+            {
+              "value": "presenca",
+              "label": "Presença"
+            },
+            {
+              "value": "conhecimento",
+              "label": "Conhecimento"
+            }
+          ],
+          "default": "agilidade"
+        },
+        {
+          "id": "alcance",
+          "key": "alcance",
+          "label": "Alcance",
+          "type": "select",
+          "options": [
+            {
+              "value": "corpo",
+              "label": "Corpo a corpo"
+            },
+            {
+              "value": "muito_perto",
+              "label": "Muito perto"
+            },
+            {
+              "value": "perto",
+              "label": "Perto"
+            },
+            {
+              "value": "longe",
+              "label": "Longe"
+            },
+            {
+              "value": "muito_longe",
+              "label": "Muito longe"
+            }
+          ],
+          "default": "corpo"
+        },
+        {
+          "id": "dano",
+          "key": "dano",
+          "label": "Dano",
+          "type": "dice"
+        },
+        {
+          "id": "tipo",
+          "key": "tipo",
+          "label": "Tipo",
+          "type": "select",
+          "options": [
+            {
+              "value": "fisico",
+              "label": "Físico"
+            },
+            {
+              "value": "magico",
+              "label": "Mágico"
+            }
+          ],
+          "default": "fisico"
+        },
+        {
+          "id": "caracteristica",
+          "key": "caracteristica",
+          "label": "Característica",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "cartas",
+      "key": "cartas",
+      "label": "Cartas de domínio",
+      "type": "list",
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Carta",
+          "type": "text"
+        },
+        {
+          "id": "dominio",
+          "key": "dominio",
+          "label": "Domínio",
+          "type": "select",
+          "options": [
+            {
+              "value": "arcano",
+              "label": "Arcano"
+            },
+            {
+              "value": "lamina",
+              "label": "Lâmina"
+            },
+            {
+              "value": "osso",
+              "label": "Osso"
+            },
+            {
+              "value": "codice",
+              "label": "Códice"
+            },
+            {
+              "value": "graca",
+              "label": "Graça"
+            },
+            {
+              "value": "meia_noite",
+              "label": "Meia-Noite"
+            },
+            {
+              "value": "sabio",
+              "label": "Sábio"
+            },
+            {
+              "value": "esplendor",
+              "label": "Esplendor"
+            },
+            {
+              "value": "valor",
+              "label": "Valor"
+            }
+          ]
+        },
+        {
+          "id": "nivel",
+          "key": "nivel",
+          "label": "Nível",
+          "type": "number",
+          "default": 1,
+          "min": 1,
+          "max": 10,
+          "integer": true
+        },
+        {
+          "id": "recuperacao",
+          "key": "recuperacao",
+          "label": "Custo de recuperação",
+          "type": "number",
+          "default": 0,
+          "min": 0,
+          "integer": true
+        },
+        {
+          "id": "no_cofre",
+          "key": "no_cofre",
+          "label": "No cofre",
+          "type": "boolean"
+        }
+      ],
+      "description": "Até 5 cartas ativas; as demais ficam no cofre."
+    },
+    {
+      "id": "efeitos",
+      "key": "efeitos",
+      "label": "Efeitos temporários",
+      "type": "list",
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Efeito",
+          "type": "text"
+        },
+        {
+          "id": "alvo",
+          "key": "alvo",
+          "label": "Afeta",
+          "type": "select",
+          "options": [
+            {
+              "value": "evasao",
+              "label": "Evasão"
+            },
+            {
+              "value": "testes",
+              "label": "Testes de traço"
+            },
+            {
+              "value": "limiares",
+              "label": "Limiares de dano"
+            },
+            {
+              "value": "armadura",
+              "label": "Pontuação de armadura"
+            }
+          ],
+          "default": "evasao"
+        },
+        {
+          "id": "valor",
+          "key": "valor",
+          "label": "Valor",
+          "type": "number",
+          "default": 1,
+          "integer": true
+        },
+        {
+          "id": "ativo",
+          "key": "ativo",
+          "label": "Ativo",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "inventario",
+      "key": "inventario",
+      "label": "Inventário",
+      "type": "list",
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Item",
+          "type": "text"
+        },
+        {
+          "id": "qtd",
+          "key": "qtd",
+          "label": "Qtd.",
+          "type": "number",
+          "default": 1,
+          "min": 0,
+          "integer": true
+        }
+      ]
+    },
+    {
+      "id": "punhados",
+      "key": "punhados",
+      "label": "Punhados de ouro",
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 9,
+      "integer": true
+    },
+    {
+      "id": "bolsas",
+      "key": "bolsas",
+      "label": "Bolsas de ouro",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 9,
+      "integer": true
+    },
+    {
+      "id": "bau",
+      "key": "bau",
+      "label": "Baú de ouro",
+      "type": "boolean"
+    },
+    {
+      "id": "historia",
+      "key": "historia",
+      "label": "História e respostas da criação",
+      "type": "longtext"
+    },
+    {
+      "id": "conexoes",
+      "key": "conexoes",
+      "label": "Conexões",
+      "type": "longtext"
+    },
+    {
+      "id": "anotacoes",
+      "key": "anotacoes",
+      "label": "Anotações",
+      "type": "longtext"
+    }
+  ],
+  "layouts": {
+    "full": [
+      {
+        "kind": "section",
+        "title": "Personagem",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "nome",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "pronomes"
+          },
+          {
+            "kind": "field",
+            "fieldId": "nivel"
+          },
+          {
+            "kind": "field",
+            "fieldId": "classe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "subclasse"
+          },
+          {
+            "kind": "field",
+            "fieldId": "ancestralidade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "comunidade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "patamar"
+          },
+          {
+            "kind": "field",
+            "fieldId": "proficiencia"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Traços",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "agilidade_base"
+          },
+          {
+            "kind": "field",
+            "fieldId": "agilidade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "forca_base"
+          },
+          {
+            "kind": "field",
+            "fieldId": "forca"
+          },
+          {
+            "kind": "field",
+            "fieldId": "acuidade_base"
+          },
+          {
+            "kind": "field",
+            "fieldId": "acuidade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "instinto_base"
+          },
+          {
+            "kind": "field",
+            "fieldId": "instinto"
+          },
+          {
+            "kind": "field",
+            "fieldId": "presenca_base"
+          },
+          {
+            "kind": "field",
+            "fieldId": "presenca"
+          },
+          {
+            "kind": "field",
+            "fieldId": "conhecimento_base"
+          },
+          {
+            "kind": "field",
+            "fieldId": "conhecimento"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Defesa",
+        "columns": 3,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "evasao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "evasao_base"
+          },
+          {
+            "kind": "field",
+            "fieldId": "armadura"
+          },
+          {
+            "kind": "field",
+            "fieldId": "armadura_base"
+          },
+          {
+            "kind": "field",
+            "fieldId": "espacos_armadura"
+          },
+          {
+            "kind": "field",
+            "fieldId": "limiar_maior"
+          },
+          {
+            "kind": "field",
+            "fieldId": "limiar_grave"
+          },
+          {
+            "kind": "field",
+            "fieldId": "limiar_maior_base"
+          },
+          {
+            "kind": "field",
+            "fieldId": "limiar_grave_base"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Vida, Estresse e Esperança",
+        "columns": 3,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "pv"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pv_max"
+          },
+          {
+            "kind": "field",
+            "fieldId": "estresse"
+          },
+          {
+            "kind": "field",
+            "fieldId": "estresse_max"
+          },
+          {
+            "kind": "field",
+            "fieldId": "esperanca"
+          },
+          {
+            "kind": "field",
+            "fieldId": "condicoes",
+            "span": 3
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Efeitos temporários",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "efeitos"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Experiências",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "experiencias"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Armas",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "armas"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Cartas de domínio",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "cartas"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Inventário e ouro",
+        "columns": 3,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "inventario",
+            "span": 3
+          },
+          {
+            "kind": "field",
+            "fieldId": "punhados"
+          },
+          {
+            "kind": "field",
+            "fieldId": "bolsas"
+          },
+          {
+            "kind": "field",
+            "fieldId": "bau"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "História",
+        "columns": 2,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "historia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "conexoes"
+          },
+          {
+            "kind": "field",
+            "fieldId": "anotacoes",
+            "span": 2
+          }
+        ]
+      }
+    ],
+    "gmSummary": [
+      "pv",
+      "estresse",
+      "esperanca",
+      "evasao",
+      "espacos_armadura",
+      "limiar_maior",
+      "limiar_grave",
+      "condicoes"
+    ]
+  }
+}

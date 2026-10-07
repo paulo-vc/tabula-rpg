@@ -43,7 +43,7 @@ describe('TemplateCatalog', () => {
   it('lista os nativos e os instalados', async () => {
     await services.files.import(services.files.exportTemplate(homebrew()).content);
     const names = (await services.catalog.list()).map((t) => t.name);
-    expect(names).toEqual(['D&D 5ª Edição (SRD 5.1)', 'Caixa Preta']);
+    expect(names).toEqual(['D&D 5ª Edição (SRD 5.1)', 'Lendas d20 (ORC)', 'Caixa Preta']);
   });
 });
 

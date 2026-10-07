@@ -1,0 +1,2333 @@
+{
+  "id": "lendas-d20-orc",
+  "version": "1.0.0",
+  "name": "Lendas d20 (ORC)",
+  "description": "Ficha para fantasia heroica d20 com graus de proficiência (destreinado a lendário), atributos como modificadores e três ações por turno. ORC Notice: This product is licensed under the ORC License held in the Library of Congress at TX 9-307-067 and available online at various locations including www.azoralaw.com/orclicense, www.gencon.com/orclicense and others. All warranties are disclaimed as set forth therein. Attribution: This product is based on the following Licensed Material: Player Core © 2023 Paizo Inc., Designed by Logan Bonner, Jason Bulmahn, Stephen Radney-MacFarland, and Mark Seifter. Reserved Material: nomes, cenário e marcas da Paizo não são usados. Expressed Material: esta ficha (layout e textos) não é material licenciado.",
+  "author": "Tabula RPG",
+  "license": "ORC",
+  "language": "pt-BR",
+  "tags": ["fantasia", "d20", "orc"],
+  "source": "builtin",
+  "fields": [
+    {
+      "id": "nome",
+      "key": "nome",
+      "label": "Nome do personagem",
+      "type": "text"
+    },
+    {
+      "id": "jogador",
+      "key": "jogador",
+      "label": "Jogador",
+      "type": "text"
+    },
+    {
+      "id": "nivel",
+      "key": "nivel",
+      "label": "Nível",
+      "type": "number",
+      "default": 1,
+      "min": 1,
+      "max": 20,
+      "integer": true
+    },
+    {
+      "id": "ancestralidade",
+      "key": "ancestralidade",
+      "label": "Ancestralidade",
+      "type": "text"
+    },
+    {
+      "id": "heranca",
+      "key": "heranca",
+      "label": "Herança",
+      "type": "text"
+    },
+    {
+      "id": "formacao",
+      "key": "formacao",
+      "label": "Formação",
+      "type": "text"
+    },
+    {
+      "id": "classe",
+      "key": "classe",
+      "label": "Classe",
+      "type": "text"
+    },
+    {
+      "id": "tamanho",
+      "key": "tamanho",
+      "label": "Tamanho",
+      "type": "select",
+      "options": [
+        {
+          "value": "minusculo",
+          "label": "Minúsculo"
+        },
+        {
+          "value": "pequeno",
+          "label": "Pequeno"
+        },
+        {
+          "value": "medio",
+          "label": "Médio"
+        },
+        {
+          "value": "grande",
+          "label": "Grande"
+        },
+        {
+          "value": "enorme",
+          "label": "Enorme"
+        },
+        {
+          "value": "imenso",
+          "label": "Imenso"
+        }
+      ],
+      "default": "medio"
+    },
+    {
+      "id": "deslocamento",
+      "key": "deslocamento",
+      "label": "Deslocamento (m)",
+      "type": "number",
+      "default": 7.5,
+      "min": 0
+    },
+    {
+      "id": "px",
+      "key": "px",
+      "label": "Pontos de experiência",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 999,
+      "integer": true,
+      "description": "Ao chegar a 1000, suba de nível e subtraia 1000."
+    },
+    {
+      "id": "heroismo",
+      "key": "heroismo",
+      "label": "Pontos de Heroísmo",
+      "type": "resource",
+      "default": 1,
+      "max": "3",
+      "description": "Gaste para rolar de novo ou para evitar a morte."
+    },
+    {
+      "id": "idiomas",
+      "key": "idiomas",
+      "label": "Idiomas",
+      "type": "text"
+    },
+    {
+      "id": "tracos",
+      "key": "tracos",
+      "label": "Traços",
+      "type": "text"
+    },
+    {
+      "id": "for",
+      "key": "for",
+      "label": "Força",
+      "type": "number",
+      "default": 0,
+      "min": -5,
+      "max": 10,
+      "integer": true,
+      "description": "Modificador de atributo (o Remaster não usa valores)."
+    },
+    {
+      "id": "des",
+      "key": "des",
+      "label": "Destreza",
+      "type": "number",
+      "default": 0,
+      "min": -5,
+      "max": 10,
+      "integer": true,
+      "description": "Modificador de atributo (o Remaster não usa valores)."
+    },
+    {
+      "id": "con",
+      "key": "con",
+      "label": "Constituição",
+      "type": "number",
+      "default": 0,
+      "min": -5,
+      "max": 10,
+      "integer": true,
+      "description": "Modificador de atributo (o Remaster não usa valores)."
+    },
+    {
+      "id": "int",
+      "key": "int",
+      "label": "Inteligência",
+      "type": "number",
+      "default": 0,
+      "min": -5,
+      "max": 10,
+      "integer": true,
+      "description": "Modificador de atributo (o Remaster não usa valores)."
+    },
+    {
+      "id": "sab",
+      "key": "sab",
+      "label": "Sabedoria",
+      "type": "number",
+      "default": 0,
+      "min": -5,
+      "max": 10,
+      "integer": true,
+      "description": "Modificador de atributo (o Remaster não usa valores)."
+    },
+    {
+      "id": "car",
+      "key": "car",
+      "label": "Carisma",
+      "type": "number",
+      "default": 0,
+      "min": -5,
+      "max": 10,
+      "integer": true,
+      "description": "Modificador de atributo (o Remaster não usa valores)."
+    },
+    {
+      "id": "atributo_chave",
+      "key": "atributo_chave",
+      "label": "Atributo-chave da classe",
+      "type": "select",
+      "options": [
+        {
+          "value": "for",
+          "label": "Força"
+        },
+        {
+          "value": "des",
+          "label": "Destreza"
+        },
+        {
+          "value": "con",
+          "label": "Constituição"
+        },
+        {
+          "value": "int",
+          "label": "Inteligência"
+        },
+        {
+          "value": "sab",
+          "label": "Sabedoria"
+        },
+        {
+          "value": "car",
+          "label": "Carisma"
+        }
+      ],
+      "default": "for"
+    },
+    {
+      "id": "mod_chave",
+      "key": "mod_chave",
+      "label": "Mod. do atributo-chave",
+      "type": "computed",
+      "formula": "is(@atributo_chave, \"for\") * @for + is(@atributo_chave, \"des\") * @des + is(@atributo_chave, \"con\") * @con + is(@atributo_chave, \"int\") * @int + is(@atributo_chave, \"sab\") * @sab + is(@atributo_chave, \"car\") * @car",
+      "signed": true
+    },
+    {
+      "id": "prof_fortitude",
+      "key": "prof_fortitude",
+      "label": "Proficiência em Fortitude",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "treinado"
+    },
+    {
+      "id": "fortitude",
+      "key": "fortitude",
+      "label": "Fortitude (Con)",
+      "type": "computed",
+      "formula": "@con + if(@prof_fortitude > 0, @prof_fortitude + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"resistencias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_reflexos",
+      "key": "prof_reflexos",
+      "label": "Proficiência em Reflexos",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "treinado"
+    },
+    {
+      "id": "reflexos",
+      "key": "reflexos",
+      "label": "Reflexos (Des)",
+      "type": "computed",
+      "formula": "@des + if(@prof_reflexos > 0, @prof_reflexos + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"resistencias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_vontade",
+      "key": "prof_vontade",
+      "label": "Proficiência em Vontade",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "treinado"
+    },
+    {
+      "id": "vontade",
+      "key": "vontade",
+      "label": "Vontade (Sab)",
+      "type": "computed",
+      "formula": "@sab + if(@prof_vontade > 0, @prof_vontade + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"resistencias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_percepcao",
+      "key": "prof_percepcao",
+      "label": "Proficiência em Percepção",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "treinado"
+    },
+    {
+      "id": "percepcao",
+      "key": "percepcao",
+      "label": "Percepção (Sab)",
+      "type": "computed",
+      "formula": "@sab + if(@prof_percepcao > 0, @prof_percepcao + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"percepcao\"))",
+      "signed": true
+    },
+    {
+      "id": "ca",
+      "key": "ca",
+      "label": "Classe de Armadura",
+      "type": "computed",
+      "formula": "10 + min(@des, @limite_des) + if(@prof_armadura > 0, @prof_armadura + @nivel, 0) + @bonus_armadura + @escudo_erguido * @escudo_ca + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"ca\"))",
+      "description": "10 + Destreza (até o limite da armadura) + proficiência + armadura + escudo erguido + efeitos."
+    },
+    {
+      "id": "prof_armadura",
+      "key": "prof_armadura",
+      "label": "Proficiência na armadura",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "treinado"
+    },
+    {
+      "id": "bonus_armadura",
+      "key": "bonus_armadura",
+      "label": "Bônus de item da armadura",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "limite_des",
+      "key": "limite_des",
+      "label": "Limite de Destreza",
+      "type": "number",
+      "default": 10,
+      "min": 0,
+      "integer": true,
+      "description": "Da armadura vestida. Sem armadura, deixe alto."
+    },
+    {
+      "id": "pv",
+      "key": "pv",
+      "label": "Pontos de Vida",
+      "type": "resource",
+      "default": 10,
+      "max": "@pv_ancestralidade + (@pv_classe + @con) * @nivel"
+    },
+    {
+      "id": "pv_temp",
+      "key": "pv_temp",
+      "label": "PV temporários",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "pv_ancestralidade",
+      "key": "pv_ancestralidade",
+      "label": "PV da ancestralidade",
+      "type": "number",
+      "default": 8,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "pv_classe",
+      "key": "pv_classe",
+      "label": "PV da classe por nível",
+      "type": "number",
+      "default": 8,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "moribundo",
+      "key": "moribundo",
+      "label": "Moribundo",
+      "type": "resource",
+      "default": 0,
+      "max": "4 - @ferido",
+      "description": "Chegar ao máximo é a morte. Ferido diminui o limite."
+    },
+    {
+      "id": "ferido",
+      "key": "ferido",
+      "label": "Ferido",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 3,
+      "integer": true
+    },
+    {
+      "id": "prof_classe",
+      "key": "prof_classe",
+      "label": "Proficiência na CD de classe",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "treinado"
+    },
+    {
+      "id": "cd_classe",
+      "key": "cd_classe",
+      "label": "CD de classe",
+      "type": "computed",
+      "formula": "10 + @mod_chave + if(@prof_classe > 0, @prof_classe + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"cd\"))"
+    },
+    {
+      "id": "resistencias_dano",
+      "key": "resistencias_dano",
+      "label": "Resistências, fraquezas e imunidades",
+      "type": "text"
+    },
+    {
+      "id": "condicoes",
+      "key": "condicoes",
+      "label": "Condições",
+      "type": "select",
+      "multiple": true,
+      "options": [
+        {
+          "value": "agarrado",
+          "label": "Agarrado"
+        },
+        {
+          "value": "amedrontado",
+          "label": "Amedrontado"
+        },
+        {
+          "value": "atordoado",
+          "label": "Atordoado"
+        },
+        {
+          "value": "caido",
+          "label": "Caído"
+        },
+        {
+          "value": "cego",
+          "label": "Cego"
+        },
+        {
+          "value": "confuso",
+          "label": "Confuso"
+        },
+        {
+          "value": "desprevenido",
+          "label": "Desprevenido"
+        },
+        {
+          "value": "enfraquecido",
+          "label": "Enfraquecido"
+        },
+        {
+          "value": "enjoado",
+          "label": "Enjoado"
+        },
+        {
+          "value": "escondido",
+          "label": "Escondido"
+        },
+        {
+          "value": "fatigado",
+          "label": "Fatigado"
+        },
+        {
+          "value": "imobilizado",
+          "label": "Imobilizado"
+        },
+        {
+          "value": "inconsciente",
+          "label": "Inconsciente"
+        },
+        {
+          "value": "lento",
+          "label": "Lento"
+        },
+        {
+          "value": "ofuscado",
+          "label": "Ofuscado"
+        },
+        {
+          "value": "paralisado",
+          "label": "Paralisado"
+        },
+        {
+          "value": "petrificado",
+          "label": "Petrificado"
+        },
+        {
+          "value": "rapido",
+          "label": "Rápido"
+        },
+        {
+          "value": "surdo",
+          "label": "Surdo"
+        }
+      ]
+    },
+    {
+      "id": "escudo_erguido",
+      "key": "escudo_erguido",
+      "label": "Escudo erguido",
+      "type": "boolean"
+    },
+    {
+      "id": "escudo_ca",
+      "key": "escudo_ca",
+      "label": "Bônus de CA do escudo",
+      "type": "number",
+      "default": 2,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "escudo_dureza",
+      "key": "escudo_dureza",
+      "label": "Dureza do escudo",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "escudo_pv",
+      "key": "escudo_pv",
+      "label": "PV do escudo",
+      "type": "resource",
+      "default": 0
+    },
+    {
+      "id": "prof_acrobatismo",
+      "key": "prof_acrobatismo",
+      "label": "Proficiência em Acrobatismo",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "acrobatismo",
+      "key": "acrobatismo",
+      "label": "Acrobatismo (Des)",
+      "type": "computed",
+      "formula": "@des + if(@prof_acrobatismo > 0, @prof_acrobatismo + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_arcanismo",
+      "key": "prof_arcanismo",
+      "label": "Proficiência em Arcanismo",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "arcanismo",
+      "key": "arcanismo",
+      "label": "Arcanismo (Int)",
+      "type": "computed",
+      "formula": "@int + if(@prof_arcanismo > 0, @prof_arcanismo + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_atletismo",
+      "key": "prof_atletismo",
+      "label": "Proficiência em Atletismo",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "atletismo",
+      "key": "atletismo",
+      "label": "Atletismo (For)",
+      "type": "computed",
+      "formula": "@for + if(@prof_atletismo > 0, @prof_atletismo + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_diplomacia",
+      "key": "prof_diplomacia",
+      "label": "Proficiência em Diplomacia",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "diplomacia",
+      "key": "diplomacia",
+      "label": "Diplomacia (Car)",
+      "type": "computed",
+      "formula": "@car + if(@prof_diplomacia > 0, @prof_diplomacia + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_enganacao",
+      "key": "prof_enganacao",
+      "label": "Proficiência em Enganação",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "enganacao",
+      "key": "enganacao",
+      "label": "Enganação (Car)",
+      "type": "computed",
+      "formula": "@car + if(@prof_enganacao > 0, @prof_enganacao + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_furtividade",
+      "key": "prof_furtividade",
+      "label": "Proficiência em Furtividade",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "furtividade",
+      "key": "furtividade",
+      "label": "Furtividade (Des)",
+      "type": "computed",
+      "formula": "@des + if(@prof_furtividade > 0, @prof_furtividade + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_intimidacao",
+      "key": "prof_intimidacao",
+      "label": "Proficiência em Intimidação",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "intimidacao",
+      "key": "intimidacao",
+      "label": "Intimidação (Car)",
+      "type": "computed",
+      "formula": "@car + if(@prof_intimidacao > 0, @prof_intimidacao + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_ladinagem",
+      "key": "prof_ladinagem",
+      "label": "Proficiência em Ladinagem",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "ladinagem",
+      "key": "ladinagem",
+      "label": "Ladinagem (Des)",
+      "type": "computed",
+      "formula": "@des + if(@prof_ladinagem > 0, @prof_ladinagem + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_manufatura",
+      "key": "prof_manufatura",
+      "label": "Proficiência em Manufatura",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "manufatura",
+      "key": "manufatura",
+      "label": "Manufatura (Int)",
+      "type": "computed",
+      "formula": "@int + if(@prof_manufatura > 0, @prof_manufatura + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_medicina",
+      "key": "prof_medicina",
+      "label": "Proficiência em Medicina",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "medicina",
+      "key": "medicina",
+      "label": "Medicina (Sab)",
+      "type": "computed",
+      "formula": "@sab + if(@prof_medicina > 0, @prof_medicina + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_natureza",
+      "key": "prof_natureza",
+      "label": "Proficiência em Natureza",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "natureza",
+      "key": "natureza",
+      "label": "Natureza (Sab)",
+      "type": "computed",
+      "formula": "@sab + if(@prof_natureza > 0, @prof_natureza + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_ocultismo",
+      "key": "prof_ocultismo",
+      "label": "Proficiência em Ocultismo",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "ocultismo",
+      "key": "ocultismo",
+      "label": "Ocultismo (Int)",
+      "type": "computed",
+      "formula": "@int + if(@prof_ocultismo > 0, @prof_ocultismo + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_performance",
+      "key": "prof_performance",
+      "label": "Proficiência em Performance",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "performance",
+      "key": "performance",
+      "label": "Performance (Car)",
+      "type": "computed",
+      "formula": "@car + if(@prof_performance > 0, @prof_performance + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_religiao",
+      "key": "prof_religiao",
+      "label": "Proficiência em Religião",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "religiao",
+      "key": "religiao",
+      "label": "Religião (Sab)",
+      "type": "computed",
+      "formula": "@sab + if(@prof_religiao > 0, @prof_religiao + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_sobrevivencia",
+      "key": "prof_sobrevivencia",
+      "label": "Proficiência em Sobrevivência",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "sobrevivencia",
+      "key": "sobrevivencia",
+      "label": "Sobrevivência (Sab)",
+      "type": "computed",
+      "formula": "@sab + if(@prof_sobrevivencia > 0, @prof_sobrevivencia + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "prof_sociedade",
+      "key": "prof_sociedade",
+      "label": "Proficiência em Sociedade",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ],
+      "default": "destreinado"
+    },
+    {
+      "id": "sociedade",
+      "key": "sociedade",
+      "label": "Sociedade (Int)",
+      "type": "computed",
+      "formula": "@int + if(@prof_sociedade > 0, @prof_sociedade + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"pericias\"))",
+      "signed": true
+    },
+    {
+      "id": "saberes",
+      "key": "saberes",
+      "label": "Saberes",
+      "type": "list",
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Saber",
+          "type": "text"
+        },
+        {
+          "id": "grau",
+          "key": "grau",
+          "label": "Grau",
+          "type": "select",
+          "options": [
+            {
+              "value": "destreinado",
+              "label": "Destreinado",
+              "number": 0
+            },
+            {
+              "value": "treinado",
+              "label": "Treinado",
+              "number": 2
+            },
+            {
+              "value": "especialista",
+              "label": "Especialista",
+              "number": 4
+            },
+            {
+              "value": "mestre",
+              "label": "Mestre",
+              "number": 6
+            },
+            {
+              "value": "lendario",
+              "label": "Lendário",
+              "number": 8
+            }
+          ],
+          "default": "treinado"
+        },
+        {
+          "id": "bonus",
+          "key": "bonus",
+          "label": "Bônus total",
+          "type": "number",
+          "default": 0,
+          "integer": true
+        }
+      ]
+    },
+    {
+      "id": "ataques",
+      "key": "ataques",
+      "label": "Golpes",
+      "type": "list",
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Arma",
+          "type": "text"
+        },
+        {
+          "id": "bonus",
+          "key": "bonus",
+          "label": "Bônus de ataque",
+          "type": "number",
+          "default": 0,
+          "integer": true
+        },
+        {
+          "id": "dano",
+          "key": "dano",
+          "label": "Dano",
+          "type": "dice"
+        },
+        {
+          "id": "tipo",
+          "key": "tipo",
+          "label": "Tipo de dano",
+          "type": "text"
+        },
+        {
+          "id": "tracos",
+          "key": "tracos",
+          "label": "Traços",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "tradicao",
+      "key": "tradicao",
+      "label": "Tradição",
+      "type": "select",
+      "options": [
+        {
+          "value": "arcana",
+          "label": "Arcana"
+        },
+        {
+          "value": "divina",
+          "label": "Divina"
+        },
+        {
+          "value": "ocultista",
+          "label": "Ocultista"
+        },
+        {
+          "value": "primal",
+          "label": "Primal"
+        }
+      ]
+    },
+    {
+      "id": "atributo_magia",
+      "key": "atributo_magia",
+      "label": "Atributo de magia",
+      "type": "select",
+      "options": [
+        {
+          "value": "int",
+          "label": "Inteligência"
+        },
+        {
+          "value": "sab",
+          "label": "Sabedoria"
+        },
+        {
+          "value": "car",
+          "label": "Carisma"
+        }
+      ],
+      "default": "int"
+    },
+    {
+      "id": "mod_magia",
+      "key": "mod_magia",
+      "label": "Mod. de magia",
+      "type": "computed",
+      "formula": "is(@atributo_magia, \"int\") * @int + is(@atributo_magia, \"sab\") * @sab + is(@atributo_magia, \"car\") * @car",
+      "signed": true
+    },
+    {
+      "id": "prof_magia",
+      "key": "prof_magia",
+      "label": "Proficiência em magia",
+      "type": "select",
+      "options": [
+        {
+          "value": "destreinado",
+          "label": "Destreinado",
+          "number": 0
+        },
+        {
+          "value": "treinado",
+          "label": "Treinado",
+          "number": 2
+        },
+        {
+          "value": "especialista",
+          "label": "Especialista",
+          "number": 4
+        },
+        {
+          "value": "mestre",
+          "label": "Mestre",
+          "number": 6
+        },
+        {
+          "value": "lendario",
+          "label": "Lendário",
+          "number": 8
+        }
+      ]
+    },
+    {
+      "id": "ataque_magia",
+      "key": "ataque_magia",
+      "label": "Ataque com magia",
+      "type": "computed",
+      "formula": "@mod_magia + if(@prof_magia > 0, @prof_magia + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"ataques\"))",
+      "signed": true
+    },
+    {
+      "id": "cd_magia",
+      "key": "cd_magia",
+      "label": "CD de magia",
+      "type": "computed",
+      "formula": "10 + @mod_magia + if(@prof_magia > 0, @prof_magia + @nivel, 0) + sum(@efeitos.valor * @efeitos.ativo * is(@efeitos.alvo, \"cd\"))"
+    },
+    {
+      "id": "foco",
+      "key": "foco",
+      "label": "Pontos de Foco",
+      "type": "resource",
+      "default": 0,
+      "max": "3"
+    },
+    {
+      "id": "magias",
+      "key": "magias",
+      "label": "Magias",
+      "type": "list",
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Magia",
+          "type": "text"
+        },
+        {
+          "id": "nivel",
+          "key": "nivel",
+          "label": "Grau",
+          "type": "number",
+          "default": 1,
+          "min": 0,
+          "max": 10,
+          "integer": true,
+          "description": "0 para truques."
+        },
+        {
+          "id": "preparada",
+          "key": "preparada",
+          "label": "Preparada",
+          "type": "boolean"
+        },
+        {
+          "id": "acoes",
+          "key": "acoes",
+          "label": "Ações",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "talentos",
+      "key": "talentos",
+      "label": "Talentos e habilidades",
+      "type": "list",
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Talento",
+          "type": "text"
+        },
+        {
+          "id": "tipo",
+          "key": "tipo",
+          "label": "Tipo",
+          "type": "select",
+          "options": [
+            {
+              "value": "ancestralidade",
+              "label": "Ancestralidade"
+            },
+            {
+              "value": "classe",
+              "label": "Classe"
+            },
+            {
+              "value": "pericia",
+              "label": "Perícia"
+            },
+            {
+              "value": "geral",
+              "label": "Geral"
+            },
+            {
+              "value": "formacao",
+              "label": "Formação"
+            },
+            {
+              "value": "outro",
+              "label": "Outro"
+            }
+          ]
+        },
+        {
+          "id": "nivel",
+          "key": "nivel",
+          "label": "Nível",
+          "type": "number",
+          "default": 1,
+          "min": 1,
+          "max": 20,
+          "integer": true
+        },
+        {
+          "id": "descricao",
+          "key": "descricao",
+          "label": "Descrição",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "equipamento",
+      "key": "equipamento",
+      "label": "Equipamento",
+      "type": "list",
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Item",
+          "type": "text"
+        },
+        {
+          "id": "qtd",
+          "key": "qtd",
+          "label": "Qtd.",
+          "type": "number",
+          "default": 1,
+          "min": 0,
+          "integer": true
+        },
+        {
+          "id": "volume",
+          "key": "volume",
+          "label": "Volume",
+          "type": "number",
+          "default": 0,
+          "min": 0,
+          "description": "L (leve) conta 0,1."
+        },
+        {
+          "id": "investido",
+          "key": "investido",
+          "label": "Investido",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "id": "volume_total",
+      "key": "volume_total",
+      "label": "Volume carregado",
+      "type": "computed",
+      "formula": "floor(sum(@equipamento.volume * @equipamento.qtd))"
+    },
+    {
+      "id": "limite_volume",
+      "key": "limite_volume",
+      "label": "Limite de volume",
+      "type": "computed",
+      "formula": "5 + @for",
+      "description": "Acima disso, fica sobrecarregado."
+    },
+    {
+      "id": "investidos",
+      "key": "investidos",
+      "label": "Itens investidos",
+      "type": "computed",
+      "formula": "count(@equipamento.investido)",
+      "description": "Máximo de 10."
+    },
+    {
+      "id": "po",
+      "key": "po",
+      "label": "Peças de ouro",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "pp",
+      "key": "pp",
+      "label": "Peças de prata",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "pc",
+      "key": "pc",
+      "label": "Peças de cobre",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "integer": true
+    },
+    {
+      "id": "efeitos",
+      "key": "efeitos",
+      "label": "Efeitos temporários",
+      "type": "list",
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Efeito",
+          "type": "text"
+        },
+        {
+          "id": "alvo",
+          "key": "alvo",
+          "label": "Afeta",
+          "type": "select",
+          "options": [
+            {
+              "value": "ca",
+              "label": "Classe de Armadura"
+            },
+            {
+              "value": "ataques",
+              "label": "Ataques"
+            },
+            {
+              "value": "resistencias",
+              "label": "Testes de resistência"
+            },
+            {
+              "value": "pericias",
+              "label": "Perícias"
+            },
+            {
+              "value": "percepcao",
+              "label": "Percepção"
+            },
+            {
+              "value": "cd",
+              "label": "CDs"
+            }
+          ],
+          "default": "ca"
+        },
+        {
+          "id": "valor",
+          "key": "valor",
+          "label": "Valor",
+          "type": "number",
+          "default": 1,
+          "integer": true,
+          "description": "Negativo para penalidades (ex.: Amedrontado 1 = -1)."
+        },
+        {
+          "id": "ativo",
+          "key": "ativo",
+          "label": "Ativo",
+          "type": "boolean",
+          "default": true
+        }
+      ],
+      "description": "Bônus e penalidades de magias, condições e itens. Somados nas fórmulas."
+    },
+    {
+      "id": "personalidade",
+      "key": "personalidade",
+      "label": "Personalidade e crenças",
+      "type": "longtext"
+    },
+    {
+      "id": "anotacoes",
+      "key": "anotacoes",
+      "label": "Anotações",
+      "type": "longtext"
+    }
+  ],
+  "layouts": {
+    "full": [
+      {
+        "kind": "section",
+        "title": "Personagem",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "nome",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "jogador"
+          },
+          {
+            "kind": "field",
+            "fieldId": "nivel"
+          },
+          {
+            "kind": "field",
+            "fieldId": "ancestralidade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "heranca"
+          },
+          {
+            "kind": "field",
+            "fieldId": "formacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "classe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "tamanho"
+          },
+          {
+            "kind": "field",
+            "fieldId": "deslocamento"
+          },
+          {
+            "kind": "field",
+            "fieldId": "px"
+          },
+          {
+            "kind": "field",
+            "fieldId": "heroismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "idiomas",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "tracos",
+            "span": 2
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Atributos",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "for"
+          },
+          {
+            "kind": "field",
+            "fieldId": "des"
+          },
+          {
+            "kind": "field",
+            "fieldId": "con"
+          },
+          {
+            "kind": "field",
+            "fieldId": "int"
+          },
+          {
+            "kind": "field",
+            "fieldId": "sab"
+          },
+          {
+            "kind": "field",
+            "fieldId": "car"
+          },
+          {
+            "kind": "field",
+            "fieldId": "atributo_chave",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "mod_chave"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Defesas e Percepção",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "prof_fortitude"
+          },
+          {
+            "kind": "field",
+            "fieldId": "fortitude"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_reflexos"
+          },
+          {
+            "kind": "field",
+            "fieldId": "reflexos"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_vontade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "vontade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_percepcao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "percepcao"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Combate",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "ca"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_armadura"
+          },
+          {
+            "kind": "field",
+            "fieldId": "bonus_armadura"
+          },
+          {
+            "kind": "field",
+            "fieldId": "limite_des"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pv"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pv_temp"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pv_ancestralidade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pv_classe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "moribundo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "ferido"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_classe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "cd_classe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "resistencias_dano",
+            "span": 4
+          },
+          {
+            "kind": "field",
+            "fieldId": "condicoes",
+            "span": 4
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Escudo",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "escudo_erguido"
+          },
+          {
+            "kind": "field",
+            "fieldId": "escudo_ca"
+          },
+          {
+            "kind": "field",
+            "fieldId": "escudo_dureza"
+          },
+          {
+            "kind": "field",
+            "fieldId": "escudo_pv"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Efeitos temporários",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "efeitos"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Golpes",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "ataques"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Perícias",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "prof_acrobatismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "acrobatismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_arcanismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "arcanismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_atletismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "atletismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_diplomacia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "diplomacia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_enganacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "enganacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_furtividade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "furtividade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_intimidacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "intimidacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_ladinagem"
+          },
+          {
+            "kind": "field",
+            "fieldId": "ladinagem"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_manufatura"
+          },
+          {
+            "kind": "field",
+            "fieldId": "manufatura"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_medicina"
+          },
+          {
+            "kind": "field",
+            "fieldId": "medicina"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_natureza"
+          },
+          {
+            "kind": "field",
+            "fieldId": "natureza"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_ocultismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "ocultismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_performance"
+          },
+          {
+            "kind": "field",
+            "fieldId": "performance"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_religiao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "religiao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_sobrevivencia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "sobrevivencia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_sociedade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "sociedade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "saberes",
+            "span": 2
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Magia",
+        "columns": 3,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "tradicao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "atributo_magia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "mod_magia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_magia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "ataque_magia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "cd_magia"
+          },
+          {
+            "kind": "field",
+            "fieldId": "foco"
+          },
+          {
+            "kind": "field",
+            "fieldId": "magias",
+            "span": 3
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Talentos",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "talentos"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Equipamento",
+        "columns": 3,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "equipamento",
+            "span": 4
+          },
+          {
+            "kind": "field",
+            "fieldId": "volume_total"
+          },
+          {
+            "kind": "field",
+            "fieldId": "limite_volume"
+          },
+          {
+            "kind": "field",
+            "fieldId": "investidos"
+          },
+          {
+            "kind": "field",
+            "fieldId": "po"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pp"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pc"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Personalidade e anotações",
+        "columns": 2,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "personalidade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "anotacoes"
+          }
+        ]
+      }
+    ],
+    "gmSummary": [
+      "pv",
+      "ca",
+      "percepcao",
+      "fortitude",
+      "reflexos",
+      "vontade",
+      "condicoes",
+      "heroismo",
+      "moribundo"
+    ]
+  }
+}
