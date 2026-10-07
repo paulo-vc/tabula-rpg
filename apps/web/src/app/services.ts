@@ -1,6 +1,7 @@
 import {
   DexieCampaignRepository,
   DexieDeviceRepository,
+  DexieDraftRepository,
   DexieSessionStateRepository,
   DexieSheetRepository,
   DexieTemplateRepository,
@@ -8,6 +9,7 @@ import {
 } from '@tabula/storage';
 import { BUILTIN_TEMPLATES } from '@tabula/templates';
 import { CampaignService } from './campaigns';
+import { TemplateEditorService } from './editor';
 import { TemplateCatalog } from './catalog';
 import { FileService } from './files';
 import { randomSecret } from './invite-link';
@@ -24,6 +26,7 @@ export interface Services {
   campaigns: CampaignService;
   session: LiveSessionManager;
   registry: RegistryService;
+  editor: TemplateEditorService;
   device: DexieDeviceRepository;
   /** Repositórios para consultas reativas (listas). */
   sheetRepository: DexieSheetRepository;
@@ -71,6 +74,13 @@ export function createServices(
     campaignRepository,
     sheets,
     files,
+    editor: new TemplateEditorService(
+      new DexieDraftRepository(db),
+      templateRepository,
+      catalog,
+      clock,
+      ids,
+    ),
     registry: new RegistryService(registrySource, catalog, files, sha256, appVersion),
     session: new LiveSessionManager(
       campaignRepository,

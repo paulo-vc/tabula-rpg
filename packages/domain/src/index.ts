@@ -6,6 +6,7 @@ export * from './formula';
 
 export * from './template/schema';
 export { compileTemplate, type CompiledFormula, type CompiledTemplate } from './template/compile';
+export { validateTemplate } from './template/validate';
 
 export * from './sheet/schema';
 export { defaultValue, listItemValue, valueProblem } from './sheet/values';
@@ -33,10 +34,12 @@ export {
 export type {
   CampaignRepository,
   DeviceRepository,
+  DraftRepository,
   SessionStateRecord,
   SessionStateRepository,
   SheetChanges,
   SheetRepository,
+  TemplateDraft,
   TemplateRepository,
 } from './ports';
 
@@ -61,3 +64,5 @@ export {
   type PublishedFile,
   type SubmissionContext,
 } from './registry/operations';
+
+export * from './template/editing';

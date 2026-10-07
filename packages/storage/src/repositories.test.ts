@@ -13,6 +13,7 @@ import {
   DexieCampaignRepository,
   DexieSessionStateRepository,
   DexieDeviceRepository,
+  DexieDraftRepository,
   DexieSheetRepository,
   DexieTemplateRepository,
   InvalidDataError,
@@ -260,7 +261,7 @@ describe('migração do banco', () => {
     try {
       expect(await new DexieSheetRepository(current).get('antiga')).toBeDefined();
       expect(await new DexieCampaignRepository(current).list()).toEqual([]);
-      expect(current.verno).toBe(3);
+      expect(current.verno).toBe(4);
     } finally {
       current.close();
       await Dexie.delete(name);
@@ -328,5 +329,45 @@ describe('DexieSessionStateRepository', () => {
     await states.deleteCampaign('c1');
     expect(await states.list('c1')).toEqual([]);
     expect(await states.list('c2')).toHaveLength(1);
+  });
+});
+
+describe('DexieDraftRepository', () => {
+  it('guarda rascunhos inválidos e lista do mais recente para o mais antigo', async () => {
+    const drafts = new DexieDraftRepository(db);
+    // Rascunho incompleto: rótulo vazio e fórmula pela metade.
+    const incomplete = template({
+      fields: [{ id: 'x', key: 'x', label: '', type: 'computed', formula: '1 +' }],
+    });
+    await drafts.save({ id: 'd1', template: incomplete, updatedAt: 1 });
+    await drafts.save({ id: 'd2', template: template(), editing: 'meu-sistema', updatedAt: 2 });
+
+    expect((await drafts.list()).map((d) => d.id)).toEqual(['d2', 'd1']);
+    expect(await drafts.get('d1')).toEqual({ id: 'd1', template: incomplete, updatedAt: 1 });
+    await drafts.delete('d1');
+    expect(await drafts.get('d1')).toBeUndefined();
+  });
+
+  it('um banco v3 ganha a tabela de rascunhos sem perder dados', async () => {
+    const name = `v3-${crypto.randomUUID()}`;
+    const v3 = new Dexie(name);
+    v3.version(1).stores({
+      templates: 'id, name',
+      sheets: 'id, updatedAt, templateRef.id',
+      settings: 'key',
+    });
+    v3.version(2).stores({ campaigns: 'id, updatedAt' });
+    v3.version(3).stores({ sessionStates: '[campaignId+key], campaignId' });
+    await v3.table('sheets').put(sheet('s1', 1));
+    v3.close();
+
+    const current = new TabulaDatabase(name);
+    try {
+      expect(await new DexieSheetRepository(current).get('s1')).toBeDefined();
+      expect(await new DexieDraftRepository(current).list()).toEqual([]);
+    } finally {
+      current.close();
+      await Dexie.delete(name);
+    }
   });
 });

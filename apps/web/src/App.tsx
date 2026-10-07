@@ -8,6 +8,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { CampaignPage } from '@/pages/CampaignPage';
 import { CampaignsPage } from '@/pages/CampaignsPage';
 import { CommunityPage } from '@/pages/CommunityPage';
+import { EditorPage } from '@/pages/EditorPage';
 import { HomePage } from '@/pages/HomePage';
 import { InvitePage } from '@/pages/InvitePage';
 import { SheetPage } from '@/pages/SheetPage';
@@ -27,6 +28,9 @@ export function App({ services }: { services: Services }) {
               <Route path="/" component={HomePage} />
               <Route path="/sistemas" component={SystemsPage} />
               <Route path="/sistemas/comunidade" component={CommunityPage} />
+              <Route path="/sistemas/editor/:id">
+                {(params) => <EditorPage key={params.id} id={params.id} />}
+              </Route>
               <Route path="/campanhas" component={CampaignsPage} />
               <Route path="/campanhas/:id">
                 {(params) => <CampaignPage key={params.id} id={params.id} />}

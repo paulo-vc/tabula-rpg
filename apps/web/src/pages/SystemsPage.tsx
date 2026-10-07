@@ -1,10 +1,19 @@
 import type { SystemTemplate } from '@tabula/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { DownloadIcon, FileUpIcon, GlobeIcon, Trash2Icon, UploadIcon } from 'lucide-react';
+import {
+  DownloadIcon,
+  FileUpIcon,
+  GlobeIcon,
+  PencilIcon,
+  PencilRulerIcon,
+  Trash2Icon,
+  UploadIcon,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { useServices } from '@/app/services-context';
+import { NewSystemDialog } from '@/components/editor/NewSystemDialog';
 import { PublishDialog } from '@/components/PublishDialog';
 import { useImport } from '@/components/use-import';
 import {
@@ -36,8 +45,10 @@ const SOURCE_LABEL: Record<SystemTemplate['source'], string> = {
 };
 
 export function SystemsPage() {
-  const { catalog, files, sheetRepository } = useServices();
+  const { catalog, editor, files, sheetRepository } = useServices();
   const templates = useLiveQuery(() => catalog.list(), [catalog]);
+  const drafts = useLiveQuery(() => editor.list(), [editor]);
+  const [, navigate] = useLocation();
   const importFile = useImport();
   const [toDelete, setToDelete] = useState<{ template: SystemTemplate; inUse: number } | null>(
     null,
@@ -58,13 +69,32 @@ export function SystemsPage() {
           <Button variant="outline" onClick={importFile}>
             <FileUpIcon /> Importar sistema
           </Button>
-          <Button asChild>
+          <Button variant="outline" asChild>
             <Link href="/sistemas/comunidade">
               <GlobeIcon /> Explorar comunidade
             </Link>
           </Button>
+          <NewSystemDialog />
         </div>
       </div>
+
+      {drafts && drafts.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-muted-foreground text-sm font-medium">Rascunhos em andamento</h2>
+          <ul className="flex flex-wrap gap-2">
+            {drafts.map((draft) => (
+              <li key={draft.id}>
+                <Button variant="secondary" asChild>
+                  <Link href={`/sistemas/editor/${draft.id}`}>
+                    <PencilRulerIcon /> {draft.template.name || 'Sistema sem nome'}
+                    {!draft.editing && <span className="text-muted-foreground">(novo)</span>}
+                  </Link>
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <ul className="grid gap-3 md:grid-cols-2">
         {templates?.map((template) => (
@@ -103,6 +133,18 @@ export function SystemsPage() {
                   >
                     <DownloadIcon /> Exportar
                   </Button>
+                  {template.source === 'local' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const draft = await editor.edit(template.id);
+                        navigate(`/sistemas/editor/${draft.id}`);
+                      }}
+                    >
+                      <PencilIcon /> Editar
+                    </Button>
+                  )}
                   {template.source === 'local' && (
                     <Button variant="outline" size="sm" onClick={() => setToPublish(template)}>
                       <UploadIcon /> Publicar

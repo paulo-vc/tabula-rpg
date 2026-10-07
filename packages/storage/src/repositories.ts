@@ -7,12 +7,14 @@ import {
   type CampaignRepository,
   type CharacterSheet,
   type DeviceRepository,
+  type DraftRepository,
   type Issue,
   type SessionStateRecord,
   type SessionStateRepository,
   type SheetChanges,
   type SheetRepository,
   type SystemTemplate,
+  type TemplateDraft,
   type TemplateRepository,
 } from '@tabula/domain';
 import type { UpdateSpec } from 'dexie';
@@ -187,5 +189,29 @@ export class DexieDeviceRepository implements DeviceRepository {
 
   async setDisplayName(name: string): Promise<void> {
     await this.db.settings.put({ key: DISPLAY_NAME_KEY, value: name.trim().slice(0, 100) });
+  }
+}
+
+/**
+ * Rascunhos do criador de sistemas. Não são validados: podem estar incompletos enquanto
+ * o usuário edita. A validação acontece ao salvar o sistema.
+ */
+export class DexieDraftRepository implements DraftRepository {
+  constructor(private readonly db: TabulaDatabase) {}
+
+  async save(draft: TemplateDraft): Promise<void> {
+    await this.db.drafts.put(draft);
+  }
+
+  get(id: string): Promise<TemplateDraft | undefined> {
+    return this.db.drafts.get(id);
+  }
+
+  list(): Promise<TemplateDraft[]> {
+    return this.db.drafts.orderBy('updatedAt').reverse().toArray();
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.db.drafts.delete(id);
   }
 }

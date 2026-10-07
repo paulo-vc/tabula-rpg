@@ -17,6 +17,27 @@ export interface TemplateRepository {
   delete(id: string): Promise<void>;
 }
 
+/**
+ * Rascunho do criador de sistemas. Pode estar inválido enquanto é editado: só vira um
+ * template instalado (validado) ao salvar.
+ */
+export interface TemplateDraft {
+  id: string;
+  template: SystemTemplate;
+  /** ID do sistema instalado que este rascunho altera; ausente se nunca foi salvo. */
+  editing?: string;
+  updatedAt: number;
+}
+
+export interface DraftRepository {
+  /** Salva ou substitui o rascunho com o mesmo `id`. */
+  save(draft: TemplateDraft): Promise<void>;
+  get(id: string): Promise<TemplateDraft | undefined>;
+  /** Ordenados da alteração mais recente para a mais antiga. */
+  list(): Promise<TemplateDraft[]>;
+  delete(id: string): Promise<void>;
+}
+
 export interface SheetRepository {
   /** Salva ou substitui a ficha com o mesmo `id`. */
   save(sheet: CharacterSheet): Promise<void>;

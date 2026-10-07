@@ -1,6 +1,6 @@
 import { err, ok, type Issue, type Result } from '../result';
-import { compileTemplate } from '../template/compile';
-import { SystemTemplateSchema, type SystemTemplate } from '../template/schema';
+import type { SystemTemplate } from '../template/schema';
+import { validateTemplate as validateCompiled } from '../template/validate';
 import { compareVersions } from '../version';
 import {
   latestVersion,
@@ -32,28 +32,8 @@ function parseJson(text: string, maxBytes: number): Result<unknown, Issue[]> {
 
 /** Schema e regras semânticas (fórmulas, layout) de um template vindo de fora. */
 function validateTemplate(json: unknown): Result<SystemTemplate, Issue[]> {
-  let parsed: ReturnType<typeof SystemTemplateSchema.safeParse>;
-  try {
-    parsed = SystemTemplateSchema.safeParse(json);
-  } catch (error) {
-    if (error instanceof RangeError) {
-      return err([issue('estrutura-invalida', 'O arquivo tem uma estrutura inválida')]);
-    }
-    throw error;
-  }
-  if (!parsed.success) {
-    return err(
-      parsed.error.issues.map((zodIssue) =>
-        issue(
-          'schema-invalido',
-          zodIssue.message,
-          zodIssue.path.filter((p): p is string | number => typeof p !== 'symbol'),
-        ),
-      ),
-    );
-  }
-  const compiled = compileTemplate(parsed.data);
-  return compiled.ok ? ok(parsed.data) : err(compiled.error);
+  const result = validateCompiled(json);
+  return result.ok ? ok(result.value.template) : result;
 }
 
 /** Lê o catálogo baixado do repositório. */
