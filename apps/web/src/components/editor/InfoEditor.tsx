@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import type { ApplyChange } from './use-template-editor';
 
-type Apply = (change: (template: SystemTemplate) => SystemTemplate) => void;
+type Apply = ApplyChange;
 
 const LICENSES = ['CC-BY-4.0', 'CC-BY-SA-4.0', 'CC0-1.0', 'OGL-1.0a', 'ORC', 'MIT'];
 
@@ -44,7 +45,7 @@ export function InfoEditor({
             id={`${base}-nome`}
             value={template.name}
             maxLength={100}
-            onChange={(event) => apply((t) => ({ ...t, name: event.target.value }))}
+            onChange={(event) => apply((t) => ({ ...t, name: event.target.value }), 'nome')}
           />
         </div>
         <div className="space-y-1.5">
@@ -53,7 +54,9 @@ export function InfoEditor({
             id={`${base}-autor`}
             value={template.author ?? ''}
             maxLength={100}
-            onChange={(event) => apply((t) => setOptional(t, 'author', event.target.value))}
+            onChange={(event) =>
+              apply((t) => setOptional(t, 'author', event.target.value), 'autor')
+            }
           />
         </div>
       </div>
@@ -65,7 +68,9 @@ export function InfoEditor({
           rows={3}
           maxLength={2000}
           value={template.description ?? ''}
-          onChange={(event) => apply((t) => setOptional(t, 'description', event.target.value))}
+          onChange={(event) =>
+            apply((t) => setOptional(t, 'description', event.target.value), 'descricao')
+          }
         />
       </div>
 
@@ -78,7 +83,9 @@ export function InfoEditor({
             value={template.license ?? ''}
             maxLength={100}
             placeholder="Necessária para publicar"
-            onChange={(event) => apply((t) => setOptional(t, 'license', event.target.value))}
+            onChange={(event) =>
+              apply((t) => setOptional(t, 'license', event.target.value), 'licenca')
+            }
           />
           <datalist id={`${base}-licencas`}>
             {LICENSES.map((license) => (
@@ -101,7 +108,7 @@ export function InfoEditor({
                   .slice(0, 10);
                 const { tags: _, ...rest } = t;
                 return tags.length > 0 ? { ...rest, tags } : rest;
-              })
+              }, 'etiquetas')
             }
           />
         </div>
@@ -116,7 +123,7 @@ export function InfoEditor({
             readOnly={!idEditable}
             maxLength={64}
             className="font-mono"
-            onChange={(event) => apply((t) => ({ ...t, id: event.target.value }))}
+            onChange={(event) => apply((t) => ({ ...t, id: event.target.value }), 'id')}
           />
           <p className="text-muted-foreground text-xs">
             {idEditable

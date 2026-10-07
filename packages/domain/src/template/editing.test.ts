@@ -10,12 +10,14 @@ import {
   contentChanged,
   copyTemplate,
   createItemField,
+  duplicateField,
   FIELD_TYPE_LABELS,
   fieldsReferencing,
   issuesByField,
   keyFromLabel,
   moveFieldToSection,
   moveNode,
+  moveNodeTo,
   pathOfField,
   removeField,
   removeSection,
@@ -318,5 +320,139 @@ describe('versões e problemas', () => {
     const { byField, general } = issuesByField(template, result.error);
     expect(byField.get('total')?.map((i) => i.code)).toEqual(['referencia-desconhecida']);
     expect(general.map((i) => i.code)).toEqual(['campo-inexistente']);
+  });
+});
+
+describe('6b: colunas, duplicar e arrastar', () => {
+  /** Lista "itens" com colunas peso e qtd, usada por uma fórmula. */
+  const withList = () => {
+    let template = blank();
+    ({ template } = addField(template, 'list', 'Itens', [0]));
+    const list = field(template, 'itens') as FieldDef & { type: 'list' };
+    template = updateField(template, {
+      ...list,
+      itemFields: [
+        ...list.itemFields,
+        createItemField('number', 'Peso', list.itemFields),
+        createItemField('number', 'Qtd', list.itemFields),
+      ],
+    });
+    ({ template } = addField(template, 'computed', 'Carga', [0]));
+    return updateField(template, {
+      ...(field(template, 'carga') as FieldDef & { type: 'computed' }),
+      formula: 'sum(@itens.peso * @itens.qtd) + count(@itens)',
+    });
+  };
+
+  it('renomear uma coluna de lista reescreve as fórmulas', () => {
+    let template = withList();
+    const list = field(template, 'itens') as FieldDef & { type: 'list' };
+    template = updateField(template, {
+      ...list,
+      itemFields: list.itemFields.map((item) =>
+        item.key === 'peso' ? { ...item, key: 'kg' } : item,
+      ),
+    });
+    expect(field(template, 'carga')).toMatchObject({
+      formula: 'sum(@itens.kg * @itens.qtd) + count(@itens)',
+    });
+    expect(compiles(template)).toBe(true);
+  });
+
+  it('renomear a lista e uma coluna ao mesmo tempo', () => {
+    let template = withList();
+    const list = field(template, 'itens') as FieldDef & { type: 'list' };
+    template = updateField(template, {
+      ...list,
+      key: 'mochila',
+      itemFields: list.itemFields.map((item) =>
+        item.key === 'qtd' ? { ...item, key: 'quantidade' } : item,
+      ),
+    });
+    expect(field(template, 'carga')).toMatchObject({
+      formula: 'sum(@mochila.peso * @mochila.quantidade) + count(@mochila)',
+    });
+    expect(compiles(template)).toBe(true);
+  });
+
+  it('referências com ponto não confundem prefixos', () => {
+    expect(renameReference('@a.b + @a.bc + @ab.b', 'a.b', 'a.z')).toBe('@a.z + @a.bc + @ab.b');
+  });
+
+  it('duplica o campo logo abaixo, com apelido novo', () => {
+    let template = withList();
+    const result = duplicateField(template, 'itens');
+    template = result.template;
+    expect(result.fieldId).toBe('itens_2');
+    expect(field(template, 'itens_2')).toMatchObject({ key: 'itens_2', label: 'Itens (cópia)' });
+    expect(outline(template.layouts.full)).toEqual([
+      { Personagem: ['nome', 'itens', 'itens_2', 'carga'] },
+    ]);
+    expect(compiles(template)).toBe(true);
+    // A cópia é independente do original.
+    (field(template, 'itens_2') as FieldDef & { type: 'list' }).itemFields.pop();
+    expect((field(template, 'itens') as FieldDef & { type: 'list' }).itemFields).toHaveLength(3);
+  });
+
+  describe('moveNodeTo', () => {
+    /** A [nome, x], B [y, z], e um campo solto "w" no fim. */
+    const layout = () => {
+      let template = blank();
+      template = updateSection(template, [0], { title: 'A' });
+      ({ template } = addField(template, 'number', 'X', [0]));
+      template = addSection(template, 'B');
+      ({ template } = addField(template, 'number', 'Y', [1]));
+      ({ template } = addField(template, 'number', 'Z', [1]));
+      ({ template } = addField(template, 'number', 'W', null));
+      return template;
+    };
+
+    it.each<[string, number[], number[], number, unknown[]]>([
+      ['desce na mesma seção', [0, 0], [0], 1, [{ A: ['x', 'nome'] }, { B: ['y', 'z'] }, 'w']],
+      ['sobe na mesma seção', [1, 1], [1], 0, [{ A: ['nome', 'x'] }, { B: ['z', 'y'] }, 'w']],
+      ['vai para outra seção', [0, 1], [1], 1, [{ A: ['nome'] }, { B: ['y', 'x', 'z'] }, 'w']],
+      ['vem de outra seção', [1, 0], [0], 0, [{ A: ['y', 'nome', 'x'] }, { B: ['z'] }, 'w']],
+      ['campo solto entra numa seção', [2], [1], 2, [{ A: ['nome', 'x'] }, { B: ['y', 'z', 'w'] }]],
+      [
+        'campo sai para o nível da ficha',
+        [1, 0],
+        [],
+        0,
+        ['y', { A: ['nome', 'x'] }, { B: ['z'] }, 'w'],
+      ],
+      ['troca a ordem das seções', [1], [], 0, [{ B: ['y', 'z'] }, { A: ['nome', 'x'] }, 'w']],
+    ])('%s', (_, from, parent, index, expected) => {
+      const template = moveNodeTo(layout(), from, parent, index);
+      expect(outline(template.layouts.full)).toEqual(expected);
+      expect(compiles(template)).toBe(true);
+    });
+
+    it('não põe uma seção dentro dela mesma nem dentro de um campo', () => {
+      const template = layout();
+      expect(moveNodeTo(template, [0], [0], 0)).toBe(template);
+      expect(moveNodeTo(template, [1, 0], [2], 0)).toBe(template);
+      expect(moveNodeTo(template, [9], [], 0)).toBe(template);
+    });
+
+    it('nenhuma sequência de arrastos perde ou duplica campos', () => {
+      const path = fc.array(fc.nat(3), { minLength: 1, maxLength: 2 });
+      fc.assert(
+        fc.property(
+          fc.array(fc.tuple(path, fc.array(fc.nat(3), { maxLength: 1 }), fc.nat(4)), {
+            maxLength: 15,
+          }),
+          (moves) => {
+            let template = layout();
+            for (const [from, parent, index] of moves) {
+              template = moveNodeTo(template, from, parent, index);
+            }
+            const ids = (nodes: readonly LayoutNode[]): string[] =>
+              nodes.flatMap((n) => (n.kind === 'field' ? [n.fieldId] : ids(n.children)));
+            expect(ids(template.layouts.full).sort()).toEqual(['nome', 'w', 'x', 'y', 'z']);
+            expect(compiles(template)).toBe(true);
+          },
+        ),
+      );
+    });
   });
 });

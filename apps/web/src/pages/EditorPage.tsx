@@ -1,3 +1,4 @@
+import { contentChanged } from '@tabula/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   ArrowLeftIcon,
@@ -6,6 +7,7 @@ import {
   SaveIcon,
   Trash2Icon,
   Undo2Icon,
+  UploadIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -17,6 +19,7 @@ import { InfoEditor } from '@/components/editor/InfoEditor';
 import { describeIssue } from '@/components/editor/issues';
 import { StructureEditor } from '@/components/editor/StructureEditor';
 import { useTemplateEditor } from '@/components/editor/use-template-editor';
+import { PublishDialog } from '@/components/PublishDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,6 +56,7 @@ export function EditorPage({ id }: { id: string }) {
   const [tab, setTab] = useState<Tab>('estrutura');
   const [editing, setEditing] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   const draft = state.status === 'pronto' ? state.draft : undefined;
   const saved = useLiveQuery(
@@ -170,6 +174,20 @@ export function EditorPage({ id }: { id: string }) {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          {saved && (
+            <Button
+              variant="outline"
+              disabled={contentChanged(saved, template)}
+              title={
+                contentChanged(saved, template)
+                  ? 'Salve as alterações antes de publicar'
+                  : 'Publicar na comunidade'
+              }
+              onClick={() => setPublishing(true)}
+            >
+              <UploadIcon /> Publicar
+            </Button>
+          )}
           <Button onClick={save} disabled={saving || problemCount > 0}>
             <SaveIcon /> Salvar sistema
           </Button>
@@ -253,6 +271,11 @@ export function EditorPage({ id }: { id: string }) {
           )}
         </section>
       </div>
+
+      <PublishDialog
+        template={publishing && saved ? saved : null}
+        onClose={() => setPublishing(false)}
+      />
 
       <FieldDialog
         template={template}

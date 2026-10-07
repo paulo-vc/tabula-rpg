@@ -203,18 +203,34 @@ export function addField(
 }
 
 /**
- * Substitui a definição de um campo. Se o apelido mudou, as fórmulas que o usam são
- * reescritas: renomear nunca quebra o sistema.
+ * Substitui a definição de um campo. Se o apelido mudou (do campo ou de uma coluna de
+ * lista), as fórmulas que o usam são reescritas: renomear nunca quebra o sistema.
  */
 export function updateField(template: SystemTemplate, next: FieldDef): SystemTemplate {
   const previous = template.fields.find((f) => f.id === next.id);
   if (!previous) return template;
-  const renamed = previous.key !== next.key;
+  const renames = renamesBetween(previous, next);
   const fields = template.fields.map((field) => {
     const updated = field.id === next.id ? next : field;
-    return renamed ? renameInField(updated, previous.key, next.key) : updated;
+    return renames.reduce((f, [from, to]) => renameInField(f, from, to), updated);
   });
   return { ...template, fields };
+}
+
+/** Pares [de, para] de referências que mudaram de nome (`hp`, `inventario.peso`…). */
+function renamesBetween(previous: FieldDef, next: FieldDef): [string, string][] {
+  const renames: [string, string][] = [];
+  if (previous.key !== next.key) renames.push([previous.key, next.key]);
+  if (previous.type === 'list' && next.type === 'list') {
+    // Depois de renomear a lista, as colunas são procuradas já com o nome novo.
+    for (const item of next.itemFields) {
+      const before = previous.itemFields.find((old) => old.id === item.id);
+      if (before && before.key !== item.key) {
+        renames.push([`${next.key}.${before.key}`, `${next.key}.${item.key}`]);
+      }
+    }
+  }
+  return renames;
 }
 
 function renameInField(field: FieldDef, from: string, to: string): FieldDef {
@@ -226,18 +242,50 @@ function renameInField(field: FieldDef, from: string, to: string): FieldDef {
   return field;
 }
 
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /**
  * Troca `@de` por `@para` numa fórmula, preservando o resto do texto (espaços, textos
- * entre aspas e outras referências que só começam igual, como `@de_mod`).
+ * entre aspas e outras referências que só começam igual, como `@de_mod`). `de` pode ser
+ * uma coluna de lista (`inventario.peso`).
  */
 export function renameReference(formula: string, from: string, to: string): string {
+  const pattern = new RegExp(`@${escapeRegExp(from)}(?![a-z0-9_])`, 'g');
   // Partes ímpares são textos entre aspas, que não são referências.
   return formula
     .split(/("(?:[^"\\]|\\.)*")/)
-    .map((part, index) =>
-      index % 2 === 1 ? part : part.replace(new RegExp(`@${from}(?![a-z0-9_])`, 'g'), `@${to}`),
-    )
+    .map((part, index) => (index % 2 === 1 ? part : part.replace(pattern, `@${to}`)))
     .join('');
+}
+
+/** Cópia de um campo logo abaixo do original, com nome, apelido e ID novos. */
+export function duplicateField(
+  template: SystemTemplate,
+  fieldId: string,
+): { template: SystemTemplate; fieldId: string } {
+  const original = template.fields.find((f) => f.id === fieldId);
+  if (!original) return { template, fieldId };
+  const key = uniqueName(original.key, allKeys(template));
+  const id = uniqueName(key, allIds(template));
+  const copy: FieldDef = {
+    ...(JSON.parse(JSON.stringify(original)) as FieldDef),
+    id,
+    key,
+    label: `${original.label} (cópia)`.slice(0, LIMITS.label),
+  };
+  const path = pathOfField(template.layouts.full, fieldId);
+  const node: LayoutNode = { kind: 'field', fieldId: id };
+  const full = path
+    ? insertAt(template.layouts.full, path.slice(0, -1), (path.at(-1) as number) + 1, node)
+    : [...template.layouts.full, node];
+  return {
+    template: {
+      ...template,
+      fields: [...template.fields, copy],
+      layouts: { ...template.layouts, full },
+    },
+    fieldId: id,
+  };
 }
 
 /** Remove o campo, o lugar dele na ficha e no resumo do Mestre. */
@@ -411,6 +459,43 @@ export function moveNode(template: SystemTemplate, path: NodePath, delta: -1 | 1
   const { nodes, removed } = removeAt(template.layouts.full, path);
   if (!removed) return template;
   return withFull(template, insertAt(nodes, parent, target, removed));
+}
+
+/**
+ * Leva um nó para a posição `index` dentro de `parent` (arrastar e soltar). Na mesma
+ * lista, o nó termina na posição `index` (como `arrayMove`); em outra, entra antes do nó
+ * que estava ali. Uma seção não pode ir para dentro de si mesma.
+ */
+export function moveNodeTo(
+  template: SystemTemplate,
+  from: NodePath,
+  parent: NodePath,
+  index: number,
+): SystemTemplate {
+  const node = nodeAt(template.layouts.full, from);
+  const isInside = parent.length >= from.length && from.every((step, i) => parent[i] === step);
+  if (!node || isInside) return template;
+  if (parent.length > 0 && nodeAt(template.layouts.full, parent)?.kind !== 'section') {
+    return template;
+  }
+  const sameList = from.length === parent.length + 1 && parent.every((step, i) => from[i] === step);
+  if (sameList) {
+    const { nodes } = removeAt(template.layouts.full, from);
+    return withFull(template, insertAt(nodes, parent, index, node));
+  }
+  // Inserir primeiro mantém `parent` válido; depois corrige o caminho de origem, que
+  // anda uma casa se o nó novo entrou antes dele na mesma lista de um ancestral.
+  const inserted = insertAt(template.layouts.full, parent, index, node);
+  const source = [...from];
+  const depth = parent.length;
+  if (
+    source.length > depth &&
+    parent.every((step, i) => source[i] === step) &&
+    (source[depth] as number) >= index
+  ) {
+    source[depth] = (source[depth] as number) + 1;
+  }
+  return withFull(template, removeAt(inserted, source).nodes);
 }
 
 function childrenOf(template: SystemTemplate, path: NodePath): readonly LayoutNode[] | undefined {

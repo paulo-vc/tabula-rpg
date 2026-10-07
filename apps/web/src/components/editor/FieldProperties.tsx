@@ -2,6 +2,7 @@ import {
   createItemField,
   FIELD_TYPE_LABELS,
   ITEM_FIELD_TYPES,
+  KeySchema,
   keyFromLabel,
   uniqueName,
   withType,
@@ -342,7 +343,26 @@ function ItemFieldsEditor({
               </Button>
             </div>
             {open === item.id && (
-              <div className="mt-3 border-t pt-3">
+              <div className="mt-3 space-y-3 border-t pt-3">
+                <Field label="Apelido nas fórmulas" htmlFor={`${base}-apelido-${item.id}`}>
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground font-mono text-sm">@{field.key}.</span>
+                    <Input
+                      id={`${base}-apelido-${item.id}`}
+                      value={item.key}
+                      maxLength={40}
+                      className="font-mono"
+                      aria-invalid={!KeySchema.safeParse(item.key).success}
+                      onChange={(event) =>
+                        update(
+                          items.map((f, i) =>
+                            i === index ? { ...f, key: event.target.value.toLowerCase() } : f,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+                </Field>
                 <FieldProperties
                   field={item}
                   fields={[]}

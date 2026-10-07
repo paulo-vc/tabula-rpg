@@ -185,7 +185,7 @@ export const SystemTemplateSchema = z.object({
   layouts: z.object({
     /** Ficha completa. */
     full: LayoutSchema,
-    /** Variante para telas pequenas. Se ausente, `full` é usado. */
+    /** Reservado para uma variante de telas pequenas. O app ainda não usa: o grid de `full` já se adapta. */
     compact: LayoutSchema.optional(),
     /** Campos exibidos no card do jogador no painel do Mestre (HP, mana, condições…). */
     gmSummary: z.array(IdSchema).max(LIMITS.gmSummary).optional(),

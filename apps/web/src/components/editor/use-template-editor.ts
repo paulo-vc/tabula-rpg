@@ -11,12 +11,22 @@ import { useServices } from '@/app/services-context';
 
 const HISTORY_LIMIT = 100;
 const SAVE_DELAY_MS = 400;
+/** Alterações seguidas do mesmo grupo (ex.: digitar um título) viram um passo só de desfazer. */
+const GROUP_WINDOW_MS = 1500;
 
 interface History {
   past: SystemTemplate[];
   present: SystemTemplate;
   future: SystemTemplate[];
+  /** Grupo da última alteração, para juntar as seguintes. */
+  group?: { key: string; at: number } | undefined;
 }
+
+/** Função que altera o template; `group` junta alterações seguidas num passo de desfazer. */
+export type ApplyChange = (
+  change: (template: SystemTemplate) => SystemTemplate,
+  group?: string,
+) => void;
 
 export type EditorState =
   { status: 'carregando' } | { status: 'inexistente' } | { status: 'pronto'; draft: TemplateDraft };
@@ -73,17 +83,23 @@ export function useTemplateEditor(draftId: string) {
     [flush],
   );
 
-  const apply = useCallback(
-    (change: (template: SystemTemplate) => SystemTemplate) => {
+  const apply: ApplyChange = useCallback(
+    (change, group) => {
+      const now = Date.now();
       setHistory((current) => {
         if (!current) return current;
         const next = change(current.present);
         if (next === current.present) return current;
         persist(next);
+        const sameGroup =
+          group !== undefined &&
+          current.group?.key === group &&
+          now - current.group.at < GROUP_WINDOW_MS;
         return {
-          past: [...current.past, current.present].slice(-HISTORY_LIMIT),
+          past: sameGroup ? current.past : [...current.past, current.present].slice(-HISTORY_LIMIT),
           present: next,
           future: [],
+          group: group === undefined ? undefined : { key: group, at: now },
         };
       });
     },

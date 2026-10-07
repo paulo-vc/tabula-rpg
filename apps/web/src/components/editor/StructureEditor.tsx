@@ -1,10 +1,36 @@
 import {
+  closestCorners,
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  pointerWithin,
+  TouchSensor,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type CollisionDetection,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   addField,
   addSection,
+  duplicateField,
   FIELD_TYPE_LABELS,
   fieldsReferencing,
   moveFieldToSection,
   moveNode,
+  moveNodeTo,
+  nodeAt,
+  pathOfField,
   removeField,
   removeSection,
   updateSection,
@@ -20,8 +46,10 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   CircleAlertIcon,
+  CopyIcon,
+  EllipsisIcon,
   EyeOffIcon,
-  FolderInputIcon,
+  GripVerticalIcon,
   PencilIcon,
   PlusIcon,
   Trash2Icon,
@@ -52,6 +80,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -64,8 +93,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import type { ApplyChange } from './use-template-editor';
 
-type Apply = (change: (template: SystemTemplate) => SystemTemplate) => void;
+type Apply = ApplyChange;
 
 const TYPE_HINTS: Record<FieldType, string> = {
   number: 'Atributos, nível, deslocamento…',
@@ -94,6 +124,93 @@ function sectionsOf(nodes: readonly LayoutNode[], prefix: number[] = []) {
   );
 }
 
+// ---------- Arrastar e soltar ----------
+
+/**
+ * IDs dos itens arrastáveis: `campo:<id>` (campo), `secao:<caminho>` (seção, pela alça) e
+ * `dentro:<caminho>` (área de soltar no fim de uma seção). Durante o arrasto o template
+ * não muda, então caminhos servem de ID.
+ */
+const fieldDragId = (fieldId: string) => `campo:${fieldId}`;
+const sectionDragId = (path: NodePath) => `secao:${path.join('.')}`;
+const insideDropId = (path: NodePath) => `dentro:${path.join('.')}`;
+
+type DragTarget = { kind: 'campo'; fieldId: string } | { kind: 'secao' | 'dentro'; path: number[] };
+
+function parseDragId(id: string | number): DragTarget | null {
+  const [kind, rest = ''] = String(id).split(/:(.*)/s);
+  if (kind === 'campo') return { kind, fieldId: rest };
+  if (kind === 'secao' || kind === 'dentro') {
+    return { kind, path: rest === '' ? [] : rest.split('.').map(Number) };
+  }
+  return null;
+}
+
+/**
+ * Campos caem sobre outros campos ou no fim de uma seção; seções só trocam de lugar
+ * entre si. Com o ponteiro, vale o que está sob ele; com o teclado, o mais próximo.
+ */
+const collision: CollisionDetection = (args) => {
+  const draggingSection = String(args.active.id).startsWith('secao:');
+  const allowed = args.droppableContainers.filter((container) => {
+    const id = String(container.id);
+    return draggingSection ? id.startsWith('secao:') : !id.startsWith('secao:');
+  });
+  const scoped = { ...args, droppableContainers: allowed };
+  const underPointer = pointerWithin(scoped);
+  if (underPointer.length > 0) {
+    // Um campo sob o ponteiro tem prioridade sobre a seção que o contém.
+    const field = underPointer.find((c) => String(c.id).startsWith('campo:'));
+    return field ? [field] : underPointer;
+  }
+  return closestCorners(scoped);
+};
+
+/** Aplica o resultado de um arrasto ao template. */
+export function applyDrop(
+  template: SystemTemplate,
+  activeId: string,
+  overId: string,
+): SystemTemplate {
+  const active = parseDragId(activeId);
+  const over = parseDragId(overId);
+  if (!active || !over || activeId === overId) return template;
+  const full = template.layouts.full;
+
+  if (active.kind === 'secao') {
+    if (over.kind !== 'secao' || over.path.length !== active.path.length) return template;
+    return moveNodeTo(template, active.path, over.path.slice(0, -1), over.path.at(-1) as number);
+  }
+  if (active.kind !== 'campo') return template;
+
+  // Campo fora da ficha: entra primeiro numa seção qualquer, depois vai para o lugar certo.
+  let current = template;
+  let from = pathOfField(full, active.fieldId);
+  if (!from) {
+    const section =
+      over.kind === 'campo' ? pathOfField(full, over.fieldId)?.slice(0, -1) : over.path;
+    if (!section || section.length === 0) return template;
+    current = moveFieldToSection(current, active.fieldId, section);
+    from = pathOfField(current.layouts.full, active.fieldId);
+    if (!from) return template;
+  }
+
+  if (over.kind === 'campo') {
+    const target = pathOfField(current.layouts.full, over.fieldId);
+    if (!target) return current;
+    return moveNodeTo(current, from, target.slice(0, -1), target.at(-1) as number);
+  }
+  // Soltar numa seção (área do fim ou cabeçalho): vai para o fim dela.
+  const section = nodeAt(current.layouts.full, over.path);
+  if (section?.kind !== 'section') return current;
+  const sameSection =
+    from.length === over.path.length + 1 && over.path.every((step, i) => from[i] === step);
+  const end = sameSection ? section.children.length - 1 : section.children.length;
+  return moveNodeTo(current, from, over.path, end);
+}
+
+// ---------- Estrutura ----------
+
 export function StructureEditor({
   template,
   issues,
@@ -107,146 +224,132 @@ export function StructureEditor({
 }) {
   const [adding, setAdding] = useState<NodePath | null>(null);
   const [toDelete, setToDelete] = useState<FieldDef | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
   const fieldsById = new Map(template.fields.map((f) => [f.id, f]));
   const sections = sectionsOf(template.layouts.full);
   const placed = new Set(fieldsIn(template.layouts.full));
   const unplaced = template.fields.filter((f) => !placed.has(f.id));
 
-  const fieldRow = (field: FieldDef, path: NodePath | null, siblings: number) => {
-    const fieldIssues = issues.get(field.id);
-    const index = path?.at(-1) ?? 0;
-    return (
-      <li
-        key={field.id}
-        className={cn(
-          'flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border px-3 py-2',
-          fieldIssues && 'border-destructive/50',
-        )}
-      >
-        <button
-          type="button"
-          className="flex min-w-0 flex-1 flex-col items-start text-left"
-          onClick={() => onEditField(field.id)}
-        >
-          <span className="truncate font-medium">{field.label || 'Campo sem nome'}</span>
-          <span className="text-muted-foreground text-xs">
-            {FIELD_TYPE_LABELS[field.type]} · <code>@{field.key}</code>
-          </span>
-        </button>
-        {fieldIssues && (
-          <Badge variant="destructive" title={fieldIssues.map((i) => i.message).join('\n')}>
-            <CircleAlertIcon /> {fieldIssues.length}
-          </Badge>
-        )}
-        {field.visibility === 'gm' && (
-          <Badge variant="outline" title="Visível só para o Mestre">
-            <EyeOffIcon /> Mestre
-          </Badge>
-        )}
-        <div className="flex">
-          {path && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Subir ${field.label}`}
-                disabled={index === 0}
-                onClick={() => apply((t) => moveNode(t, path, -1))}
-              >
-                <ArrowUpIcon />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Descer ${field.label}`}
-                disabled={index === siblings - 1}
-                onClick={() => apply((t) => moveNode(t, path, 1))}
-              >
-                <ArrowDownIcon />
-              </Button>
-            </>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Mover ${field.label} para outra seção`}
-              >
-                <FolderInputIcon />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Mover para</DropdownMenuLabel>
-              {sections.map((section) => (
-                <DropdownMenuItem
-                  key={section.path.join('.')}
-                  onSelect={() => apply((t) => moveFieldToSection(t, field.id, section.path))}
-                >
-                  {section.title}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Editar ${field.label}`}
-            onClick={() => onEditField(field.id)}
-          >
-            <PencilIcon />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Excluir ${field.label}`}
-            onClick={() => setToDelete(field)}
-          >
-            <Trash2Icon />
-          </Button>
-        </div>
-      </li>
-    );
+  const sensors = useSensors(
+    // Uma pequena distância antes de arrastar mantém os cliques funcionando.
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    // No toque, segurar um instante: deslizar o dedo continua rolando a página.
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const onDragStart = (event: DragStartEvent) => setDragging(String(event.active.id));
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    setDragging(null);
+    if (over) apply((t) => applyDrop(t, String(active.id), String(over.id)));
   };
 
-  const renderNodes = (nodes: readonly LayoutNode[], prefix: number[]) =>
-    nodes.map((node, index) => {
-      const path = [...prefix, index];
-      if (node.kind === 'field') {
-        const field = fieldsById.get(node.fieldId);
-        return field ? fieldRow(field, path, nodes.length) : null;
-      }
-      return (
-        <SectionCard
-          key={`s${path.join('.')}`}
-          node={node}
-          path={path}
-          isFirst={index === 0}
-          isLast={index === nodes.length - 1}
-          apply={apply}
-          onAddField={() => setAdding(path)}
-        >
-          {renderNodes(node.children, path)}
-        </SectionCard>
-      );
-    });
+  const rowFor = (field: FieldDef, path: NodePath | null, siblings: number) => (
+    <FieldRow
+      key={field.id}
+      field={field}
+      path={path}
+      siblings={siblings}
+      issues={issues.get(field.id)}
+      sections={sections}
+      apply={apply}
+      onEdit={() => onEditField(field.id)}
+      onDelete={() => setToDelete(field)}
+      onDuplicate={() => {
+        const result = duplicateField(template, field.id);
+        apply(() => result.template);
+        onEditField(result.fieldId);
+      }}
+    />
+  );
+
+  const renderNodes = (nodes: readonly LayoutNode[], prefix: number[]) => (
+    <SortableContext
+      items={nodes.map((node, index) =>
+        node.kind === 'field' ? fieldDragId(node.fieldId) : sectionDragId([...prefix, index]),
+      )}
+      strategy={verticalListSortingStrategy}
+    >
+      {nodes.map((node, index) => {
+        const path = [...prefix, index];
+        if (node.kind === 'field') {
+          const field = fieldsById.get(node.fieldId);
+          return field ? rowFor(field, path, nodes.length) : null;
+        }
+        return (
+          <SectionCard
+            key={`s${path.join('.')}`}
+            node={node}
+            path={path}
+            isFirst={index === 0}
+            isLast={index === nodes.length - 1}
+            apply={apply}
+            onAddField={() => setAdding(path)}
+          >
+            {renderNodes(node.children, path)}
+          </SectionCard>
+        );
+      })}
+    </SortableContext>
+  );
 
   const referencing = toDelete ? fieldsReferencing(template, toDelete.key) : [];
+  const draggingTarget = dragging ? parseDragId(dragging) : null;
+  const draggingLabel =
+    draggingTarget?.kind === 'campo'
+      ? fieldsById.get(draggingTarget.fieldId)?.label
+      : draggingTarget?.kind === 'secao'
+        ? (() => {
+            const node = nodeAt(template.layouts.full, draggingTarget.path);
+            return node?.kind === 'section' ? node.title : undefined;
+          })()
+        : undefined;
 
   return (
     <div className="space-y-4">
-      <ul className="space-y-4">{renderNodes(template.layouts.full, [])}</ul>
+      <p className="text-muted-foreground text-xs">
+        Arraste pela alça <GripVerticalIcon className="inline size-3.5" /> para reorganizar (no
+        celular, segure um instante antes de arrastar).
+      </p>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={collision}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragCancel={() => setDragging(null)}
+        accessibility={{
+          screenReaderInstructions: {
+            draggable:
+              'Para mover, pressione espaço ou Enter, use as setas e pressione espaço de novo para soltar. Esc cancela.',
+          },
+        }}
+      >
+        <ul className="space-y-4">{renderNodes(template.layouts.full, [])}</ul>
 
-      {unplaced.length > 0 && (
-        <section className="space-y-2 rounded-lg border border-dashed p-3">
-          <h3 className="text-sm font-semibold">Fora da ficha</h3>
-          <p className="text-muted-foreground text-xs">
-            Estes campos aparecem no fim da ficha, em "Outros campos". Use o botão de mover para
-            colocá-los numa seção.
-          </p>
-          <ul className="space-y-2">{unplaced.map((field) => fieldRow(field, null, 0))}</ul>
-        </section>
-      )}
+        {unplaced.length > 0 && (
+          <section className="space-y-2 rounded-lg border border-dashed p-3">
+            <h3 className="text-sm font-semibold">Fora da ficha</h3>
+            <p className="text-muted-foreground text-xs">
+              Estes campos aparecem no fim da ficha, em "Outros campos". Arraste-os para uma seção
+              ou use o menu do campo.
+            </p>
+            <SortableContext
+              items={unplaced.map((field) => fieldDragId(field.id))}
+              strategy={verticalListSortingStrategy}
+            >
+              <ul className="space-y-2">{unplaced.map((field) => rowFor(field, null, 0))}</ul>
+            </SortableContext>
+          </section>
+        )}
+
+        <DragOverlay>
+          {draggingLabel !== undefined && (
+            <div className="bg-card rounded-md border px-3 py-2 font-medium shadow-lg">
+              {draggingLabel || 'Sem nome'}
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
 
       <Button
         variant="outline"
@@ -297,6 +400,133 @@ export function StructureEditor({
   );
 }
 
+function FieldRow({
+  field,
+  path,
+  siblings,
+  issues,
+  sections,
+  apply,
+  onEdit,
+  onDelete,
+  onDuplicate,
+}: {
+  field: FieldDef;
+  path: NodePath | null;
+  siblings: number;
+  issues: Issue[] | undefined;
+  sections: { path: number[]; title: string }[];
+  apply: Apply;
+  onEdit: () => void;
+  onDelete: () => void;
+  onDuplicate: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: fieldDragId(field.id) });
+  const index = path?.at(-1) ?? 0;
+  const name = field.label || 'Campo sem nome';
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
+      className={cn(
+        'bg-card flex items-center gap-2 rounded-md border py-2 pr-1 pl-1',
+        issues && 'border-destructive/50',
+        isDragging && 'opacity-40',
+      )}
+    >
+      <button
+        type="button"
+        ref={setActivatorNodeRef}
+        aria-label={`Arrastar ${name}`}
+        className="text-muted-foreground hover:text-foreground cursor-grab touch-none rounded p-1"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVerticalIcon className="size-4" />
+      </button>
+      <button
+        type="button"
+        className="flex min-w-0 flex-1 flex-col items-start text-left"
+        onClick={onEdit}
+      >
+        <span className="max-w-full truncate font-medium">{name}</span>
+        <span className="text-muted-foreground max-w-full truncate text-xs">
+          {FIELD_TYPE_LABELS[field.type]} · <code>@{field.key}</code>
+        </span>
+      </button>
+      {issues && (
+        <Badge variant="destructive" title={issues.map((i) => i.message).join('\n')}>
+          <CircleAlertIcon /> {issues.length}
+        </Badge>
+      )}
+      {field.visibility === 'gm' && (
+        <Badge variant="outline" title="Visível só para o Mestre">
+          <EyeOffIcon />
+          <span className="hidden sm:inline">Mestre</span>
+        </Badge>
+      )}
+      <Button variant="ghost" size="icon" aria-label={`Editar ${name}`} onClick={onEdit}>
+        <PencilIcon />
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label={`Mais ações para ${name}`}>
+            <EllipsisIcon />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {path && (
+            <>
+              <DropdownMenuItem
+                disabled={index === 0}
+                onSelect={() => apply((t) => moveNode(t, path, -1))}
+              >
+                <ArrowUpIcon /> Subir
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={index === siblings - 1}
+                onSelect={() => apply((t) => moveNode(t, path, 1))}
+              >
+                <ArrowDownIcon /> Descer
+              </DropdownMenuItem>
+            </>
+          )}
+          <DropdownMenuItem onSelect={onDuplicate}>
+            <CopyIcon /> Duplicar
+          </DropdownMenuItem>
+          {sections.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Mover para</DropdownMenuLabel>
+              {sections.map((section) => (
+                <DropdownMenuItem
+                  key={section.path.join('.')}
+                  onSelect={() => apply((t) => moveFieldToSection(t, field.id, section.path))}
+                >
+                  {section.title}
+                </DropdownMenuItem>
+              ))}
+            </>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+            <Trash2Icon /> Excluir
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </li>
+  );
+}
+
 function SectionCard({
   node,
   path,
@@ -316,15 +546,50 @@ function SectionCard({
 }) {
   const base = useId();
   const nested = path.length > 1;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: sectionDragId(path) });
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: insideDropId(path) });
+  const title = node.title || 'Seção sem título';
+
   return (
-    <li className={cn('space-y-3 rounded-lg border p-3', nested ? 'bg-muted/30' : 'bg-card')}>
+    <li
+      ref={setNodeRef}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
+      className={cn(
+        'space-y-3 rounded-lg border p-3',
+        nested ? 'bg-muted/30' : 'bg-card',
+        isDragging && 'opacity-40',
+      )}
+    >
       <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          ref={setActivatorNodeRef}
+          aria-label={`Arrastar seção ${title}`}
+          className="text-muted-foreground hover:text-foreground cursor-grab touch-none rounded p-1"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVerticalIcon className="size-4" />
+        </button>
         <Input
           aria-label="Título da seção"
-          className="min-w-40 flex-1 font-semibold"
+          className="min-w-32 flex-1 font-semibold"
           value={node.title}
           maxLength={100}
-          onChange={(event) => apply((t) => updateSection(t, path, { title: event.target.value }))}
+          onChange={(event) =>
+            apply(
+              (t) => updateSection(t, path, { title: event.target.value }),
+              `titulo:${path.join('.')}`,
+            )
+          }
         />
         <Select
           value={String(node.columns)}
@@ -347,7 +612,7 @@ function SectionCard({
           <Button
             variant="ghost"
             size="icon"
-            aria-label={`Subir seção ${node.title}`}
+            aria-label={`Subir seção ${title}`}
             disabled={isFirst}
             onClick={() => apply((t) => moveNode(t, path, -1))}
           >
@@ -356,7 +621,7 @@ function SectionCard({
           <Button
             variant="ghost"
             size="icon"
-            aria-label={`Descer seção ${node.title}`}
+            aria-label={`Descer seção ${title}`}
             disabled={isLast}
             onClick={() => apply((t) => moveNode(t, path, 1))}
           >
@@ -365,7 +630,7 @@ function SectionCard({
           <Button
             variant="ghost"
             size="icon"
-            aria-label={`Excluir seção ${node.title}`}
+            aria-label={`Excluir seção ${title}`}
             title={node.children.length > 0 ? 'Mova ou exclua os campos antes' : undefined}
             disabled={node.children.length > 0}
             onClick={() => apply((t) => removeSection(t, path))}
@@ -374,11 +639,26 @@ function SectionCard({
           </Button>
         </div>
       </div>
-      {node.children.length === 0 && <p className="text-muted-foreground text-sm">Seção vazia.</p>}
       <ul className="space-y-2">{children}</ul>
-      <Button variant="outline" size="sm" onClick={onAddField}>
-        <PlusIcon /> Campo
-      </Button>
+      {/* Área de soltar no fim da seção (também recebe campos numa seção vazia). */}
+      <div
+        ref={setDropRef}
+        className={cn(
+          'text-muted-foreground rounded-md border border-dashed px-3 py-2 text-sm transition-colors',
+          isOver ? 'border-primary bg-primary/5 text-foreground' : 'border-transparent',
+          node.children.length === 0 && !isOver && 'border-border',
+        )}
+      >
+        {node.children.length === 0 ? 'Seção vazia: arraste campos para cá.' : null}
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(node.children.length === 0 && 'ml-2')}
+          onClick={onAddField}
+        >
+          <PlusIcon /> Campo
+        </Button>
+      </div>
     </li>
   );
 }

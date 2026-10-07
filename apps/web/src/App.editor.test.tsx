@@ -120,7 +120,8 @@ describe('criador de sistemas', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Editar' }));
     await screen.findByRole('heading', { name: 'Minha Fantasia' });
-    await user.click(screen.getByRole('button', { name: 'Excluir Sorte' }));
+    await user.click(screen.getByRole('button', { name: 'Mais ações para Sorte' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Excluir' }));
     await user.click(await screen.findByRole('button', { name: 'Excluir' }));
     await user.click(screen.getByRole('button', { name: 'Salvar sistema' }));
 
@@ -136,7 +137,7 @@ describe('criador de sistemas', () => {
     const titles = screen.getAllByRole('textbox', { name: 'Título da seção' });
     expect(titles.map((t) => (t as HTMLInputElement).value)).toEqual(['Personagem', 'Seção 2']);
 
-    await user.click(screen.getByRole('button', { name: 'Mover Nome para outra seção' }));
+    await user.click(screen.getByRole('button', { name: 'Mais ações para Nome' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Seção 2' }));
     expect(screen.getByRole('button', { name: 'Excluir seção Personagem' })).toBeEnabled();
     await user.click(screen.getByRole('button', { name: 'Excluir seção Personagem' }));
@@ -164,5 +165,77 @@ describe('criador de sistemas', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Salvar sistema' })).toBeEnabled();
     expect(screen.getAllByRole('textbox', { name: 'Título da seção' }).length).toBeGreaterThan(5);
+  });
+});
+
+describe('criador de sistemas: refinamentos', () => {
+  it('duplica um campo e abre a cópia para edição', async () => {
+    const { user } = await openBlankEditor();
+    await user.click(screen.getByRole('button', { name: 'Mais ações para Nome' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Duplicar' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Nome (cópia)' });
+    expect(within(dialog).getByLabelText('Apelido nas fórmulas')).toHaveValue('nome_2');
+  });
+
+  it('renomear uma coluna de lista atualiza a fórmula que a soma', async () => {
+    const { user } = await openBlankEditor();
+    let dialog = await addField(user, 'Itens', 'Lista de itens');
+    await user.click(within(dialog).getByRole('button', { name: /Coluna/ }));
+    await user.click(within(dialog).getAllByRole('button', { name: 'Detalhes' })[1] as HTMLElement);
+    const key = within(dialog).getByLabelText('Apelido nas fórmulas', {
+      selector: '[id$="coluna_2"]',
+    });
+    await user.clear(key);
+    await user.type(key, 'peso');
+    await user.click(within(dialog).getByRole('button', { name: 'Aplicar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    dialog = await addField(user, 'Carga', 'Calculado (fórmula)');
+    const formula = within(dialog).getByLabelText('Fórmula');
+    await user.clear(formula);
+    await user.click(within(dialog).getByRole('button', { name: 'sum(@itens.peso)' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Aplicar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    await user.click(screen.getByRole('button', { name: 'Editar Itens' }));
+    dialog = await screen.findByRole('dialog', { name: 'Itens' });
+    await user.click(within(dialog).getAllByRole('button', { name: 'Detalhes' })[1] as HTMLElement);
+    const renamed = within(dialog).getByLabelText('Apelido nas fórmulas', {
+      selector: '[id$="coluna_2"]',
+    });
+    await user.clear(renamed);
+    await user.type(renamed, 'kg');
+    await user.click(within(dialog).getByRole('button', { name: 'Aplicar' }));
+
+    await user.click(await screen.findByRole('button', { name: 'Editar Carga' }));
+    dialog = await screen.findByRole('dialog', { name: 'Carga' });
+    expect(within(dialog).getByLabelText('Fórmula')).toHaveValue('sum(@itens.kg)');
+  });
+
+  it('digitar um título vira um passo só de desfazer', async () => {
+    const { user } = await openBlankEditor();
+    const title = screen.getByRole('textbox', { name: 'Título da seção' });
+    await user.clear(title);
+    await user.type(title, 'Atributos');
+    expect(title).toHaveValue('Atributos');
+    await user.click(screen.getByRole('button', { name: 'Desfazer' }));
+    expect(screen.getByRole('textbox', { name: 'Título da seção' })).toHaveValue('Personagem');
+  });
+
+  it('publicar direto do editor pede para salvar antes', async () => {
+    const created = await services.editor.createBlank('Minha Fantasia');
+    await services.editor.save(created.id);
+    const draft = await services.editor.edit('minha-fantasia');
+    const user = renderAt(`#/sistemas/editor/${draft.id}`);
+    const publish = await screen.findByRole('button', { name: 'Publicar' });
+    expect(publish).toBeEnabled();
+
+    await user.click(screen.getByRole('button', { name: 'Nova seção' }));
+    expect(screen.getByRole('button', { name: 'Publicar' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Desfazer' }));
+    await user.click(screen.getByRole('button', { name: 'Publicar' }));
+    expect(
+      await screen.findByRole('dialog', { name: /Publicar "Minha Fantasia"/ }),
+    ).toBeInTheDocument();
   });
 });
