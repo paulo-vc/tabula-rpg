@@ -25,7 +25,7 @@ export default tseslint.config(
     rules: reactHooks.configs.recommended.rules,
   },
   {
-    files: ['*.{js,cjs}', 'scripts/**/*.mjs'],
+    files: ['*.{js,cjs}', 'scripts/**/*.mjs', 'tools/*/scripts/**/*.mjs'],
     languageOptions: { globals: globals.node },
   },
   prettier,

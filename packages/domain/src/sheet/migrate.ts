@@ -1,4 +1,5 @@
 import type { CompiledTemplate } from '../template/compile';
+import { compareVersions, parseVersion } from '../version';
 import type { SystemTemplate, TemplateRef } from '../template/schema';
 import type { CharacterSheet, FieldValue, SheetValues } from './schema';
 import { defaultValue, valueProblem } from './values';
@@ -12,17 +13,6 @@ export type Compatibility =
   | { kind: 'versao-anterior' }
   /** Outro sistema: a ficha não serve para este template. */
   | { kind: 'outro-sistema' };
-
-const parseVersion = (version: string) =>
-  version.split('.').map(Number) as [number, number, number];
-
-function compareVersions(a: string, b: string): number {
-  const [x, y] = [parseVersion(a), parseVersion(b)];
-  for (let i = 0; i < 3; i++) {
-    if (x[i] !== y[i]) return (x[i] as number) - (y[i] as number);
-  }
-  return 0;
-}
 
 /** Compara a referência de uma ficha com um template (ex.: o template oficial de uma campanha). */
 export function checkCompatibility(ref: TemplateRef, template: SystemTemplate): Compatibility {

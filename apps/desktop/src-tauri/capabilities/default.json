@@ -3,5 +3,11 @@
   "identifier": "default",
   "description": "Permissões mínimas da janela principal. Cada nova permissão deve ser justificada no PR.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": [
+    "core:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://github.com/*" }]
+    }
+  ]
 }

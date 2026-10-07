@@ -1,0 +1,31 @@
+name: Verificar
+
+# Pedidos de inclusão feitos à mão passam pelas mesmas verificações da publicação.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node scripts/tabula-registry.mjs check
+      - name: Versões publicadas não mudam
+        env:
+          BASE: ${{ github.base_ref }}
+        run: |
+          changed=$(git diff --name-only --diff-filter=MDR "origin/$BASE...HEAD" -- 'templates/*/*.json' | grep -v '/registro\.json$' || true)
+          if [ -n "$changed" ]; then
+            echo "::error::Versões publicadas não podem ser alteradas nem removidas. Publique uma versão nova."
+            echo "$changed"
+            exit 1
+          fi

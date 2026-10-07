@@ -1,6 +1,6 @@
 {
   "name": "@tabula/web",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,6 +16,7 @@
     "@tabula/storage": "workspace:*",
     "@tabula/sync": "workspace:*",
     "@tabula/templates": "workspace:*",
+    "@tauri-apps/plugin-opener": "^2.7.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "dexie": "^4.4.6",

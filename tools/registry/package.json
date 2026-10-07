@@ -1,0 +1,24 @@
+{
+  "name": "@tabula/registry",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Automação do repositório de sistemas da comunidade: valida pedidos de publicação e gera o catálogo. Empacotada num único arquivo usado pelos workflows do repositório.",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "export": "vite build && node scripts/export.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tabula/domain": "workspace:*",
+    "@tabula/templates": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
+  }
+}

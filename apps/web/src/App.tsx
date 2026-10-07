@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { CampaignPage } from '@/pages/CampaignPage';
 import { CampaignsPage } from '@/pages/CampaignsPage';
+import { CommunityPage } from '@/pages/CommunityPage';
 import { HomePage } from '@/pages/HomePage';
 import { InvitePage } from '@/pages/InvitePage';
 import { SheetPage } from '@/pages/SheetPage';
@@ -25,6 +26,7 @@ export function App({ services }: { services: Services }) {
             <Switch>
               <Route path="/" component={HomePage} />
               <Route path="/sistemas" component={SystemsPage} />
+              <Route path="/sistemas/comunidade" component={CommunityPage} />
               <Route path="/campanhas" component={CampaignsPage} />
               <Route path="/campanhas/:id">
                 {(params) => <CampaignPage key={params.id} id={params.id} />}

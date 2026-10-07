@@ -1,9 +1,11 @@
 import type { SystemTemplate } from '@tabula/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { DownloadIcon, FileUpIcon, Trash2Icon } from 'lucide-react';
-import { useState } from 'react';
+import { DownloadIcon, FileUpIcon, GlobeIcon, Trash2Icon, UploadIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Link } from 'wouter';
 import { useServices } from '@/app/services-context';
+import { PublishDialog } from '@/components/PublishDialog';
 import { useImport } from '@/components/use-import';
 import {
   AlertDialog,
@@ -40,6 +42,8 @@ export function SystemsPage() {
   const [toDelete, setToDelete] = useState<{ template: SystemTemplate; inUse: number } | null>(
     null,
   );
+  const [toPublish, setToPublish] = useState<SystemTemplate | null>(null);
+  const updates = useUpdates(templates);
 
   const askDelete = async (template: SystemTemplate) => {
     const inUse = (await sheetRepository.listByTemplate(template.id)).length;
@@ -50,9 +54,16 @@ export function SystemsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Sistemas</h1>
-        <Button variant="outline" onClick={importFile}>
-          <FileUpIcon /> Importar sistema
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={importFile}>
+            <FileUpIcon /> Importar sistema
+          </Button>
+          <Button asChild>
+            <Link href="/sistemas/comunidade">
+              <GlobeIcon /> Explorar comunidade
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <ul className="grid gap-3 md:grid-cols-2">
@@ -67,19 +78,24 @@ export function SystemsPage() {
                   {template.license && ` · ${template.license}`}
                 </CardDescription>
                 <CardAction className="flex gap-1">
+                  {updates.has(template.id) && (
+                    <Badge asChild>
+                      <Link href="/sistemas/comunidade">Versão {updates.get(template.id)}</Link>
+                    </Badge>
+                  )}
                   <Badge variant="secondary">{SOURCE_LABEL[template.source]}</Badge>
                 </CardAction>
               </CardHeader>
               <CardContent className="space-y-3">
                 {template.description && (
                   <p
-                    className="text-muted-foreground line-clamp-4 text-sm"
+                    className="text-muted-foreground line-clamp-4 text-sm wrap-anywhere"
                     title={template.description}
                   >
                     {template.description}
                   </p>
                 )}
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -87,6 +103,11 @@ export function SystemsPage() {
                   >
                     <DownloadIcon /> Exportar
                   </Button>
+                  {template.source === 'local' && (
+                    <Button variant="outline" size="sm" onClick={() => setToPublish(template)}>
+                      <UploadIcon /> Publicar
+                    </Button>
+                  )}
                   {template.source !== 'builtin' && (
                     <Button variant="ghost" size="sm" onClick={() => askDelete(template)}>
                       <Trash2Icon /> Remover
@@ -98,6 +119,8 @@ export function SystemsPage() {
           </li>
         ))}
       </ul>
+
+      <PublishDialog template={toPublish} onClose={() => setToPublish(null)} />
 
       <AlertDialog open={toDelete !== null} onOpenChange={(open) => !open && setToDelete(null)}>
         <AlertDialogContent>
@@ -127,4 +150,29 @@ export function SystemsPage() {
       </AlertDialog>
     </div>
   );
+}
+
+/**
+ * Versões novas dos sistemas da comunidade instalados. Consulta o catálogo em segundo
+ * plano; sem internet, simplesmente não mostra nada.
+ */
+function useUpdates(templates: SystemTemplate[] | undefined): Map<string, string> {
+  const { registry } = useServices();
+  const [updates, setUpdates] = useState(new Map<string, string>());
+  const hasCommunity = templates?.some((template) => template.source === 'community') ?? false;
+
+  useEffect(() => {
+    if (!hasCommunity) return;
+    let active = true;
+    registry
+      .loadIndex()
+      .then((index) => registry.updates(index))
+      .then((found) => active && setUpdates(found))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [registry, hasCommunity, templates]);
+
+  return updates;
 }

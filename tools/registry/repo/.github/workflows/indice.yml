@@ -1,0 +1,39 @@
+name: Atualizar catálogo
+
+# Regenera o index.json quando um sistema entra na main e limpa o cache da CDN, para o
+# app ver a novidade em minutos.
+on:
+  push:
+    branches: [main]
+    paths: ['templates/**', 'scripts/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: indice
+  cancel-in-progress: false
+
+jobs:
+  indice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node scripts/tabula-registry.mjs index
+      - name: Gravar o catálogo
+        run: |
+          if git diff --quiet -- index.json; then
+            echo "Catálogo sem mudanças."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Atualizar catálogo"
+          git push
+      - name: Limpar o cache da CDN
+        run: curl -fsS --retry 3 "https://purge.jsdelivr.net/gh/${GITHUB_REPOSITORY}@main/index.json"

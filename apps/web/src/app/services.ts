@@ -12,6 +12,8 @@ import { TemplateCatalog } from './catalog';
 import { FileService } from './files';
 import { randomSecret } from './invite-link';
 import { LiveSessionManager, type TransportFactory } from './live-session';
+import { RegistryService, type RegistrySource, type Sha256 } from './registry';
+import { HttpRegistrySource, webSha256 } from './registry-http';
 import { SheetService, type Clock, type IdGenerator } from './sheets';
 
 /** Raiz de composição: liga as portas do domínio às implementações concretas. */
@@ -21,6 +23,7 @@ export interface Services {
   files: FileService;
   campaigns: CampaignService;
   session: LiveSessionManager;
+  registry: RegistryService;
   device: DexieDeviceRepository;
   /** Repositórios para consultas reativas (listas). */
   sheetRepository: DexieSheetRepository;
@@ -33,6 +36,10 @@ export interface ServiceOptions {
   newSecret?: () => string;
   /** Transporte da sessão ao vivo: WebRTC no app; rede em memória nos testes. */
   createTransport?: TransportFactory;
+  /** Repositório de sistemas da comunidade: CDN no app; memória nos testes. */
+  registrySource?: RegistrySource;
+  sha256?: Sha256;
+  appVersion?: string;
 }
 
 export function createServices(
@@ -44,6 +51,9 @@ export function createServices(
     createTransport = () => {
       throw new Error('Transporte da sessão não configurado');
     },
+    registrySource = new HttpRegistrySource(),
+    sha256 = webSha256,
+    appVersion = __APP_VERSION__,
   }: ServiceOptions = {},
 ): Services {
   const sheetRepository = new DexieSheetRepository(db);
@@ -61,6 +71,7 @@ export function createServices(
     campaignRepository,
     sheets,
     files,
+    registry: new RegistryService(registrySource, catalog, files, sha256, appVersion),
     session: new LiveSessionManager(
       campaignRepository,
       sheetRepository,

@@ -47,3 +47,17 @@ export {
   serializeExport,
   type ExportEnvelope,
 } from './export/envelope';
+
+export { compareVersions } from './version';
+
+export * from './registry/schema';
+export {
+  addVersion,
+  parseRegistryIndex,
+  parseTemplateFile,
+  prepareSubmission,
+  serializeIndex,
+  serializeTemplateFile,
+  type PublishedFile,
+  type SubmissionContext,
+} from './registry/operations';

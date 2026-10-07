@@ -1,0 +1,44 @@
+name: Publicar sistema
+description: Envie um sistema criado no Tabula RPG para a comunidade.
+title: 'Publicar: '
+labels: [publicar]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por compartilhar! No app, use **Sistemas → Publicar**: ele baixa o arquivo e abre esta página.
+        Uma verificação automática responde nesta issue em poucos minutos.
+  - type: textarea
+    id: arquivo
+    attributes:
+      label: Arquivo do sistema
+      description: Arraste para cá o arquivo `.sistema.json` baixado pelo app.
+    validations:
+      required: true
+  - type: dropdown
+    id: licenca
+    attributes:
+      label: Licença
+      description: Como outras pessoas podem usar o seu sistema. Na dúvida, escolha CC-BY-4.0.
+      options:
+        - CC-BY-4.0
+        - CC-BY-SA-4.0
+        - CC0-1.0
+        - OGL-1.0a
+        - ORC
+        - MIT
+        - A que está no arquivo
+    validations:
+      required: true
+  - type: input
+    id: autor
+    attributes:
+      label: Autor
+      description: Nome exibido no app. Se ficar vazio, usamos o do arquivo ou o seu usuário do GitHub.
+  - type: checkboxes
+    id: confirmacao
+    attributes:
+      label: Confirmação
+      options:
+        - label: Tenho o direito de publicar este conteúdo e ele não copia textos de livros protegidos.
+          required: true

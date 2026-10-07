@@ -1,13 +1,20 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
+
+const { version } = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf-8'),
+) as { version: string };
 
 // O app desktop (Tauri) carrega este mesmo frontend. Porta fixa para o `devUrl` do Tauri.
 export default defineConfig({
   // Caminhos relativos: o mesmo build funciona no GitHub Pages (subpasta) e no app desktop.
   base: './',
+  // Versão do app: sistemas da comunidade podem exigir uma versão mínima.
+  define: { __APP_VERSION__: JSON.stringify(version) },
   plugins: [
     react(),
     tailwindcss(),

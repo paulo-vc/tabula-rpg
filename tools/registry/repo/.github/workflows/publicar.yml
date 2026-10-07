@@ -1,0 +1,60 @@
+name: Publicar sistema
+
+# Uma issue do formulário "Publicar sistema" é verificada e, se estiver tudo certo, vira
+# um pedido de inclusão (PR) para revisão. O conteúdo da issue nunca é interpolado em
+# comandos: a CLI lê o evento direto do arquivo.
+on:
+  issues:
+    types: [opened, edited, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: publicar-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    if: github.event.issue.state == 'open' && contains(github.event.issue.labels.*.name, 'publicar')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Verificar o sistema
+        id: verificar
+        run: node scripts/tabula-registry.mjs ingest "$RUNNER_TEMP/relatorio.md"
+
+      - name: Abrir pedido de inclusão
+        if: steps.verificar.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ID: ${{ steps.verificar.outputs.id }}
+          VERSAO: ${{ steps.verificar.outputs.version }}
+          ISSUE: ${{ github.event.issue.number }}
+          AUTOR: ${{ github.event.issue.user.login }}
+        run: |
+          branch="publicar/$ID-$VERSAO"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add templates
+          git commit -m "Publicar $ID $VERSAO" -m "Pedido de @$AUTOR em #$ISSUE"
+          git push --force origin "$branch"
+          if ! gh pr view "$branch" > /dev/null 2>&1; then
+            gh pr create --head "$branch" --base main \
+              --title "Publicar $ID $VERSAO" \
+              --body "Pedido de @$AUTOR. Closes #$ISSUE"
+          fi
+
+      - name: Responder na issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: gh issue comment "$ISSUE" --body-file "$RUNNER_TEMP/relatorio.md"

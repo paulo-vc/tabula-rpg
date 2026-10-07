@@ -25,6 +25,10 @@ packages/
 apps/
   web/         Interface React. Também é o frontend do app desktop.
   desktop/     Shell Tauri que empacota o `web` como instalador/executável.
+tools/
+  conn-test/   Protótipo de teste de conexão P2P (Fase 3).
+  registry/    Automação do repositório de sistemas da comunidade (CLI empacotada num
+               único arquivo) e o esqueleto desse repositório (`repo/`).
 ```
 
 Regras de dependência, verificadas no CI por `dependency-cruiser` (`pnpm depcheck`):
@@ -110,6 +114,7 @@ Implementado em `packages/domain`:
 - **Compilar uma vez, avaliar muitas:** `compileTemplate` valida as regras semânticas (unicidade, referências, ciclos, layout) e pré-processa as fórmulas. `computeDerived` recalcula a ficha a cada alteração.
 - **Migração sem perda:** ao atualizar o template, `migrateSheet` preserva valores compatíveis, preenche campos novos e guarda os removidos em `orphaned`, restaurando-os se o campo voltar.
 - **Fronteira de confiança:** todo arquivo externo entra por `parseExport`, que verifica tamanho (2 MB), JSON, versão do formato, schema Zod, limites de tamanho, IDs reservados (contra poluição de protótipo) e regras semânticas do template.
+- **Sistemas da comunidade:** o app lê o catálogo (`index.json`) e os arquivos pela CDN jsDelivr, com o GitHub direto como reserva. Cada arquivo é conferido pelo hash SHA-256 do catálogo e passa pela mesma validação de um arquivo importado (`parseTemplateFile`). As regras de publicação (`prepareSubmission`: licença, posse do `id`, versão maior) ficam no domínio e são as mesmas na automação do repositório. Ver [ADR 0006](adr/0006-repositorio-de-templates.md).
 - **Domínio determinístico:** IDs e horários são injetados por quem chama; o domínio não usa `Date.now()`, aleatoriedade ou APIs do navegador/Node.
 
 ## Roadmap
@@ -121,6 +126,6 @@ Implementado em `packages/domain`:
 | **2** | Fichas locais: persistência, renderização a partir do template, D&D 5e (SRD), import/export                              |
 | **3** | **Mesa + sync em tempo real** (protótipo de teste de conexão primeiro). Primeira versão pública: **v0.1**                |
 | **4** | Fórmulas avançadas: somas e contagens em listas, seleções com valor numérico, `is()`, efeitos temporários (D&D 5e 1.1.0) |
-| **5** | Repositório de templates da comunidade, com instalação dentro do app                                                     |
+| **5** | Repositório de templates da comunidade: explorar, instalar e atualizar no app; publicar por formulário, sem Git          |
 | **6** | Criador visual de sistemas, com "Publicar na comunidade"                                                                 |
 | **7** | Mesa avançada: Mestre edita fichas, campos secretos, rolagens, log da sessão                                             |
