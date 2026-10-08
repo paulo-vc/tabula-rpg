@@ -123,7 +123,7 @@ export class RegistryService {
     if (status.kind === 'requer-app-novo') {
       return failure(
         'requer-app-novo',
-        `"${entry.name}" precisa do Tabula ${status.minAppVersion} ou mais novo. Atualize o app.`,
+        `"${entry.name}" precisa do Tabularium ${status.minAppVersion} ou mais novo. Atualize o app.`,
       );
     }
 

@@ -34,12 +34,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 sm:gap-4">
           <Link
             href="/"
-            aria-label="Tabula RPG"
+            aria-label="Tabularium"
             className="flex shrink-0 items-center gap-2 font-semibold"
           >
             <img src="icon.svg" alt="" className="size-6" />
             {/* Em telas estreitas, só o ícone: o menu e o indicador de sessão precisam do espaço. */}
-            <span className="hidden sm:inline">Tabula RPG</span>
+            <span className="font-brand hidden text-lg tracking-wide sm:inline">Tabularium</span>
           </Link>
           <nav aria-label="Principal" className="flex min-w-0 gap-1">
             <NavLink href="/" also="/fichas/*">
@@ -57,7 +57,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
       <footer className="text-muted-foreground mx-auto flex max-w-6xl flex-wrap gap-x-4 gap-y-1 px-4 pb-6 text-xs">
-        <span>Tabula RPG {__APP_VERSION__}</span>
+        <span>Tabularium {__APP_VERSION__}</span>
         <a
           href={newIssueUrl}
           className="hover:text-foreground underline-offset-2 hover:underline"

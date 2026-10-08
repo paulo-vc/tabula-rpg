@@ -161,7 +161,7 @@ describe('formatReport', () => {
   it('resume a rede e cada conexão', () => {
     expect(formatReport(base)).toBe(
       [
-        '== Tabula RPG — teste de conexão ==',
+        '== Tabularium — teste de conexão ==',
         'Participante: Ana',
         'Rede: Fibra',
         'Navegador: Chrome',
