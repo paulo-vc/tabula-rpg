@@ -23,12 +23,12 @@ export default defineConfig({
       // No app desktop (Tauri) os arquivos já são locais: service worker é desnecessário.
       disable: Boolean(process.env.TAURI_ENV_PLATFORM),
       manifest: {
-        name: 'Tabula RPG',
-        short_name: 'Tabula',
-        description: 'Fichas de RPG de mesa com sincronização em tempo real.',
+        name: 'Tabularium',
+        short_name: 'Tabularium',
+        description: 'Fichas de RPG de mesa com sessão ao vivo para o Mestre.',
         lang: 'pt-BR',
-        theme_color: '#4c1d95',
-        background_color: '#09090b',
+        theme_color: '#8a3418',
+        background_color: '#1c1714',
         display: 'standalone',
         start_url: './',
         icons: [

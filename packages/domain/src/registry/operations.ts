@@ -111,7 +111,7 @@ export function prepareSubmission(
   }
   if (kind === 'tabula/template') payload = (payload as { payload?: unknown }).payload;
   if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
-    return err([issue('schema-invalido', 'O arquivo não contém um sistema do Tabula')]);
+    return err([issue('schema-invalido', 'O arquivo não contém um sistema do Tabularium')]);
   }
 
   const fromFile = payload as { license?: unknown; author?: unknown };

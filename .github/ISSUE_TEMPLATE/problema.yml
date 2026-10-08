@@ -23,7 +23,7 @@ body:
     id: versao
     attributes:
       label: Versão
-      description: 'Aparece no rodapé do app (ex.: Tabula RPG 0.1.0).'
+      description: 'Aparece no rodapé do app (ex.: Tabularium 0.2.0).'
   - type: dropdown
     id: sessao
     attributes:

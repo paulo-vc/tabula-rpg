@@ -1,7 +1,7 @@
 [package]
 name = "tabula-desktop"
 version = "0.1.0"
-description = "Tabula RPG — shell desktop"
+description = "Tabularium — shell desktop"
 authors = ["Paulo Vinicius"]
 license = "MIT"
 repository = "https://github.com/paulo-vc/tabula-rpg"
