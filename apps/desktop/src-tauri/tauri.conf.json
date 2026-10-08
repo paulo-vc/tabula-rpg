@@ -41,7 +41,22 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser",
-        "languages": ["PortugueseBR", "English"]
+        "languages": [
+          "PortugueseBR",
+          "English"
+        ]
+      }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE3NzA3N0I4MEJCN0ZDQjQKUldTMC9MY0x1SGR3RitGd1h2LzdQbEJoMHdQb0pVaDRod1djTzVIYUFLV1JIN0RVRVI1YUdpcVYK",
+      "endpoints": [
+        "https://github.com/paulo-vc/tabula-rpg/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
       }
     }
   }

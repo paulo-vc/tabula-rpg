@@ -32,7 +32,7 @@ A conexão direta funciona na grande maioria das redes domésticas e no 4G. Em a
 
 - Sem contas, sem anúncios, sem coleta de dados.
 - Fichas, campanhas e sistemas ficam no armazenamento do seu aparelho. Durante a sessão, a ficha vai só para o Mestre da campanha, criptografada.
-- O app consulta o GitHub para listar os sistemas da comunidade e, no desktop, para avisar de versões novas.
+- O app consulta o GitHub para listar os sistemas da comunidade e, no desktop, para buscar atualizações (que só são instaladas se tiverem a assinatura do projeto).
 
 ## Sistemas incluídos e licenças
 
@@ -49,6 +49,7 @@ Pré-requisitos: **Node.js 24+** e **pnpm** (via `corepack enable pnpm`). Para o
 pnpm install
 pnpm dev            # app web em http://localhost:5173
 pnpm desktop:dev    # app desktop (requer Rust)
+pnpm desktop:build:local  # instalador local, sem a assinatura de atualização
 pnpm check          # tudo que o CI verifica
 ```
 
