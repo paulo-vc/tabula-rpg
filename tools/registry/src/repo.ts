@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import type { Dirent } from 'node:fs';
 import { dirname, join } from 'node:path';
 import {
   addVersion,
@@ -40,6 +41,8 @@ export interface RepoTemplate {
   files: Map<string, Uint8Array>;
   /** Arquivos com nome fora do padrão (são erro). */
   stray: string[];
+  /** Um arquivo solto em `templates/`, no lugar de uma pasta de sistema (é erro). */
+  isFile?: boolean;
 }
 
 export type RepoState = Map<string, RepoTemplate>;
@@ -52,18 +55,27 @@ export interface RepoWrite {
 
 export const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 
+const byName = (a: Dirent, b: Dirent) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+
 export async function readRepo(root: string): Promise<RepoState> {
   const state: RepoState = new Map();
-  let ids: string[];
+  let entries: Dirent[];
   try {
-    ids = await readdir(join(root, 'templates'));
+    entries = await readdir(join(root, 'templates'), { withFileTypes: true });
   } catch {
     return state; // repositório ainda vazio
   }
-  for (const id of ids.sort()) {
+  // Arquivos ocultos (.gitkeep, que mantém a pasta no Git) não são sistemas.
+  const visible = (name: string) => !name.startsWith('.');
+  for (const entry of entries.filter((e) => visible(e.name)).sort(byName)) {
+    const id = entry.name;
+    if (!entry.isDirectory()) {
+      state.set(id, { record: undefined, files: new Map(), stray: [], isFile: true });
+      continue;
+    }
     const dir = join(root, 'templates', id);
     const template: RepoTemplate = { record: undefined, files: new Map(), stray: [] };
-    for (const name of (await readdir(dir)).sort()) {
+    for (const name of (await readdir(dir)).filter(visible).sort()) {
       const path = `templates/${id}/${name}`;
       if (name === 'registro.json') {
         template.record = JSON.parse(await readFile(join(dir, name), 'utf-8'));
@@ -105,6 +117,12 @@ export function buildIndex(state: RepoState): Result<RegistryIndex, Issue[]> {
   let updatedAt = index.updatedAt;
 
   for (const [id, template] of state) {
+    if (template.isFile) {
+      problems.push(
+        problem(`templates/${id}`, 'Arquivo fora do padrão: cada sistema fica numa pasta'),
+      );
+      continue;
+    }
     if (!IdSchema.safeParse(id).success) {
       problems.push(problem(`templates/${id}`, 'Pasta com id inválido'));
       continue;
