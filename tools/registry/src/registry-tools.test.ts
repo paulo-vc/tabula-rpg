@@ -206,6 +206,22 @@ describe('repositório e publicação', () => {
     ]);
   });
 
+  it('ignora arquivos ocultos (.gitkeep) e aponta arquivos soltos', async () => {
+    await applyWrites(root, [
+      { path: 'templates/.gitkeep', content: '' },
+      { path: 'templates/.DS_Store', content: 'x' },
+    ]);
+    expect(buildIndex(await readRepo(root))).toMatchObject({ ok: true, value: { templates: [] } });
+
+    await publish();
+    await applyWrites(root, [
+      { path: 'templates/ordem/.gitkeep', content: '' },
+      { path: 'templates/solto.json', content: '{}' },
+    ]);
+    const result = buildIndex(await readRepo(root));
+    expect(result.ok ? [] : result.error.map((i) => i.path[0])).toEqual(['templates/solto.json']);
+  });
+
   it('repositório vazio gera catálogo vazio', async () => {
     expect(buildIndex(await readRepo(root))).toMatchObject({ ok: true, value: { templates: [] } });
   });

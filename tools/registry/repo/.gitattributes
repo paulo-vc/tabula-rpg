@@ -1,0 +1,3 @@
+# Os sistemas são conferidos pelo hash SHA-256 dos bytes: o arquivo precisa ser idêntico
+# em qualquer sistema operacional (sem conversão de quebra de linha).
+* text=auto eol=lf
