@@ -1,0 +1,11 @@
+name: Sugerir uma ideia
+description: Uma funcionalidade ou melhoria.
+labels: [ideia]
+body:
+  - type: textarea
+    id: ideia
+    attributes:
+      label: Qual a ideia?
+      description: O que você gostaria de fazer no app e por quê.
+    validations:
+      required: true

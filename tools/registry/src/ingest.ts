@@ -64,6 +64,23 @@ export async function ingest(input: IngestInput): Promise<Result<Ingested, Issue
     }
   }
 
+  return publish(text, { ...input, license: form.license, author: form.author });
+}
+
+export interface PublishInput {
+  submitter: string;
+  now: string;
+  repo: RepoState;
+  builtinIds: readonly string[];
+  license?: string | undefined;
+  author?: string | undefined;
+}
+
+/**
+ * Valida um sistema e gera os arquivos a incluir no repositório. Usado pela automação
+ * (issue de publicação) e pela moderação (`add`, para incluir um arquivo diretamente).
+ */
+export function publish(text: string, input: PublishInput): Result<Ingested, Issue[]> {
   const index = buildIndex(input.repo);
   if (!index.ok) {
     return failure('repositorio-invalido', 'O repositório está inconsistente. Avise a moderação.');
@@ -73,8 +90,8 @@ export async function ingest(input: IngestInput): Promise<Result<Ingested, Issue
     index: index.value,
     submitter: input.submitter,
     builtinIds: input.builtinIds,
-    license: form.license,
-    author: form.author,
+    license: input.license,
+    author: input.author,
   });
   if (!prepared.ok) return prepared;
   const template = prepared.value;

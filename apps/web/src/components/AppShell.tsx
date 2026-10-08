@@ -4,6 +4,9 @@ import { cn } from '@/lib/utils';
 import { GmChangeNotice } from './live/GmChangeNotice';
 import { LiveSessionIndicator } from './live/LiveSessionIndicator';
 import { RollNotice } from './live/RollNotice';
+import { UpdateNotice } from './UpdateNotice';
+import { newIssueUrl } from '@/app/updates';
+import { openExternal } from '@/lib/open-external';
 
 /** `also`: outras rotas que pertencem à mesma seção (ex.: uma ficha pertence a "Fichas"). */
 function NavLink({ href, also, children }: { href: string; also?: string; children: ReactNode }) {
@@ -53,6 +56,20 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+      <footer className="text-muted-foreground mx-auto flex max-w-6xl flex-wrap gap-x-4 gap-y-1 px-4 pb-6 text-xs">
+        <span>Tabula RPG {__APP_VERSION__}</span>
+        <a
+          href={newIssueUrl}
+          className="hover:text-foreground underline-offset-2 hover:underline"
+          onClick={(event) => {
+            event.preventDefault();
+            void openExternal(newIssueUrl);
+          }}
+        >
+          Reportar um problema
+        </a>
+      </footer>
+      <UpdateNotice />
       <GmChangeNotice />
       <RollNotice />
     </div>

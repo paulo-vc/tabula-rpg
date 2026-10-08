@@ -1,0 +1,39 @@
+name: Reportar um problema
+description: Algo não funcionou como esperado.
+labels: [bug]
+body:
+  - type: textarea
+    id: oque
+    attributes:
+      label: O que aconteceu?
+      description: Conte o que você fez, o que esperava e o que aconteceu.
+    validations:
+      required: true
+  - type: dropdown
+    id: onde
+    attributes:
+      label: Onde
+      options:
+        - App para Windows
+        - App para Linux
+        - Versão web (navegador)
+    validations:
+      required: true
+  - type: input
+    id: versao
+    attributes:
+      label: Versão
+      description: 'Aparece no rodapé do app (ex.: Tabula RPG 0.1.0).'
+  - type: dropdown
+    id: sessao
+    attributes:
+      label: Acontece na sessão ao vivo?
+      options:
+        - Não
+        - Sim, como Mestre
+        - Sim, como jogador
+  - type: textarea
+    id: rede
+    attributes:
+      label: Rede (se for problema de conexão)
+      description: 'Ex.: Wi-Fi de casa, 4G, rede da faculdade. Ajuda a entender falhas de conexão direta.'

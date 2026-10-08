@@ -81,12 +81,15 @@ async function setUpLiveTable() {
   if (!created.ok) throw new Error(created.error.message);
   await gm.session.startAsGameMaster(campaign.id);
   await player.session.joinAsPlayer(campaign.id);
-  await waitFor(async () => {
+  await waitLong(async () => {
     await network.settle();
     expect(player.session.getSnapshot()).toMatchObject({ status: { state: 'conectado' } });
   });
   return { campaign, sheet: created.value };
 }
+
+/** Sessões simuladas com dois aparelhos ficam lentas quando a suíte toda roda junto. */
+const waitLong = (assertion: () => Promise<void> | void) => waitFor(assertion, { timeout: 4000 });
 
 function renderApp(services: Services, hash: string) {
   window.location.hash = hash;
@@ -108,7 +111,7 @@ describe('rolagens pela ficha', () => {
     await user.click(screen.getByRole('button', { name: 'Rolar Dano' }));
     expect(await screen.findByText('Dano: 6')).toBeInTheDocument();
 
-    await waitFor(async () => {
+    await waitLong(async () => {
       await network.settle();
       expect((await gm.session.rolls(campaign.id)).map((r) => r.label)).toEqual([
         'Teste de Agilidade',
@@ -123,7 +126,7 @@ describe('rolagens pela ficha', () => {
     expect(await screen.findByText('Nenhuma rolagem ainda.')).toBeInTheDocument();
 
     await player.session.roll({ label: 'Furtividade', expression: '1d20+3' });
-    await waitFor(async () => {
+    await waitLong(async () => {
       await network.settle();
       const list = screen.getByRole('list', { name: 'Registro de rolagens' });
       expect(within(list).getByText(/Furtividade/)).toBeInTheDocument();

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseRegistryIndex, type SystemTemplate } from '@tabula/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ingest, report, type IngestInput } from './ingest';
+import { ingest, publish, report, type IngestInput } from './ingest';
 import { LICENSE_FROM_FILE, locateFile, parsePublishForm } from './issue-form';
 import { applyWrites, buildIndex, readRepo, sha256 } from './repo';
 
@@ -208,5 +208,31 @@ describe('repositório e publicação', () => {
 
   it('repositório vazio gera catálogo vazio', async () => {
     expect(buildIndex(await readRepo(root))).toMatchObject({ ok: true, value: { templates: [] } });
+  });
+});
+
+describe('moderação: incluir um sistema direto', () => {
+  it('valida com as mesmas regras e grava em nome da dona', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'tabula-add-'));
+    try {
+      const input = {
+        submitter: 'paulo-vc',
+        now: '2026-10-08T00:00:00.000Z',
+        repo: await readRepo(root),
+        builtinIds: ['dnd5e-srd'],
+      };
+      const ok = publish(JSON.stringify(system('1.0.0', { license: 'DPCGL' })), input);
+      if (!ok.ok) throw new Error('falhou');
+      await applyWrites(root, ok.value.writes);
+      const index = buildIndex(await readRepo(root));
+      expect(index).toMatchObject({ ok: true, value: { templates: [{ owner: 'paulo-vc' }] } });
+
+      expect(publish(JSON.stringify(system()), input)).toMatchObject({
+        ok: false,
+        error: [{ code: 'licenca-ausente' }],
+      });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });

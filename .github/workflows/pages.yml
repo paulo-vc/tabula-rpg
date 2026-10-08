@@ -1,0 +1,46 @@
+name: Versão web
+
+# Publica o app web no GitHub Pages (gratuito para repositórios públicos) a cada mudança
+# na main. Enquanto o repositório for privado, o job é pulado.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - id: pages
+        uses: actions/configure-pages@v6
+      - name: Build
+        run: pnpm --filter @tabula/web build
+        env:
+          # Endereço público usado nos links de convite.
+          VITE_PUBLIC_URL: ${{ steps.pages.outputs.base_url }}/
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: apps/web/dist
+      - id: deploy
+        uses: actions/deploy-pages@v5

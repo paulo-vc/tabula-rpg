@@ -1,7 +1,7 @@
 import { appendFile, readFile, writeFile } from 'node:fs/promises';
 import { serializeIndex, type Issue } from '@tabula/domain';
 import { BUILTIN_TEMPLATES } from '@tabula/templates';
-import { ingest, report } from './ingest';
+import { ingest, publish, report } from './ingest';
 import { applyWrites, buildIndex, readRepo } from './repo';
 
 /**
@@ -10,6 +10,7 @@ import { applyWrites, buildIndex, readRepo } from './repo';
  *   ingest <relatorio.md>   lê a issue do evento, grava os arquivos e escreve o relatório
  *   index                   regenera o index.json
  *   check                   verifica todos os arquivos (pedidos de inclusão feitos à mão)
+ *   add <arquivo> <dono>    moderação: inclui um sistema direto (sem issue), em nome de <dono>
  */
 
 /**
@@ -65,6 +66,24 @@ async function main(): Promise<number> {
       }
       return 0;
     }
+    case 'add': {
+      const [, file, owner] = process.argv.slice(2);
+      if (!file || !owner) throw new Error('Uso: add <arquivo.json> <usuário do GitHub>');
+      const result = publish(await readFile(file, 'utf-8'), {
+        submitter: owner,
+        now: new Date().toISOString(),
+        repo: await readRepo(root),
+        builtinIds: BUILTIN_TEMPLATES.map((template) => template.id),
+      });
+      if (!result.ok) {
+        printIssues(result.error);
+        return 1;
+      }
+      await applyWrites(root, result.value.writes);
+      const { id, version } = result.value.template;
+      console.log(`${id} ${version} incluído. Rode "index" e faça o commit.`);
+      return 0;
+    }
     case 'index':
     case 'check': {
       const index = buildIndex(await readRepo(root));
@@ -78,7 +97,7 @@ async function main(): Promise<number> {
       return 0;
     }
     default:
-      console.error('Comandos: ingest <relatorio.md> | index | check');
+      console.error('Comandos: ingest <relatorio.md> | index | check | add <arquivo> <dono>');
       return 2;
   }
 }
