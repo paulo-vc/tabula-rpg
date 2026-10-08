@@ -1,9 +1,9 @@
 {
   "id": "dualidade",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Dualidade",
   "description": "Ficha compatível com o sistema Daggerheart™: traços, Evasão, limiares de dano, Esperança, Estresse, armas e cartas de domínio. Ficha não oficial da comunidade. This product includes materials from the Daggerheart System Reference Document 1.0, © Critical Role, LLC, under the terms of the Darrington Press Community Gaming License. More information at www.daggerheart.com. Darrington Press™ and the Darrington Press authorized work logo are trademarks of Critical Role, LLC and used with permission.",
-  "author": "Tabula RPG",
+  "author": "Tabularium",
   "license": "DPCGL",
   "language": "pt-BR",
   "tags": ["fantasia", "narrativo", "compatível com Daggerheart"],
@@ -532,6 +532,12 @@
           "key": "no_cofre",
           "label": "No cofre",
           "type": "boolean"
+        },
+        {
+          "id": "descricao",
+          "key": "descricao",
+          "label": "Descrição",
+          "type": "longtext"
         }
       ],
       "description": "Até 5 cartas ativas; as demais ficam no cofre."
@@ -662,100 +668,51 @@
     "full": [
       {
         "kind": "section",
-        "title": "Personagem",
-        "columns": 4,
+        "title": "Traços",
+        "columns": 3,
         "children": [
           {
             "kind": "field",
-            "fieldId": "nome",
-            "span": 2
+            "fieldId": "agilidade",
+            "secondary": "agilidade_base"
           },
           {
             "kind": "field",
-            "fieldId": "pronomes"
+            "fieldId": "forca",
+            "secondary": "forca_base"
           },
           {
             "kind": "field",
-            "fieldId": "nivel"
+            "fieldId": "acuidade",
+            "secondary": "acuidade_base"
           },
           {
             "kind": "field",
-            "fieldId": "classe"
+            "fieldId": "instinto",
+            "secondary": "instinto_base"
           },
           {
             "kind": "field",
-            "fieldId": "subclasse"
+            "fieldId": "presenca",
+            "secondary": "presenca_base"
           },
           {
             "kind": "field",
-            "fieldId": "ancestralidade"
-          },
-          {
-            "kind": "field",
-            "fieldId": "comunidade"
-          },
-          {
-            "kind": "field",
-            "fieldId": "patamar"
-          },
-          {
-            "kind": "field",
-            "fieldId": "proficiencia"
+            "fieldId": "conhecimento",
+            "secondary": "conhecimento_base"
           }
-        ]
+        ],
+        "tab": "Principal",
+        "display": "compacto"
       },
       {
         "kind": "section",
-        "title": "Traços",
-        "columns": 4,
+        "title": "Experiências",
+        "columns": 1,
         "children": [
           {
             "kind": "field",
-            "fieldId": "agilidade_base"
-          },
-          {
-            "kind": "field",
-            "fieldId": "agilidade"
-          },
-          {
-            "kind": "field",
-            "fieldId": "forca_base"
-          },
-          {
-            "kind": "field",
-            "fieldId": "forca"
-          },
-          {
-            "kind": "field",
-            "fieldId": "acuidade_base"
-          },
-          {
-            "kind": "field",
-            "fieldId": "acuidade"
-          },
-          {
-            "kind": "field",
-            "fieldId": "instinto_base"
-          },
-          {
-            "kind": "field",
-            "fieldId": "instinto"
-          },
-          {
-            "kind": "field",
-            "fieldId": "presenca_base"
-          },
-          {
-            "kind": "field",
-            "fieldId": "presenca"
-          },
-          {
-            "kind": "field",
-            "fieldId": "conhecimento_base"
-          },
-          {
-            "kind": "field",
-            "fieldId": "conhecimento"
+            "fieldId": "experiencias"
           }
         ]
       },
@@ -800,7 +757,8 @@
             "kind": "field",
             "fieldId": "limiar_grave_base"
           }
-        ]
+        ],
+        "tab": "Combate"
       },
       {
         "kind": "section",
@@ -836,34 +794,23 @@
       },
       {
         "kind": "section",
-        "title": "Efeitos temporários",
-        "columns": 1,
-        "children": [
-          {
-            "kind": "field",
-            "fieldId": "efeitos"
-          }
-        ]
-      },
-      {
-        "kind": "section",
-        "title": "Experiências",
-        "columns": 1,
-        "children": [
-          {
-            "kind": "field",
-            "fieldId": "experiencias"
-          }
-        ]
-      },
-      {
-        "kind": "section",
         "title": "Armas",
         "columns": 1,
         "children": [
           {
             "kind": "field",
             "fieldId": "armas"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Efeitos temporários",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "efeitos"
           }
         ]
       },
@@ -876,7 +823,8 @@
             "kind": "field",
             "fieldId": "cartas"
           }
-        ]
+        ],
+        "tab": "Cartas"
       },
       {
         "kind": "section",
@@ -900,7 +848,53 @@
             "kind": "field",
             "fieldId": "bau"
           }
-        ]
+        ],
+        "tab": "Inventário"
+      },
+      {
+        "kind": "section",
+        "title": "Personagem",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "nome",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "pronomes"
+          },
+          {
+            "kind": "field",
+            "fieldId": "nivel"
+          },
+          {
+            "kind": "field",
+            "fieldId": "classe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "subclasse"
+          },
+          {
+            "kind": "field",
+            "fieldId": "ancestralidade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "comunidade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "patamar"
+          },
+          {
+            "kind": "field",
+            "fieldId": "proficiencia"
+          }
+        ],
+        "tab": "Personagem"
       },
       {
         "kind": "section",
@@ -914,13 +908,21 @@
           {
             "kind": "field",
             "fieldId": "conexoes"
-          },
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Anotações",
+        "columns": 1,
+        "children": [
           {
             "kind": "field",
             "fieldId": "anotacoes",
             "span": 2
           }
-        ]
+        ],
+        "tab": "Anotações"
       }
     ],
     "gmSummary": [

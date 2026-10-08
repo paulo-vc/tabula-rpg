@@ -1,9 +1,9 @@
 {
   "id": "dnd5e-srd",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "D&D 5ª Edição (SRD 5.1)",
-  "description": "Ficha para personagens de D&D 5ª edição. This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode. Termos traduzidos para o português e organizados como ficha pelo projeto Tabula RPG.",
-  "author": "Tabula RPG",
+  "description": "Ficha para personagens de D&D 5ª edição. This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode. Termos traduzidos para o português e organizados como ficha pelo projeto Tabularium.",
+  "author": "Tabularium",
   "license": "CC-BY-4.0",
   "language": "pt-BR",
   "tags": ["fantasia", "d20", "dnd"],
@@ -1034,6 +1034,12 @@
           "key": "notas",
           "label": "Notas",
           "type": "text"
+        },
+        {
+          "id": "descricao",
+          "key": "descricao",
+          "label": "Descrição",
+          "type": "longtext"
         }
       ]
     },
@@ -1125,6 +1131,12 @@
           "key": "equipado",
           "label": "Equipado",
           "type": "boolean"
+        },
+        {
+          "id": "descricao",
+          "key": "descricao",
+          "label": "Descrição",
+          "type": "longtext"
         }
       ]
     },
@@ -1237,99 +1249,110 @@
       "key": "anotacoes",
       "label": "Anotações",
       "type": "longtext"
+    },
+    {
+      "id": "habilidades",
+      "key": "habilidades",
+      "label": "Habilidades e talentos",
+      "type": "list",
+      "maxItems": 100,
+      "itemFields": [
+        {
+          "id": "nome",
+          "key": "nome",
+          "label": "Habilidade",
+          "type": "text"
+        },
+        {
+          "id": "origem",
+          "key": "origem",
+          "label": "Origem",
+          "type": "select",
+          "options": [
+            {
+              "value": "raca",
+              "label": "Raça"
+            },
+            {
+              "value": "classe",
+              "label": "Classe"
+            },
+            {
+              "value": "antecedente",
+              "label": "Antecedente"
+            },
+            {
+              "value": "talento",
+              "label": "Talento"
+            },
+            {
+              "value": "outro",
+              "label": "Outro"
+            }
+          ]
+        },
+        {
+          "id": "usos",
+          "key": "usos",
+          "label": "Usos",
+          "type": "text"
+        },
+        {
+          "id": "descricao",
+          "key": "descricao",
+          "label": "Descrição",
+          "type": "longtext"
+        }
+      ],
+      "description": "Características de raça e classe, talentos e outras habilidades."
     }
   ],
   "layouts": {
     "full": [
       {
         "kind": "section",
-        "title": "Personagem",
-        "columns": 4,
+        "title": "Atributos",
+        "columns": 3,
         "children": [
           {
             "kind": "field",
-            "fieldId": "nome",
-            "span": 2
+            "fieldId": "for_mod",
+            "secondary": "for"
           },
           {
             "kind": "field",
-            "fieldId": "classe"
+            "fieldId": "des_mod",
+            "secondary": "des"
           },
           {
             "kind": "field",
-            "fieldId": "nivel"
+            "fieldId": "con_mod",
+            "secondary": "con"
           },
           {
             "kind": "field",
-            "fieldId": "raca"
+            "fieldId": "int_mod",
+            "secondary": "int"
           },
           {
             "kind": "field",
-            "fieldId": "antecedente"
+            "fieldId": "sab_mod",
+            "secondary": "sab"
           },
           {
             "kind": "field",
-            "fieldId": "alinhamento"
-          },
-          {
-            "kind": "field",
-            "fieldId": "xp"
+            "fieldId": "car_mod",
+            "secondary": "car"
           }
-        ]
+        ],
+        "tab": "Principal",
+        "display": "compacto"
       },
       {
         "kind": "section",
-        "title": "Atributos",
-        "columns": 4,
+        "title": "Geral",
+        "columns": 2,
         "children": [
-          {
-            "kind": "field",
-            "fieldId": "for"
-          },
-          {
-            "kind": "field",
-            "fieldId": "for_mod"
-          },
-          {
-            "kind": "field",
-            "fieldId": "des"
-          },
-          {
-            "kind": "field",
-            "fieldId": "des_mod"
-          },
-          {
-            "kind": "field",
-            "fieldId": "con"
-          },
-          {
-            "kind": "field",
-            "fieldId": "con_mod"
-          },
-          {
-            "kind": "field",
-            "fieldId": "int"
-          },
-          {
-            "kind": "field",
-            "fieldId": "int_mod"
-          },
-          {
-            "kind": "field",
-            "fieldId": "sab"
-          },
-          {
-            "kind": "field",
-            "fieldId": "sab_mod"
-          },
-          {
-            "kind": "field",
-            "fieldId": "car"
-          },
-          {
-            "kind": "field",
-            "fieldId": "car_mod"
-          },
           {
             "kind": "field",
             "fieldId": "bonus_prof"
@@ -1338,12 +1361,13 @@
             "kind": "field",
             "fieldId": "inspiracao"
           }
-        ]
+        ],
+        "display": "compacto"
       },
       {
         "kind": "section",
         "title": "Testes de resistência",
-        "columns": 4,
+        "columns": 2,
         "children": [
           {
             "kind": "field",
@@ -1393,7 +1417,8 @@
             "kind": "field",
             "fieldId": "salv_car"
           }
-        ]
+        ],
+        "display": "linhas"
       },
       {
         "kind": "section",
@@ -1621,7 +1646,8 @@
             "fieldId": "percepcao_passiva",
             "span": 3
           }
-        ]
+        ],
+        "display": "linhas"
       },
       {
         "kind": "section",
@@ -1678,6 +1704,18 @@
             "kind": "field",
             "fieldId": "exaustao"
           }
+        ],
+        "tab": "Combate"
+      },
+      {
+        "kind": "section",
+        "title": "Ataques",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "ataques"
+          }
         ]
       },
       {
@@ -1689,17 +1727,6 @@
             "kind": "field",
             "fieldId": "efeitos",
             "span": 1
-          }
-        ]
-      },
-      {
-        "kind": "section",
-        "title": "Ataques",
-        "columns": 1,
-        "children": [
-          {
-            "kind": "field",
-            "fieldId": "ataques"
           }
         ]
       },
@@ -1769,7 +1796,8 @@
             "fieldId": "magias",
             "span": 3
           }
-        ]
+        ],
+        "tab": "Magias"
       },
       {
         "kind": "section",
@@ -1809,11 +1837,60 @@
             "fieldId": "equipamento",
             "span": 4
           }
+        ],
+        "tab": "Inventário"
+      },
+      {
+        "kind": "section",
+        "title": "Personagem",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "nome",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "classe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "nivel"
+          },
+          {
+            "kind": "field",
+            "fieldId": "raca"
+          },
+          {
+            "kind": "field",
+            "fieldId": "antecedente"
+          },
+          {
+            "kind": "field",
+            "fieldId": "alinhamento"
+          },
+          {
+            "kind": "field",
+            "fieldId": "xp"
+          }
+        ],
+        "tab": "Personagem"
+      },
+      {
+        "kind": "section",
+        "title": "Habilidades e talentos",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "habilidades"
+          }
         ]
       },
       {
         "kind": "section",
-        "title": "Personalidade e características",
+        "title": "Personalidade",
         "columns": 2,
         "children": [
           {
@@ -1831,7 +1908,14 @@
           {
             "kind": "field",
             "fieldId": "defeitos"
-          },
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Características",
+        "columns": 2,
+        "children": [
           {
             "kind": "field",
             "fieldId": "caracteristicas",
@@ -1841,15 +1925,33 @@
             "kind": "field",
             "fieldId": "proficiencias_idiomas",
             "span": 2
-          },
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Anotações",
+        "columns": 1,
+        "children": [
           {
             "kind": "field",
             "fieldId": "anotacoes",
             "span": 2
           }
-        ]
+        ],
+        "tab": "Anotações"
       }
     ],
-    "gmSummary": ["hp", "ca_total", "condicoes", "exaustao", "percepcao_passiva", "cd_magia"]
+    "gmSummary": [
+      "hp",
+      "ca_total",
+      "iniciativa",
+      "deslocamento",
+      "percepcao_passiva",
+      "cd_magia",
+      "condicoes",
+      "exaustao",
+      "inspiracao"
+    ]
   }
 }

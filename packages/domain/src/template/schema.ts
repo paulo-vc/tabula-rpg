@@ -134,9 +134,33 @@ export const NUMERIC_ITEM_FIELD_TYPES = ['number', 'boolean', 'select'] as const
 
 // ---------- Layout ----------
 
+/**
+ * Como a seção é desenhada na ficha:
+ * - `padrao`: campos com rótulo em grade;
+ * - `compacto`: blocos de valor (ex.: atributos), número grande e rótulo pequeno;
+ * - `linhas`: cada grupo de `columns` campos vira uma linha (ex.: perícias: proficiência,
+ *   nome e total numa linha só).
+ */
+export const SECTION_DISPLAYS = ['padrao', 'compacto', 'linhas'] as const;
+export type SectionDisplay = (typeof SECTION_DISPLAYS)[number];
+
 export type LayoutNode =
-  | { kind: 'section'; title: string; columns: 1 | 2 | 3 | 4; children: LayoutNode[] }
-  | { kind: 'field'; fieldId: string; span?: 1 | 2 | 3 | 4 | undefined };
+  | {
+      kind: 'section';
+      title: string;
+      columns: 1 | 2 | 3 | 4;
+      children: LayoutNode[];
+      /** Aba da ficha em que a seção aparece (só nas seções de primeiro nível). */
+      tab?: string | undefined;
+      display?: SectionDisplay | undefined;
+    }
+  | {
+      kind: 'field';
+      fieldId: string;
+      span?: 1 | 2 | 3 | 4 | undefined;
+      /** Campo mostrado junto, pequeno (ex.: o valor do atributo junto do modificador). */
+      secondary?: string | undefined;
+    };
 
 const ColumnsSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]);
 
@@ -147,11 +171,14 @@ export const LayoutNodeSchema: z.ZodType<LayoutNode> = z.lazy(() =>
       title: LabelSchema,
       columns: ColumnsSchema,
       children: z.array(LayoutNodeSchema).max(LIMITS.layoutNodes),
+      tab: z.string().trim().min(1).max(40).optional(),
+      display: z.enum(SECTION_DISPLAYS).optional(),
     }),
     z.object({
       kind: z.literal('field'),
       fieldId: IdSchema,
       span: ColumnsSchema.optional(),
+      secondary: IdSchema.optional(),
     }),
   ]),
 );
