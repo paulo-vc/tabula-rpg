@@ -55,6 +55,10 @@ describe('Dualidade (compatível com Daggerheart)', () => {
     expect(template.description).toContain('Darrington Press Community Gaming License');
   });
 
+  it('testes rolam os dados de dualidade (2d12)', () => {
+    expect(template.checkDice).toBe('2d12');
+  });
+
   it('patamar acompanha o nível', () => {
     expect([1, 2, 4, 5, 7, 8, 10].map((nivel) => calc({ nivel }).value('patamar'))).toEqual([
       1, 2, 2, 3, 3, 4, 4,

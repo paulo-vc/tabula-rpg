@@ -16,6 +16,8 @@ import { useServices } from '@/app/services-context';
 import { SheetLayout } from '@/components/sheet/SheetLayout';
 import { useDraft } from '@/components/sheet/use-draft';
 import { useSheetEditing } from '@/components/sheet/use-sheet-editing';
+import { RollContext } from '@/components/sheet/roll-context';
+import { useRoller } from '@/components/live/use-roller';
 import { useDeviceId } from '@/components/use-device';
 import {
   AlertDialog,
@@ -118,6 +120,7 @@ function SheetEditor({ id, compiled }: { id: string; compiled: OpenedReady['comp
     [services, id],
   );
   const { values, derived, onChange } = useSheetEditing(compiled, sheet?.values, persist);
+  const roller = useRoller(compiled);
   // Ficha de jogador numa campanha: os campos secretos são do Mestre. Escondidos também
   // enquanto a consulta carrega, para não piscarem na tela.
   const deviceId = useDeviceId();
@@ -196,14 +199,16 @@ function SheetEditor({ id, compiled }: { id: string; compiled: OpenedReady['comp
         </DropdownMenu>
       </div>
 
-      <SheetLayout
-        compiled={compiled}
-        values={values}
-        derived={derived}
-        onChange={onChange}
-        newItemId={() => crypto.randomUUID()}
-        {...(hidden && { hiddenFieldIds: hidden })}
-      />
+      <RollContext value={roller}>
+        <SheetLayout
+          compiled={compiled}
+          values={values}
+          derived={derived}
+          onChange={onChange}
+          newItemId={() => crypto.randomUUID()}
+          {...(hidden && { hiddenFieldIds: hidden })}
+        />
+      </RollContext>
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>

@@ -2,6 +2,9 @@ import {
   compileTemplate,
   IdSchema,
   LabelSchema,
+  LOG_CATCH_UP,
+  RollEntrySchema,
+  type RollEntry,
   SystemTemplateSchema,
   type SystemTemplate,
 } from '@tabula/domain';
@@ -17,6 +20,7 @@ import { z } from 'zod';
  *   REJECT  [2][json]                 o Mestre recusou o jogador (motivo)
  *   TEMPLATE_REQUEST [3][json]        pede o sistema da campanha ao Mestre
  *   TEMPLATE         [4][json]        o sistema (validado como um arquivo importado)
+ *   LOG              [5][json]        rolagens do registro da sessão
  *
  * Topologia em estrela: jogadores só conversam com o Mestre; cada ficha é um documento
  * separado, sincronizado apenas entre o dono e o Mestre (jogadores não recebem as fichas
@@ -27,7 +31,14 @@ export const PROTOCOL_VERSION = 1;
 /** Mensagens maiores são descartadas (proteção contra participantes maliciosos). */
 export const MAX_MESSAGE_BYTES = 512 * 1024;
 
-const MessageType = { Hello: 0, Sync: 1, Reject: 2, TemplateRequest: 3, Template: 4 } as const;
+const MessageType = {
+  Hello: 0,
+  Sync: 1,
+  Reject: 2,
+  TemplateRequest: 3,
+  Template: 4,
+  Log: 5,
+} as const;
 
 const base = {
   protocol: z.literal(PROTOCOL_VERSION),
@@ -59,7 +70,14 @@ export type IncomingMessage =
   | { type: 'sync'; sheetId: string; decoder: decoding.Decoder }
   | { type: 'reject'; reject: Reject }
   | { type: 'template-request'; request: TemplateRequest }
-  | { type: 'template'; template: SystemTemplate };
+  | { type: 'template'; template: SystemTemplate }
+  | { type: 'log'; entries: RollEntry[] };
+
+const LogSchema = z.object({ entries: z.array(RollEntrySchema).min(1).max(LOG_CATCH_UP) });
+
+export function encodeLog(entries: RollEntry[]): Uint8Array {
+  return encodeJson(MessageType.Log, { entries });
+}
 
 /** Pedido do sistema da campanha (quem ainda não o tem instalado, nem ficha). */
 export const TemplateRequestSchema = z.object({
@@ -132,6 +150,10 @@ export function decodeMessage(data: Uint8Array): IncomingMessage | null {
         const template = SystemTemplateSchema.safeParse(parseJson(decoding.readVarString(decoder)));
         if (!template.success || !compileTemplate(template.data).ok) return null;
         return { type: 'template', template: template.data };
+      }
+      case MessageType.Log: {
+        const log = LogSchema.safeParse(parseJson(decoding.readVarString(decoder)));
+        return log.success ? { type: 'log', entries: log.data.entries } : null;
       }
       case MessageType.Hello: {
         const hello = HelloSchema.safeParse(parseJson(decoding.readVarString(decoder)));

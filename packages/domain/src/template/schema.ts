@@ -179,6 +179,11 @@ export const SystemTemplateSchema = z.object({
     .optional(),
   tags: z.array(z.string().trim().min(1).max(30)).max(LIMITS.tags).optional(),
   source: TemplateSourceSchema,
+  /**
+   * Dado rolado nos testes (botão de rolar dos modificadores): "1d20" se ausente; "2d12"
+   * em sistemas de dados de dualidade, "3d6" em outros…
+   */
+  checkDice: z.string().max(LIMITS.label).optional(),
   /** Versão mínima do app capaz de abrir este template. */
   minAppVersion: SemVerSchema.optional(),
   fields: z.array(FieldDefSchema).min(1).max(LIMITS.fields),

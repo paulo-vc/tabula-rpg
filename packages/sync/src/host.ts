@@ -1,10 +1,17 @@
-import { LIMITS, type FieldValue, type SystemTemplate } from '@tabula/domain';
+import {
+  LIMITS,
+  LOG_CATCH_UP,
+  type FieldValue,
+  type RollEntry,
+  type SystemTemplate,
+} from '@tabula/domain';
 import * as encoding from 'lib0/encoding';
 import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
 import {
   decodeMessage,
   encodeHello,
+  encodeLog,
   encodeReject,
   encodeTemplate,
   PROTOCOL_VERSION,
@@ -63,6 +70,9 @@ export class SessionHost {
   /** Quem já recebeu o sistema nesta conexão (evita reenviar sem parar a quem insiste). */
   private readonly templateSent = new Set<string>();
   private readonly listeners = new Set<() => void>();
+  private readonly rollListeners = new Set<(entry: RollEntry) => void>();
+  /** Rolagens públicas recentes, enviadas a quem entra no meio da sessão. */
+  private recentRolls: RollEntry[] = [];
   private stopped = false;
   private failures = 0;
 
@@ -153,6 +163,54 @@ export class SessionHost {
     return true;
   }
 
+  /** Rolagens recentes de sessões anteriores (para quem entrar receber o contexto). */
+  seedRolls(entries: readonly RollEntry[]): void {
+    this.recentRolls = entries.filter((entry) => !entry.secret).slice(-LOG_CATCH_UP);
+  }
+
+  /**
+   * Rolagem do Mestre. Pública: vai para todos os jogadores online. Secreta: não sai
+   * deste aparelho.
+   */
+  roll(entry: RollEntry): void {
+    if (entry.secret || this.stopped) return;
+    this.remember(entry);
+    this.broadcast(entry, null);
+  }
+
+  /** Avisa quando um jogador rola (a rolagem já foi validada e repassada à mesa). */
+  onRoll(listener: (entry: RollEntry) => void): () => void {
+    this.rollListeners.add(listener);
+    return () => this.rollListeners.delete(listener);
+  }
+
+  private remember(entry: RollEntry): void {
+    this.recentRolls = [...this.recentRolls, entry].slice(-LOG_CATCH_UP);
+  }
+
+  /** Envia a rolagem a todos os jogadores online, exceto `except` (quem rolou). */
+  private broadcast(entry: RollEntry, except: string | null): void {
+    const message = encodeLog([entry]);
+    for (const peerId of this.sheetOfPeer.keys()) {
+      if (peerId !== except) this.send(peerId, message);
+    }
+  }
+
+  private receiveRolls(peerId: string, entries: RollEntry[]): void {
+    const sheetId = this.sheetOfPeer.get(peerId);
+    const entry = sheetId === undefined ? undefined : this.entries.get(sheetId);
+    if (!entry) return;
+    const known = new Set(this.recentRolls.map((roll) => roll.id));
+    for (const roll of entries) {
+      // Cada jogador só registra rolagens próprias, públicas e novas.
+      if (roll.authorId !== entry.userId || roll.secret || known.has(roll.id)) continue;
+      known.add(roll.id);
+      this.remember(roll);
+      this.broadcast(roll, peerId);
+      for (const listener of this.rollListeners) listener(roll);
+    }
+  }
+
   /** Estado das fichas para salvar e continuar numa próxima sessão. */
   exportState(): Map<string, SavedSheetState> {
     return new Map(
@@ -190,6 +248,8 @@ export class SessionHost {
       if (request.campaignId !== this.campaign.id || request.templateId !== template.id) return;
       this.templateSent.add(peerId);
       this.send(peerId, encodeTemplate(template));
+    } else if (message.type === 'log') {
+      this.receiveRolls(peerId, message.entries);
     } else if (message.type === 'sync') {
       const sheetId = this.sheetOfPeer.get(peerId);
       const entry = sheetId === undefined ? undefined : this.entries.get(sheetId);
@@ -231,6 +291,7 @@ export class SessionHost {
     if (previous !== undefined && previous !== hello.sheetId) this.detach(peerId);
 
     const entry = existing ?? this.createEntry(hello.sheetId, hello.userId, hello.displayName);
+    const firstHello = entry.peerId !== peerId;
     // O mesmo jogador reconectando (outra aba, rede trocada): a conexão mais nova assume.
     if (entry.peerId !== null && entry.peerId !== peerId) this.sheetOfPeer.delete(entry.peerId);
     entry.peerId = peerId;
@@ -241,6 +302,9 @@ export class SessionHost {
     const step1 = syncEncoder(hello.sheetId);
     syncProtocol.writeSyncStep1(step1, entry.doc);
     this.send(peerId, encoding.toUint8Array(step1));
+    // O HELLO pode se repetir (o transporte reanuncia quem já está conectado): o histórico
+    // vai uma vez por conexão.
+    if (firstHello && this.recentRolls.length > 0) this.send(peerId, encodeLog(this.recentRolls));
     this.notify();
   }
 

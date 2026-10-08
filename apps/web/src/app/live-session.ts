@@ -2,8 +2,13 @@ import {
   err,
   linkedSheetId,
   ok,
+  parseDice,
   roleOf,
+  rollDice,
   valueProblem,
+  type DieRoller,
+  type RollEntry,
+  type RollLogRepository,
   type Campaign,
   type CharacterSheet,
   type CompiledTemplate,
@@ -69,7 +74,13 @@ export class LiveSessionManager {
     save: () => Promise<void>;
     /** Só na sessão do Mestre: altera a ficha de um jogador. */
     setPlayerValues?: (sheetId: string, values: Record<string, FieldValue>) => boolean;
+    campaignId: string;
+    /** Quem rola nesta sessão (nome exibido no registro). */
+    author: { id: string; name: string };
+    /** Envia a rolagem à mesa (o Mestre não envia as secretas). */
+    shareRoll: (entry: RollEntry) => void;
   } | null = null;
+  private readonly rollListeners = new Set<(entry: RollEntry) => void>();
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(
@@ -82,6 +93,9 @@ export class LiveSessionManager {
     private readonly catalog: TemplateCatalog,
     private readonly files: FileService,
     private readonly secrets: SecretValuesRepository,
+    private readonly rollLog: RollLogRepository,
+    private readonly dieRoller: DieRoller,
+    private readonly newId: () => string,
   ) {}
 
   getSnapshot = (): LiveSession => this.snapshot;
@@ -125,6 +139,8 @@ export class LiveSessionManager {
       },
       saved,
     );
+    host.seedRolls(await this.rollLog.list(campaignId));
+    const stopRolls = host.onRoll((entry) => this.recordRolls(campaignId, [entry]));
 
     const publish = () =>
       this.setSnapshot({
@@ -153,10 +169,14 @@ export class LiveSessionManager {
     this.active = {
       save,
       stop: async () => {
+        stopRolls();
         unsubscribe();
         await host.stop();
       },
       setPlayerValues: (sheetId, values) => host.setValues(sheetId, values),
+      campaignId,
+      author: { id: campaign.gmId, name: campaign.gmName },
+      shareRoll: (entry) => host.roll(entry),
     };
     host.start();
     publish();
@@ -197,10 +217,13 @@ export class LiveSessionManager {
       { userId, displayName: member?.displayName ?? 'Jogador' },
       withoutSecrets(sheet, compiled),
       saved?.state,
-      (changes) => {
-        applyGmChanges(changes).catch((error: unknown) =>
-          console.error('Falha ao gravar alteração do Mestre', error),
-        );
+      {
+        onRemoteChange: (changes) => {
+          applyGmChanges(changes).catch((error: unknown) =>
+            console.error('Falha ao gravar alteração do Mestre', error),
+          );
+        },
+        onRolls: (entries) => this.recordRolls(campaignId, entries),
       },
     );
 
@@ -235,6 +258,11 @@ export class LiveSessionManager {
         watch.unsubscribe();
         unsubscribe();
         await client.stop();
+      },
+      campaignId,
+      author: { id: userId, name: member?.displayName ?? 'Jogador' },
+      shareRoll: (entry) => {
+        client.roll(entry);
       },
     };
     client.start();
@@ -271,6 +299,60 @@ export class LiveSessionManager {
       return failure('ficha-ausente', 'Esta ficha não faz parte da sessão.');
     }
     return ok(undefined);
+  }
+
+  /**
+   * Rola dados. Numa sessão, a rolagem entra no registro da campanha e vai para a mesa
+   * (a não ser que seja uma rolagem secreta do Mestre); fora dela, só mostra o resultado.
+   */
+  async roll(input: {
+    label: string;
+    expression: string;
+    secret?: boolean;
+  }): Promise<Result<RollEntry, Issue>> {
+    const parsed = parseDice(input.expression);
+    if (!parsed.ok) return failure(parsed.error.code, parsed.error.message);
+    const active = this.active;
+    const author = active?.author ?? {
+      id: await this.device.getDeviceId(),
+      name: (await this.device.getDisplayName()) ?? 'Você',
+    };
+    const entry: RollEntry = {
+      id: this.newId(),
+      at: this.clock.now(),
+      authorId: author.id,
+      authorName: author.name,
+      label: input.label.slice(0, 120),
+      result: rollDice(parsed.value, this.dieRoller),
+      // Só o Mestre rola em segredo.
+      secret: input.secret === true && this.snapshot.kind === 'mestre',
+    };
+    if (active) {
+      active.shareRoll(entry);
+      await this.rollLog.add(active.campaignId, [entry]);
+    }
+    return ok(entry);
+  }
+
+  /** Registro de rolagens de uma campanha, da mais antiga para a mais recente. */
+  rolls(campaignId: string): Promise<RollEntry[]> {
+    return this.rollLog.list(campaignId);
+  }
+
+  /** Avisa quando chega uma rolagem de outra pessoa da mesa. */
+  onRoll(listener: (entry: RollEntry) => void): () => void {
+    this.rollListeners.add(listener);
+    return () => this.rollListeners.delete(listener);
+  }
+
+  /** Rolagens de outros participantes: entram no registro e avisam a interface. */
+  private recordRolls(campaignId: string, entries: readonly RollEntry[]): void {
+    void this.rollLog.add(campaignId, entries).then(
+      () => {
+        for (const entry of entries) for (const listener of this.rollListeners) listener(entry);
+      },
+      (error: unknown) => console.error('Falha ao registrar rolagem', error),
+    );
   }
 
   /** Valores secretos de uma ficha de jogador (só no aparelho do Mestre). */

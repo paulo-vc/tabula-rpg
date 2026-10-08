@@ -1,5 +1,6 @@
 export {
   SessionClient,
+  type ClientCallbacks,
   type ClientCampaign,
   type ClientStatus,
   type RemoteChanges,

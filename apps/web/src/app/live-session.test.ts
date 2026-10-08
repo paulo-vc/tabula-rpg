@@ -348,3 +348,90 @@ describe('o Mestre altera fichas (Fase 7)', () => {
     );
   });
 });
+
+describe('rolagens (Fase 7b)', () => {
+  async function liveTable() {
+    const table = await setUpTable();
+    await gm.session.startAsGameMaster(table.campaign.id);
+    await player.session.joinAsPlayer(table.campaign.id);
+    await eventually(() => expect(gmPlayers()[0]?.online).toBe(true));
+    await eventually(() =>
+      expect(player.session.getSnapshot()).toMatchObject({ status: { state: 'conectado' } }),
+    );
+    return table;
+  }
+
+  it('a rolagem da jogadora entra no registro dos dois e avisa o Mestre', async () => {
+    const { campaign } = await liveTable();
+    const seen: string[] = [];
+    gm.session.onRoll((entry) => seen.push(entry.label));
+
+    const result = await player.session.roll({ label: 'Atletismo', expression: '1d20+5' });
+    if (!result.ok) throw new Error(result.error.message);
+    expect(result.value).toMatchObject({ authorName: 'Ana', secret: false });
+    expect(result.value.result.total).toBeGreaterThanOrEqual(6);
+    expect(result.value.result.total).toBeLessThanOrEqual(25);
+
+    await eventually(async () => {
+      expect((await gm.session.rolls(campaign.id)).map((r) => r.id)).toEqual([result.value.id]);
+      expect(seen).toEqual(['Atletismo']);
+    });
+    expect(await player.session.rolls(campaign.id)).toHaveLength(1);
+  });
+
+  it('rolagem secreta do Mestre fica só com ele; a pública chega à jogadora', async () => {
+    const { campaign } = await liveTable();
+    await gm.session.roll({ label: 'Emboscada', expression: '1d20', secret: true });
+    const open = await gm.session.roll({ label: 'Iniciativa do dragão', expression: '1d20+2' });
+    if (!open.ok) throw new Error('falhou');
+
+    await eventually(async () =>
+      expect((await player.session.rolls(campaign.id)).map((r) => r.label)).toEqual([
+        'Iniciativa do dragão',
+      ]),
+    );
+    expect((await gm.session.rolls(campaign.id)).map((r) => r.label)).toEqual([
+      'Emboscada',
+      'Iniciativa do dragão',
+    ]);
+  });
+
+  it('a jogadora não consegue rolar em segredo', async () => {
+    await liveTable();
+    const result = await player.session.roll({ label: 'x', expression: '1d6', secret: true });
+    expect(result).toMatchObject({ ok: true, value: { secret: false } });
+  });
+
+  it('quem volta à sessão recebe as rolagens que perdeu', async () => {
+    const { campaign } = await liveTable();
+    await player.session.stop();
+    await gm.session.roll({ label: 'Enquanto ela estava fora', expression: '2d6' });
+
+    await player.session.joinAsPlayer(campaign.id);
+    await eventually(async () =>
+      expect((await player.session.rolls(campaign.id)).map((r) => r.label)).toContain(
+        'Enquanto ela estava fora',
+      ),
+    );
+  });
+
+  it('fora de uma sessão só mostra o resultado; expressão inválida é recusada', async () => {
+    const { campaign } = await setUpTable();
+    expect(await player.session.roll({ label: 'Solo', expression: '3d6' })).toMatchObject({
+      ok: true,
+    });
+    expect(await player.session.rolls(campaign.id)).toEqual([]);
+    expect(await player.session.roll({ label: 'x', expression: '1d20*2' })).toMatchObject({
+      ok: false,
+      error: { code: 'expressao-invalida' },
+    });
+  });
+
+  it('o registro sai junto com a campanha', async () => {
+    const { campaign } = await liveTable();
+    await gm.session.roll({ label: 'x', expression: '1d4' });
+    await gm.session.stop();
+    await gm.campaigns.delete(campaign.id);
+    expect(await gm.session.rolls(campaign.id)).toEqual([]);
+  });
+});

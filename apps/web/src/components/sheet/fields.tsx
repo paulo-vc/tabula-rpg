@@ -28,6 +28,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatNumber, parseNumber } from './format';
+import { CheckButton, RollButton } from './roll-context';
 import { useDraft } from './use-draft';
 
 type Derived = Result<number, EvaluationError> | undefined;
@@ -129,7 +130,7 @@ function TextInput({
   compact,
 }: PrimitiveProps<FieldOf<'text'> | FieldOf<'dice'>>) {
   const { draft, change, blur } = useDraft(typeof value === 'string' ? value : '', onChange);
-  return (
+  const input = (
     <Input
       id={id}
       aria-label={label}
@@ -140,6 +141,13 @@ function TextInput({
       onChange={(event) => change(event.target.value)}
       onBlur={blur}
     />
+  );
+  if (field.type !== 'dice') return input;
+  return (
+    <div className="flex items-center gap-1">
+      {input}
+      <RollButton label={label ?? field.label} expression={draft} />
+    </div>
   );
 }
 
@@ -239,7 +247,7 @@ function LongTextInput({ value, onChange, id, label }: PrimitiveProps<FieldOf<'l
 
 function ComputedDisplay({ field, derived }: { field: FieldOf<'computed'>; derived: Derived }) {
   const text = derived?.ok ? formatNumber(derived.value, field.signed) : '—';
-  return (
+  const output = (
     <output
       aria-label={field.label}
       title={derived && !derived.ok ? derived.error.message : `Calculado: ${field.formula}`}
@@ -250,6 +258,14 @@ function ComputedDisplay({ field, derived }: { field: FieldOf<'computed'>; deriv
     >
       {text}
     </output>
+  );
+  // Modificadores (com sinal) viram testes: o dado do sistema + o valor.
+  if (!field.signed || !derived?.ok) return output;
+  return (
+    <div className="flex items-center gap-1">
+      <div className="min-w-0 flex-1">{output}</div>
+      <CheckButton label={field.label} modifier={derived.value} />
+    </div>
   );
 }
 

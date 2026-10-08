@@ -3,6 +3,7 @@ import { Link, useRoute } from 'wouter';
 import { cn } from '@/lib/utils';
 import { GmChangeNotice } from './live/GmChangeNotice';
 import { LiveSessionIndicator } from './live/LiveSessionIndicator';
+import { RollNotice } from './live/RollNotice';
 
 /** `also`: outras rotas que pertencem à mesma seção (ex.: uma ficha pertence a "Fichas"). */
 function NavLink({ href, also, children }: { href: string; also?: string; children: ReactNode }) {
@@ -53,6 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
       <GmChangeNotice />
+      <RollNotice />
     </div>
   );
 }

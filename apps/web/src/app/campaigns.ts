@@ -14,6 +14,7 @@ import {
   type DeviceRepository,
   type Issue,
   type Result,
+  type RollLogRepository,
   type SecretValuesRepository,
   type SessionStateRepository,
   type SheetRepository,
@@ -31,6 +32,7 @@ export class CampaignService {
     private readonly campaigns: CampaignRepository,
     private readonly sessionStates: SessionStateRepository,
     private readonly secrets: SecretValuesRepository,
+    private readonly rollLog: RollLogRepository,
     private readonly sheetRepository: SheetRepository,
     private readonly sheets: SheetService,
     private readonly catalog: TemplateCatalog,
@@ -126,6 +128,7 @@ export class CampaignService {
   async delete(campaignId: string): Promise<void> {
     await this.sessionStates.deleteCampaign(campaignId);
     await this.secrets.deleteCampaign(campaignId);
+    await this.rollLog.deleteCampaign(campaignId);
     await this.campaigns.delete(campaignId);
   }
 

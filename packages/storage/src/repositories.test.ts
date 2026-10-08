@@ -1,5 +1,9 @@
 import 'fake-indexeddb/auto';
 import {
+  LOG_LIMIT,
+  parseDice,
+  rollDice,
+  type RollEntry,
   compileTemplate,
   createCampaign,
   createSheet,
@@ -14,6 +18,7 @@ import {
   DexieSessionStateRepository,
   DexieDeviceRepository,
   DexieDraftRepository,
+  DexieRollLogRepository,
   DexieSecretValuesRepository,
   DexieSheetRepository,
   DexieTemplateRepository,
@@ -262,7 +267,7 @@ describe('migração do banco', () => {
     try {
       expect(await new DexieSheetRepository(current).get('antiga')).toBeDefined();
       expect(await new DexieCampaignRepository(current).list()).toEqual([]);
-      expect(current.verno).toBe(5);
+      expect(current.verno).toBe(6);
     } finally {
       current.close();
       await Dexie.delete(name);
@@ -396,5 +401,48 @@ describe('DexieSecretValuesRepository', () => {
     await expect(secrets.update('c1', 's1', { x: { a: 1 } as never }, 1)).rejects.toBeInstanceOf(
       InvalidDataError,
     );
+  });
+});
+
+describe('DexieRollLogRepository', () => {
+  const roll = (id: string, at: number): RollEntry => {
+    const parsed = parseDice('1d20');
+    if (!parsed.ok) throw new Error('dado');
+    return {
+      id,
+      at,
+      authorId: 'ana',
+      authorName: 'Ana',
+      label: 'Teste',
+      result: rollDice(parsed.value, () => 10),
+      secret: false,
+    };
+  };
+
+  it('lista em ordem, ignora repetidas e separa por campanha', async () => {
+    const log = new DexieRollLogRepository(db);
+    await log.add('c1', [roll('b', 2), roll('a', 1)]);
+    await log.add('c1', [roll('a', 1), roll('c', 3)]);
+    await log.add('c2', [roll('x', 1)]);
+    expect((await log.list('c1')).map((r) => r.id)).toEqual(['a', 'b', 'c']);
+    await log.deleteCampaign('c1');
+    expect(await log.list('c1')).toEqual([]);
+    expect(await log.list('c2')).toHaveLength(1);
+  });
+
+  it(`guarda só as ${LOG_LIMIT} mais recentes`, async () => {
+    const log = new DexieRollLogRepository(db);
+    const entries = Array.from({ length: LOG_LIMIT + 5 }, (_, i) => roll(`r${i}`, i));
+    await log.add('c1', entries);
+    const kept = await log.list('c1');
+    expect(kept).toHaveLength(LOG_LIMIT);
+    expect(kept[0]?.id).toBe('r5');
+  });
+
+  it('recusa rolagem inconsistente', async () => {
+    const log = new DexieRollLogRepository(db);
+    const forged = roll('f', 1);
+    forged.result.total = 99;
+    await expect(log.add('c1', [forged])).rejects.toBeInstanceOf(InvalidDataError);
   });
 });

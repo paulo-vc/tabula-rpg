@@ -117,6 +117,7 @@ describe('compileTemplate', () => {
     ['dependencia-circular', (t) => Object.assign(field(t, 'f_ca'), { formula: '@ca + 1' })],
     ['dependencia-circular', (t) => Object.assign(field(t, 'f_hp'), { max: '@hp_pct' })],
     ['campo-inexistente', (t) => t.layouts.full.push({ kind: 'field', fieldId: 'f_fantasma' })],
+    ['dado-de-teste-invalido', (t) => (t.checkDice = '1d20*2')],
     ['campo-repetido', (t) => t.layouts.full.push({ kind: 'field', fieldId: 'f_hp' })],
     ['campo-inexistente', (t) => (t.layouts.gmSummary = ['f_fantasma'])],
     [

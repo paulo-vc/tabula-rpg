@@ -8,6 +8,7 @@
   "language": "pt-BR",
   "tags": ["fantasia", "narrativo", "compatível com Daggerheart"],
   "source": "community",
+  "checkDice": "2d12",
   "fields": [
     {
       "id": "nome",

@@ -8,6 +8,8 @@ import { useServices } from '@/app/services-context';
 import { useLiveSession } from '@/components/live/use-live-session';
 import { SheetLayout } from '@/components/sheet/SheetLayout';
 import { useSheetEditing } from '@/components/sheet/use-sheet-editing';
+import { RollContext } from '@/components/sheet/roll-context';
+import { useRoller } from '@/components/live/use-roller';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -102,6 +104,16 @@ function PlayerSheet({
     [session, campaignId, sheetId],
   );
   const { values, derived, onChange } = useSheetEditing(compiled, stored, persist);
+  const roller = useRoller(compiled);
+  // O Mestre rolando pela ficha do jogador: o registro mostra de quem é o teste.
+  const playerRoller = useMemo(
+    () => ({
+      ...roller,
+      roll: (label: string, expression: string) =>
+        roller.roll(`${player.sheet.name}: ${label}`, expression),
+    }),
+    [roller, player.sheet.name],
+  );
 
   return (
     <div className="space-y-4">
@@ -128,14 +140,16 @@ function PlayerSheet({
           </>
         )}
       </p>
-      <SheetLayout
-        compiled={compiled}
-        values={values}
-        derived={derived}
-        onChange={onChange}
-        newItemId={() => crypto.randomUUID()}
-        secretFieldIds={secretIds}
-      />
+      <RollContext value={playerRoller}>
+        <SheetLayout
+          compiled={compiled}
+          values={values}
+          derived={derived}
+          onChange={onChange}
+          newItemId={() => crypto.randomUUID()}
+          secretFieldIds={secretIds}
+        />
+      </RollContext>
     </div>
   );
 }

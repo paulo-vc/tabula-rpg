@@ -11,7 +11,7 @@ type Apply = ApplyChange;
 const LICENSES = ['CC-BY-4.0', 'CC-BY-SA-4.0', 'CC0-1.0', 'OGL-1.0a', 'ORC', 'MIT'];
 
 /** Atualiza uma propriedade opcional, removendo-a quando fica vazia. */
-function setOptional<K extends 'description' | 'author' | 'license' | 'language'>(
+function setOptional<K extends 'description' | 'author' | 'license' | 'language' | 'checkDice'>(
   template: SystemTemplate,
   key: K,
   value: string,
@@ -112,6 +112,23 @@ export function InfoEditor({
             }
           />
         </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor={`${base}-dado`}>Dado dos testes</Label>
+        <Input
+          id={`${base}-dado`}
+          value={template.checkDice ?? ''}
+          maxLength={20}
+          placeholder="1d20"
+          className="w-40 font-mono"
+          onChange={(event) =>
+            apply((t) => setOptional(t, 'checkDice', event.target.value.trim()), 'dado')
+          }
+        />
+        <p className="text-muted-foreground text-xs">
+          Rolado com os modificadores (campos calculados com sinal). Ex.: 1d20, 2d12, 3d6, 1d100.
+        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

@@ -1,6 +1,7 @@
 import type {
   Campaign,
   CharacterSheet,
+  RollEntry,
   SecretValuesRecord,
   SessionStateRecord,
   SystemTemplate,
@@ -16,6 +17,14 @@ export interface Setting {
 
 export const DEFAULT_DATABASE_NAME = 'tabula';
 
+/** Uma rolagem no registro de uma campanha. */
+export interface RollLogRecord {
+  campaignId: string;
+  id: string;
+  at: number;
+  entry: RollEntry;
+}
+
 /**
  * Banco local (IndexedDB). É a fonte da verdade do app (ADR 0003).
  *
@@ -30,6 +39,7 @@ export class TabulaDatabase extends Dexie {
   sessionStates!: Table<SessionStateRecord, [string, string]>;
   drafts!: EntityTable<TemplateDraft, 'id'>;
   secretValues!: Table<SecretValuesRecord, [string, string]>;
+  rollLog!: Table<RollLogRecord, [string, string]>;
 
   constructor(name: string = DEFAULT_DATABASE_NAME) {
     super(name);
@@ -53,6 +63,10 @@ export class TabulaDatabase extends Dexie {
     // v5 (Fase 7): valores dos campos secretos, só no aparelho do Mestre.
     this.version(5).stores({
       secretValues: '[campaignId+sheetId], campaignId',
+    });
+    // v6 (Fase 7b): registro de rolagens da sessão.
+    this.version(6).stores({
+      rollLog: '[campaignId+id], campaignId, [campaignId+at]',
     });
   }
 }

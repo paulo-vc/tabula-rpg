@@ -11,6 +11,10 @@ import {
   FieldValueSchema,
   type FieldValue,
   type Issue,
+  LOG_LIMIT,
+  RollEntrySchema,
+  type RollEntry,
+  type RollLogRepository,
   type SecretValuesRecord,
   type SecretValuesRepository,
   type SessionStateRecord,
@@ -21,7 +25,7 @@ import {
   type TemplateDraft,
   type TemplateRepository,
 } from '@tabula/domain';
-import type { UpdateSpec } from 'dexie';
+import { Dexie, type UpdateSpec } from 'dexie';
 import type { TabulaDatabase } from './database';
 
 /** Tentativa de gravar dados inválidos. Indica um bug: os casos de uso validam antes. */
@@ -255,5 +259,43 @@ export class DexieSecretValuesRepository implements SecretValuesRepository {
 
   async deleteCampaign(campaignId: string): Promise<void> {
     await this.db.secretValues.where('campaignId').equals(campaignId).delete();
+  }
+}
+
+export class DexieRollLogRepository implements RollLogRepository {
+  constructor(private readonly db: TabulaDatabase) {}
+
+  async list(campaignId: string): Promise<RollEntry[]> {
+    const records = await this.db.rollLog
+      .where('[campaignId+at]')
+      .between([campaignId, Dexie.minKey], [campaignId, Dexie.maxKey])
+      .toArray();
+    return records.map((record) => record.entry);
+  }
+
+  async add(campaignId: string, entries: readonly RollEntry[]): Promise<void> {
+    for (const entry of entries) {
+      const parsed = RollEntrySchema.safeParse(entry);
+      if (!parsed.success) {
+        throw new InvalidDataError('Rolagem inválida', zodIssues(parsed.error.issues));
+      }
+    }
+    await this.db.transaction('rw', this.db.rollLog, async () => {
+      for (const entry of entries) {
+        const exists = await this.db.rollLog.get([campaignId, entry.id]);
+        if (!exists) await this.db.rollLog.put({ campaignId, id: entry.id, at: entry.at, entry });
+      }
+      // Mantém só as mais recentes.
+      const keys = await this.db.rollLog
+        .where('[campaignId+at]')
+        .between([campaignId, Dexie.minKey], [campaignId, Dexie.maxKey])
+        .primaryKeys();
+      const excess = keys.length - LOG_LIMIT;
+      if (excess > 0) await this.db.rollLog.bulkDelete(keys.slice(0, excess));
+    });
+  }
+
+  async deleteCampaign(campaignId: string): Promise<void> {
+    await this.db.rollLog.where('campaignId').equals(campaignId).delete();
   }
 }

@@ -1,4 +1,5 @@
 import type { Campaign } from './campaign/schema';
+import type { RollEntry } from './dice/log';
 import type { CharacterSheet, FieldValue } from './sheet/schema';
 import type { SystemTemplate } from './template/schema';
 
@@ -121,5 +122,14 @@ export interface SecretValuesRepository {
     values: Record<string, FieldValue>,
     updatedAt: number,
   ): Promise<void>;
+  deleteCampaign(campaignId: string): Promise<void>;
+}
+
+/** Registro de rolagens da sessão, por campanha (as mais antigas saem após `LOG_LIMIT`). */
+export interface RollLogRepository {
+  /** Da mais antiga para a mais recente. */
+  list(campaignId: string): Promise<RollEntry[]>;
+  /** Acrescenta as rolagens novas (as já registradas, pelo `id`, são ignoradas). */
+  add(campaignId: string, entries: readonly RollEntry[]): Promise<void>;
   deleteCampaign(campaignId: string): Promise<void>;
 }

@@ -1,4 +1,5 @@
 import { collectRefs, parseFormula, type FormulaNode } from '../formula';
+import { parseDice } from '../dice/dice';
 import { topologicalSort } from '../graph/topological-sort';
 import { checkFormula } from './check-formula';
 import { err, ok, type Issue, type Result } from '../result';
@@ -235,6 +236,11 @@ export function compileTemplate(template: SystemTemplate): Result<CompiledTempla
   } else {
     const cycle = order.error.map((node) => `@${node}`).join(' → ');
     issues.push(issue('dependencia-circular', ['fields'], `Dependência circular: ${cycle}`));
+  }
+
+  if (template.checkDice !== undefined) {
+    const dice = parseDice(template.checkDice);
+    if (!dice.ok) issues.push(issue('dado-de-teste-invalido', ['checkDice'], dice.error.message));
   }
 
   // Layouts.

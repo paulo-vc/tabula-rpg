@@ -1,10 +1,16 @@
-import { FieldValueSchema, type CharacterSheet, type FieldValue } from '@tabula/domain';
+import {
+  FieldValueSchema,
+  type CharacterSheet,
+  type FieldValue,
+  type RollEntry,
+} from '@tabula/domain';
 import * as encoding from 'lib0/encoding';
 import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
 import {
   decodeMessage,
   encodeHello,
+  encodeLog,
   PROTOCOL_VERSION,
   syncEncoder,
   type Hello,
@@ -32,6 +38,13 @@ const LOCAL = Symbol('alteração local');
 
 /** Valores alterados pelo Mestre, por ID de campo (já validados quanto ao formato). */
 export type RemoteChanges = Record<string, FieldValue>;
+
+export interface ClientCallbacks {
+  /** O Mestre alterou valores da ficha (Fase 7a). */
+  onRemoteChange?: (changes: RemoteChanges) => void;
+  /** Rolagens da mesa chegaram (de outros jogadores, do Mestre ou do histórico recente). */
+  onRolls?: (entries: RollEntry[]) => void;
+}
 
 /**
  * Lado do jogador. Sincroniza a ficha dele (e só ela) com o Mestre.
@@ -61,7 +74,7 @@ export class SessionClient {
     private readonly me: { userId: string; displayName: string },
     sheet: CharacterSheet,
     savedState?: Uint8Array,
-    private readonly onRemoteChange: (changes: RemoteChanges) => void = () => {},
+    private readonly callbacks: ClientCallbacks = {},
   ) {
     this.latest = sheet;
     this.ready = false;
@@ -84,7 +97,7 @@ export class SessionClient {
         const value = FieldValueSchema.safeParse(values.get(fieldId));
         if (value.success) changes[fieldId] = value.data;
       }
-      if (Object.keys(changes).length > 0) this.onRemoteChange(changes);
+      if (Object.keys(changes).length > 0) this.callbacks.onRemoteChange?.(changes);
     });
     this.doc.on('update', (update: Uint8Array, origin: unknown) => {
       if (origin === this.gmPeer || this.gmPeer === null || this.stopped) return;
@@ -140,6 +153,16 @@ export class SessionClient {
     if (this.ready) reconcile(this.doc, sheet, LOCAL);
   }
 
+  /**
+   * Envia uma rolagem ao Mestre, que a repassa à mesa.
+   * @returns `false` se não está conectado (a rolagem fica só neste aparelho).
+   */
+  roll(entry: RollEntry): boolean {
+    if (this.gmPeer === null || this.current.state !== 'conectado' || this.stopped) return false;
+    this.transport.send(this.gmPeer, encodeLog([entry]));
+    return true;
+  }
+
   /** Estado do documento, para salvar e continuar numa próxima sessão. */
   exportState(): Uint8Array {
     return Y.encodeStateAsUpdate(this.doc);
@@ -182,6 +205,11 @@ export class SessionClient {
 
     if (message.type === 'reject') {
       this.setStatus({ state: 'recusado', reason: message.reject });
+      return;
+    }
+
+    if (message.type === 'log') {
+      this.callbacks.onRolls?.(message.entries);
       return;
     }
 

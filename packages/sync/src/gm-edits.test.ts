@@ -39,10 +39,12 @@ class Player {
       { userId: this.sheet.ownerId, displayName: this.sheet.ownerId },
       this.sheet,
       saved,
-      (changes) => {
-        this.received.push(changes);
-        this.sheet = { ...this.sheet, values: { ...this.sheet.values, ...changes } };
-        this.client.update(this.sheet);
+      {
+        onRemoteChange: (changes) => {
+          this.received.push(changes);
+          this.sheet = { ...this.sheet, values: { ...this.sheet.values, ...changes } };
+          this.client.update(this.sheet);
+        },
       },
     );
     this.client.start();

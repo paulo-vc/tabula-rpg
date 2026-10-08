@@ -35,6 +35,7 @@ export type {
   CampaignRepository,
   DeviceRepository,
   DraftRepository,
+  RollLogRepository,
   SecretValuesRecord,
   SecretValuesRepository,
   SessionStateRecord,
@@ -68,3 +69,6 @@ export {
 } from './registry/operations';
 
 export * from './template/editing';
+
+export * from './dice/dice';
+export * from './dice/log';
