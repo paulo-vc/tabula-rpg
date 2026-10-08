@@ -1,5 +1,5 @@
 import type { Campaign } from './campaign/schema';
-import type { CharacterSheet } from './sheet/schema';
+import type { CharacterSheet, FieldValue } from './sheet/schema';
 import type { SystemTemplate } from './template/schema';
 
 /**
@@ -98,5 +98,28 @@ export interface SessionStateRecord {
 export interface SessionStateRepository {
   list(campaignId: string): Promise<SessionStateRecord[]>;
   save(records: SessionStateRecord[]): Promise<void>;
+  deleteCampaign(campaignId: string): Promise<void>;
+}
+
+/**
+ * Valores dos campos secretos (visíveis só para o Mestre) das fichas dos jogadores. Ficam
+ * apenas no aparelho do Mestre: nunca entram no documento sincronizado com o jogador.
+ */
+export interface SecretValuesRecord {
+  campaignId: string;
+  sheetId: string;
+  values: Record<string, FieldValue>;
+  updatedAt: number;
+}
+
+export interface SecretValuesRepository {
+  get(campaignId: string, sheetId: string): Promise<SecretValuesRecord | undefined>;
+  /** Altera só os campos informados, de forma atômica. */
+  update(
+    campaignId: string,
+    sheetId: string,
+    values: Record<string, FieldValue>,
+    updatedAt: number,
+  ): Promise<void>;
   deleteCampaign(campaignId: string): Promise<void>;
 }

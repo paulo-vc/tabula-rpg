@@ -14,8 +14,9 @@ import { z } from 'zod';
  * - `meta`: id, nome, dono e template;
  * - `values`: um valor por campo (o último a escrever vence, por campo).
  *
- * Listas e recursos são valores inteiros (um item da lista não é mesclado com outro):
- * na v0.1 só o dono escreve na ficha, então não há edição concorrente dentro de um valor.
+ * Listas e recursos são valores inteiros: o dono e o Mestre podem alterar a ficha
+ * (Fase 7), e se os dois mudarem o MESMO campo ao mesmo tempo, um dos valores vence por
+ * inteiro (os dois lados chegam ao mesmo resultado). Campos diferentes nunca se perdem.
  */
 export const META = 'meta';
 export const VALUES = 'values';

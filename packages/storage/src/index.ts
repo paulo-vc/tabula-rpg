@@ -3,6 +3,7 @@ export {
   DexieCampaignRepository,
   DexieDeviceRepository,
   DexieDraftRepository,
+  DexieSecretValuesRepository,
   DexieSessionStateRepository,
   DexieSheetRepository,
   DexieTemplateRepository,

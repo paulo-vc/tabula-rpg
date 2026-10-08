@@ -3,8 +3,10 @@ import {
   err,
   inviteFor,
   joinCampaign,
+  linkedSheetId,
   linkSheet,
   ok,
+  roleOf,
   type Campaign,
   type CampaignInvite,
   type CampaignRepository,
@@ -12,6 +14,7 @@ import {
   type DeviceRepository,
   type Issue,
   type Result,
+  type SecretValuesRepository,
   type SessionStateRepository,
   type SheetRepository,
 } from '@tabula/domain';
@@ -27,6 +30,7 @@ export class CampaignService {
   constructor(
     private readonly campaigns: CampaignRepository,
     private readonly sessionStates: SessionStateRepository,
+    private readonly secrets: SecretValuesRepository,
     private readonly sheetRepository: SheetRepository,
     private readonly sheets: SheetService,
     private readonly catalog: TemplateCatalog,
@@ -106,9 +110,22 @@ export class CampaignService {
     return this.sheetRepository.listByTemplate(campaign.templateRef.id);
   }
 
+  /**
+   * A ficha é a de um jogador numa campanha deste dispositivo. Nesse caso os campos
+   * secretos (do Mestre) não aparecem para ele.
+   */
+  async isPlayerSheet(sheetId: string, userId: string): Promise<boolean> {
+    const campaigns = await this.campaigns.list();
+    return campaigns.some(
+      (campaign) =>
+        roleOf(campaign, userId) === 'jogador' && linkedSheetId(campaign, userId) === sheetId,
+    );
+  }
+
   /** Apaga a campanha deste dispositivo (o Mestre encerra; o jogador sai). Fichas ficam. */
   async delete(campaignId: string): Promise<void> {
     await this.sessionStates.deleteCampaign(campaignId);
+    await this.secrets.deleteCampaign(campaignId);
     await this.campaigns.delete(campaignId);
   }
 

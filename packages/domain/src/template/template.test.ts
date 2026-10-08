@@ -105,6 +105,12 @@ describe('compileTemplate', () => {
     ['propriedade-invalida', (t) => Object.assign(field(t, 'f_ca'), { formula: '@hp.atual' })],
     ['propriedade-invalida', (t) => Object.assign(field(t, 'f_ca'), { formula: '@for.max' })],
     [
+      'referencia-secreta',
+      (t) => {
+        Object.assign(field(t, 'f_for'), { visibility: 'gm' });
+      },
+    ],
+    [
       'dependencia-circular',
       (t) => Object.assign(field(t, 'f_for_mod'), { formula: '@atletismo' }),
     ],
@@ -152,6 +158,16 @@ describe('compileTemplate', () => {
         },
       ],
     });
+  });
+
+  it('campos secretos podem usar outros secretos e os visíveis', () => {
+    const template = variant((t) => {
+      Object.assign(field(t, 'f_for'), { visibility: 'gm' });
+      // Quem usava @for passa a ser secreto também: nada vaza.
+      for (const id of ['f_for_mod', 'f_atletismo'])
+        Object.assign(field(t, id), { visibility: 'gm' });
+    });
+    expect(codesOf(template)).toEqual([]);
   });
 
   it('referências a recurso sem fórmula de máximo não criam dependência', () => {

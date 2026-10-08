@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, useRoute } from 'wouter';
 import { cn } from '@/lib/utils';
+import { GmChangeNotice } from './live/GmChangeNotice';
 import { LiveSessionIndicator } from './live/LiveSessionIndicator';
 
 /** `also`: outras rotas que pertencem à mesma seção (ex.: uma ficha pertence a "Fichas"). */
@@ -51,6 +52,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+      <GmChangeNotice />
     </div>
   );
 }

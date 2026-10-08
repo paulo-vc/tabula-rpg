@@ -8,7 +8,11 @@ import {
   type CharacterSheet,
   type DeviceRepository,
   type DraftRepository,
+  FieldValueSchema,
+  type FieldValue,
   type Issue,
+  type SecretValuesRecord,
+  type SecretValuesRepository,
   type SessionStateRecord,
   type SessionStateRepository,
   type SheetChanges,
@@ -213,5 +217,43 @@ export class DexieDraftRepository implements DraftRepository {
 
   async delete(id: string): Promise<void> {
     await this.db.drafts.delete(id);
+  }
+}
+
+export class DexieSecretValuesRepository implements SecretValuesRepository {
+  constructor(private readonly db: TabulaDatabase) {}
+
+  get(campaignId: string, sheetId: string): Promise<SecretValuesRecord | undefined> {
+    return this.db.secretValues.get([campaignId, sheetId]);
+  }
+
+  async update(
+    campaignId: string,
+    sheetId: string,
+    values: Record<string, FieldValue>,
+    updatedAt: number,
+  ): Promise<void> {
+    for (const [fieldId, value] of Object.entries(values)) {
+      const parsed = FieldValueSchema.safeParse(value);
+      if (!parsed.success) {
+        throw new InvalidDataError(
+          `Valor secreto inválido em ${fieldId}`,
+          zodIssues(parsed.error.issues),
+        );
+      }
+    }
+    await this.db.transaction('rw', this.db.secretValues, async () => {
+      const current = await this.db.secretValues.get([campaignId, sheetId]);
+      await this.db.secretValues.put({
+        campaignId,
+        sheetId,
+        values: { ...current?.values, ...values },
+        updatedAt,
+      });
+    });
+  }
+
+  async deleteCampaign(campaignId: string): Promise<void> {
+    await this.db.secretValues.where('campaignId').equals(campaignId).delete();
   }
 }

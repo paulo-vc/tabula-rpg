@@ -10,7 +10,9 @@ import {
 } from '@tabula/domain';
 import type { HostPlayer } from '@tabula/sync';
 import { useMemo } from 'react';
+import { Link } from 'wouter';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatNumber } from '@/components/sheet/format';
@@ -96,9 +98,12 @@ function valueText(field: FieldDef, value: FieldValue | undefined): string {
 export function PlayerCard({
   player,
   compiled,
+  campaignId,
 }: {
   player: HostPlayer;
   compiled: CompiledTemplate | undefined;
+  /** Com a campanha, o card leva à ficha completa (o Mestre pode alterá-la). */
+  campaignId?: string;
 }) {
   const values = player.sheet?.values;
   const derived = useMemo(
@@ -160,6 +165,13 @@ export function PlayerCard({
               );
             })}
           </dl>
+          {campaignId && (
+            <Button variant="outline" size="sm" className="mt-3" asChild>
+              <Link href={`/campanhas/${campaignId}/jogadores/${player.sheetId}`}>
+                Abrir ficha de {player.sheet.name}
+              </Link>
+            </Button>
+          )}
         </CardContent>
       )}
     </Card>

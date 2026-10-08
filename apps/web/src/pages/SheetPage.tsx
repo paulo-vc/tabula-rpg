@@ -1,4 +1,4 @@
-import { computeDerived, type FieldValue, type SheetValues } from '@tabula/domain';
+import type { FieldValue } from '@tabula/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   ArrowLeftIcon,
@@ -8,13 +8,15 @@ import {
   Trash2Icon,
   TriangleAlertIcon,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Link, useLocation } from 'wouter';
 import type { OpenedSheet } from '@/app/sheets';
 import { useServices } from '@/app/services-context';
 import { SheetLayout } from '@/components/sheet/SheetLayout';
 import { useDraft } from '@/components/sheet/use-draft';
+import { useSheetEditing } from '@/components/sheet/use-sheet-editing';
+import { useDeviceId } from '@/components/use-device';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -111,14 +113,32 @@ function SheetEditor({ id, compiled }: { id: string; compiled: OpenedReady['comp
   const [, navigate] = useLocation();
   const sheet = useLiveQuery(() => services.sheetRepository.get(id), [services, id]);
 
-  const { values, derived, onChange } = useSheetEditing(id, compiled, sheet?.values);
+  const persist = useCallback(
+    (fieldId: string, value: FieldValue) => services.sheets.setValue(id, fieldId, value),
+    [services, id],
+  );
+  const { values, derived, onChange } = useSheetEditing(compiled, sheet?.values, persist);
+  // Ficha de jogador numa campanha: os campos secretos são do Mestre. Escondidos também
+  // enquanto a consulta carrega, para não piscarem na tela.
+  const deviceId = useDeviceId();
+  const isPlayerSheet = useLiveQuery(
+    async () => (deviceId ? services.campaigns.isPlayerSheet(id, deviceId) : undefined),
+    [services, id, deviceId],
+  );
+  const hidden = useMemo(
+    () =>
+      isPlayerSheet !== false
+        ? new Set(compiled.template.fields.filter((f) => f.visibility === 'gm').map((f) => f.id))
+        : undefined,
+    [isPlayerSheet, compiled],
+  );
 
   const name = useDraft(
     sheet?.name ?? '',
     (next: string) => {
       if (next.trim()) void services.sheets.rename(id, next);
     },
-    SAVE_DELAY,
+    400,
   );
 
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -182,6 +202,7 @@ function SheetEditor({ id, compiled }: { id: string; compiled: OpenedReady['comp
         derived={derived}
         onChange={onChange}
         newItemId={() => crypto.randomUUID()}
+        {...(hidden && { hiddenFieldIds: hidden })}
       />
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
@@ -211,72 +232,3 @@ function SheetEditor({ id, compiled }: { id: string; compiled: OpenedReady['comp
 }
 
 type OpenedReady = Extract<OpenedSheet, { status: 'pronta' }>;
-
-/** Pausa (ms) antes de gravar: digitar "16" grava uma vez, não duas. */
-const SAVE_DELAY = 400;
-
-/**
- * Edição otimista da ficha: o valor aparece e os cálculos se atualizam na hora; a gravação
- * acontece após uma pausa, por campo. Cliques rápidos (ex.: "+" no HP) partem sempre do
- * valor mais recente. Gravações pendentes são feitas ao sair da página ou esconder a aba.
- */
-function useSheetEditing(
-  id: string,
-  compiled: OpenedReady['compiled'],
-  stored: SheetValues | undefined,
-) {
-  const services = useServices();
-  const [pending, setPending] = useState<Record<string, FieldValue>>({});
-  const values = useMemo(() => ({ ...stored, ...pending }), [stored, pending]);
-  const derived = useMemo(() => computeDerived(compiled, values), [compiled, values]);
-
-  const queue = useRef(new Map<string, FieldValue>());
-  const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
-
-  const save = useCallback(
-    (fieldId: string) => {
-      clearTimeout(timers.current.get(fieldId));
-      timers.current.delete(fieldId);
-      if (!queue.current.has(fieldId)) return;
-      const value = queue.current.get(fieldId) as FieldValue;
-      queue.current.delete(fieldId);
-      services.sheets.setValue(id, fieldId, value).then(
-        () =>
-          setPending((current) => {
-            if (current[fieldId] !== value) return current; // já há um valor mais novo
-            const { [fieldId]: _saved, ...rest } = current;
-            return rest;
-          }),
-        (error: unknown) => toast.error('Não foi possível salvar', { description: String(error) }),
-      );
-    },
-    [services, id],
-  );
-
-  useEffect(() => {
-    const saveAll = () => [...queue.current.keys()].forEach(save);
-    const onHide = () => document.visibilityState === 'hidden' && saveAll();
-    document.addEventListener('visibilitychange', onHide);
-    window.addEventListener('pagehide', saveAll);
-    return () => {
-      document.removeEventListener('visibilitychange', onHide);
-      window.removeEventListener('pagehide', saveAll);
-      saveAll(); // ao sair da página da ficha
-    };
-  }, [save]);
-
-  const onChange = useCallback(
-    (fieldId: string, value: FieldValue) => {
-      setPending((current) => ({ ...current, [fieldId]: value }));
-      queue.current.set(fieldId, value);
-      clearTimeout(timers.current.get(fieldId));
-      timers.current.set(
-        fieldId,
-        setTimeout(() => save(fieldId), SAVE_DELAY),
-      );
-    },
-    [save],
-  );
-
-  return { values, derived, onChange };
-}

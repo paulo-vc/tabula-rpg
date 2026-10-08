@@ -194,6 +194,22 @@ export function compileTemplate(template: SystemTemplate): Result<CompiledTempla
     if (problems.length > 0) return;
     const refs = collectRefs(parsed.value);
 
+    // Um campo que o jogador vê não pode depender de um secreto: o valor vazaria pelo
+    // cálculo (e, no aparelho do jogador, que não tem o segredo, o resultado seria outro).
+    if (field.visibility !== 'gm') {
+      const secret = refs.find((ref) => fieldsByKey.get(ref.key)?.visibility === 'gm');
+      if (secret) {
+        issues.push(
+          issue(
+            'referencia-secreta',
+            source.path,
+            `@${secret.key} é visível só para o Mestre e não pode ser usado num campo que o jogador vê`,
+          ),
+        );
+        return;
+      }
+    }
+
     const compiled: CompiledFormula = {
       fieldId: field.id,
       target: source.target,

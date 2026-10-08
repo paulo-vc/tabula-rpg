@@ -1,4 +1,4 @@
-import type { CharacterSheet } from '@tabula/domain';
+import { FieldValueSchema, type CharacterSheet, type FieldValue } from '@tabula/domain';
 import * as encoding from 'lib0/encoding';
 import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
@@ -10,7 +10,7 @@ import {
   type Hello,
   type Reject,
 } from './protocol';
-import { reconcile } from './sheet-doc';
+import { reconcile, VALUES } from './sheet-doc';
 import type { SyncTransport } from './transport';
 
 export type ClientStatus =
@@ -30,6 +30,9 @@ export interface ClientCampaign {
 
 const LOCAL = Symbol('alteração local');
 
+/** Valores alterados pelo Mestre, por ID de campo (já validados quanto ao formato). */
+export type RemoteChanges = Record<string, FieldValue>;
+
 /**
  * Lado do jogador. Sincroniza a ficha dele (e só ela) com o Mestre.
  *
@@ -37,6 +40,10 @@ const LOCAL = Symbol('alteração local');
  * versão mais recente, e o documento recebe só a diferença. Para que essas escritas vençam
  * escritas antigas, o documento só é alterado depois de conhecer o estado mais recente:
  * um estado salvo de sessões anteriores, ou o estado do Mestre (após a primeira troca).
+ *
+ * O Mestre também pode alterar a ficha (Fase 7). Depois que o documento está pronto, o que
+ * chega dele é entregue a `onRemoteChange` para gravar na ficha local; antes disso (primeira
+ * conexão sem estado salvo), a ficha local prevalece e nada é entregue.
  */
 export class SessionClient {
   private readonly doc = new Y.Doc();
@@ -54,6 +61,7 @@ export class SessionClient {
     private readonly me: { userId: string; displayName: string },
     sheet: CharacterSheet,
     savedState?: Uint8Array,
+    private readonly onRemoteChange: (changes: RemoteChanges) => void = () => {},
   ) {
     this.latest = sheet;
     this.ready = false;
@@ -66,6 +74,18 @@ export class SessionClient {
         // Estado salvo corrompido: começa do zero e espera o Mestre.
       }
     }
+    this.doc.getMap<unknown>(VALUES).observe((event) => {
+      const origin = event.transaction.origin;
+      if (origin === LOCAL || !this.ready || this.stopped) return;
+      const values = this.doc.getMap<unknown>(VALUES);
+      const changes: RemoteChanges = {};
+      for (const fieldId of event.keysChanged) {
+        if (!values.has(fieldId)) continue; // remoções não apagam nada na ficha local
+        const value = FieldValueSchema.safeParse(values.get(fieldId));
+        if (value.success) changes[fieldId] = value.data;
+      }
+      if (Object.keys(changes).length > 0) this.onRemoteChange(changes);
+    });
     this.doc.on('update', (update: Uint8Array, origin: unknown) => {
       if (origin === this.gmPeer || this.gmPeer === null || this.stopped) return;
       if (this.current.state === 'recusado') return;

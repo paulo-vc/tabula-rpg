@@ -11,6 +11,7 @@ import { CommunityPage } from '@/pages/CommunityPage';
 import { EditorPage } from '@/pages/EditorPage';
 import { HomePage } from '@/pages/HomePage';
 import { InvitePage } from '@/pages/InvitePage';
+import { PlayerSheetPage } from '@/pages/PlayerSheetPage';
 import { SheetPage } from '@/pages/SheetPage';
 import { SystemsPage } from '@/pages/SystemsPage';
 
@@ -32,6 +33,15 @@ export function App({ services }: { services: Services }) {
                 {(params) => <EditorPage key={params.id} id={params.id} />}
               </Route>
               <Route path="/campanhas" component={CampaignsPage} />
+              <Route path="/campanhas/:id/jogadores/:sheetId">
+                {(params) => (
+                  <PlayerSheetPage
+                    key={params.sheetId}
+                    campaignId={params.id}
+                    sheetId={params.sheetId}
+                  />
+                )}
+              </Route>
               <Route path="/campanhas/:id">
                 {(params) => <CampaignPage key={params.id} id={params.id} />}
               </Route>

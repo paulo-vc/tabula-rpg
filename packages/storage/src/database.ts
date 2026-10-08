@@ -1,6 +1,7 @@
 import type {
   Campaign,
   CharacterSheet,
+  SecretValuesRecord,
   SessionStateRecord,
   SystemTemplate,
   TemplateDraft,
@@ -28,6 +29,7 @@ export class TabulaDatabase extends Dexie {
   campaigns!: EntityTable<Campaign, 'id'>;
   sessionStates!: Table<SessionStateRecord, [string, string]>;
   drafts!: EntityTable<TemplateDraft, 'id'>;
+  secretValues!: Table<SecretValuesRecord, [string, string]>;
 
   constructor(name: string = DEFAULT_DATABASE_NAME) {
     super(name);
@@ -47,6 +49,10 @@ export class TabulaDatabase extends Dexie {
     // v4 (Fase 6): rascunhos do criador de sistemas.
     this.version(4).stores({
       drafts: 'id, updatedAt',
+    });
+    // v5 (Fase 7): valores dos campos secretos, só no aparelho do Mestre.
+    this.version(5).stores({
+      secretValues: '[campaignId+sheetId], campaignId',
     });
   }
 }

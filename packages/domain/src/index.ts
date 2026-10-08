@@ -35,6 +35,8 @@ export type {
   CampaignRepository,
   DeviceRepository,
   DraftRepository,
+  SecretValuesRecord,
+  SecretValuesRepository,
   SessionStateRecord,
   SessionStateRepository,
   SheetChanges,

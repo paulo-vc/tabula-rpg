@@ -112,7 +112,7 @@ export function GameMasterSession({ campaign }: { campaign: Campaign }) {
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {players.map((player) => (
                 <li key={player.sheetId}>
-                  <PlayerCard player={player} compiled={compiled} />
+                  <PlayerCard player={player} compiled={compiled} campaignId={campaign.id} />
                 </li>
               ))}
             </ul>

@@ -242,3 +242,109 @@ describe('envio do sistema pelo Mestre', () => {
     expect(await pending).toEqual({ ok: false, reason: 'cancelado' });
   });
 });
+
+describe('o Mestre altera fichas (Fase 7)', () => {
+  /** Sistema com um campo secreto, instalado nos dois aparelhos. */
+  const SECRET_TEMPLATE = {
+    id: 'mesa-secreta',
+    version: '1.0.0',
+    name: 'Mesa Secreta',
+    source: 'local' as const,
+    fields: [
+      { id: 'vigor', key: 'vigor', label: 'Vigor', type: 'number' as const, default: 2 },
+      { id: 'pv', key: 'pv', label: 'PV', type: 'resource' as const, default: 10 },
+      {
+        id: 'maldicao',
+        key: 'maldicao',
+        label: 'Maldição',
+        type: 'text' as const,
+        visibility: 'gm' as const,
+      },
+    ],
+    layouts: { full: [] },
+  };
+
+  async function setUpSecretTable() {
+    for (const services of [gm, player]) await services.files.installTemplate(SECRET_TEMPLATE);
+    const campaign = await gm.campaigns.create({
+      name: 'Segredos',
+      templateId: 'mesa-secreta',
+      gmName: 'Paulo',
+    });
+    await player.campaigns.join(inviteFor(campaign), 'Ana');
+    const created = await player.campaigns.createLinkedSheet(campaign.id, 'Lia');
+    if (!created.ok) throw new Error(created.error.message);
+    await gm.session.startAsGameMaster(campaign.id);
+    await player.session.joinAsPlayer(campaign.id);
+    await eventually(() => expect(gmPlayers()[0]?.online).toBe(true));
+    return { campaign, sheet: created.value };
+  }
+
+  it('a alteração do Mestre chega à ficha da jogadora e ela é avisada', async () => {
+    const { campaign, sheet } = await setUpSecretTable();
+    const result = await gm.session.setPlayerValue(campaign.id, sheet.id, 'pv', {
+      current: 4,
+      max: 10,
+    });
+    expect(result).toEqual({ ok: true, value: undefined });
+
+    await eventually(async () => {
+      expect((await player.sheets.open(sheet.id)).status).toBe('pronta');
+      expect((await playerDb.sheets.get(sheet.id))?.values.pv).toEqual({ current: 4, max: 10 });
+      expect(player.session.getSnapshot()).toMatchObject({
+        gmChange: { fieldIds: ['pv'], count: 1 },
+      });
+    });
+  });
+
+  it('campo secreto fica só no aparelho do Mestre', async () => {
+    const { campaign, sheet } = await setUpSecretTable();
+    await player.sheets.setValue(sheet.id, 'maldicao', 'tentativa da jogadora');
+    await gm.session.setPlayerValue(campaign.id, sheet.id, 'maldicao', 'Licantropia');
+    await gm.session.setPlayerValue(campaign.id, sheet.id, 'vigor', 5);
+
+    await eventually(async () =>
+      expect((await playerDb.sheets.get(sheet.id))?.values.vigor).toBe(5),
+    );
+    expect(await gm.session.secretValues(campaign.id, sheet.id)).toEqual({
+      maldicao: 'Licantropia',
+    });
+    // Nada secreto trafegou: nem o valor do Mestre chegou à jogadora, nem o dela ao Mestre.
+    expect((await playerDb.sheets.get(sheet.id))?.values.maldicao).toBe('tentativa da jogadora');
+    expect(gmPlayers()[0]?.sheet?.values).not.toHaveProperty('maldicao');
+  });
+
+  it('recusa valor inválido, campo inexistente e edição sem sessão aberta', async () => {
+    const { campaign, sheet } = await setUpSecretTable();
+    expect(await gm.session.setPlayerValue(campaign.id, sheet.id, 'vigor', 'muito')).toMatchObject({
+      ok: false,
+      error: { code: 'valor-invalido' },
+    });
+    expect(await gm.session.setPlayerValue(campaign.id, sheet.id, 'nada', 1)).toMatchObject({
+      ok: false,
+      error: { code: 'campo-ausente' },
+    });
+    await gm.session.stop();
+    expect(await gm.session.setPlayerValue(campaign.id, sheet.id, 'vigor', 3)).toMatchObject({
+      ok: false,
+      error: { code: 'sem-sessao' },
+    });
+    // Campos secretos não dependem da sessão: ficam no aparelho do Mestre.
+    expect(await gm.session.setPlayerValue(campaign.id, sheet.id, 'maldicao', 'x')).toEqual({
+      ok: true,
+      value: undefined,
+    });
+  });
+
+  it('a jogadora offline recebe a alteração ao voltar', async () => {
+    const { campaign, sheet } = await setUpSecretTable();
+    await player.session.stop();
+    await eventually(() => expect(gmPlayers()[0]?.online).toBe(false));
+
+    await gm.session.setPlayerValue(campaign.id, sheet.id, 'vigor', 9);
+    await player.session.joinAsPlayer(campaign.id);
+    await eventually(async () =>
+      expect((await playerDb.sheets.get(sheet.id))?.values.vigor).toBe(9),
+    );
+  });
+});

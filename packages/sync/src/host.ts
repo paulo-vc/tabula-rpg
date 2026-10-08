@@ -1,4 +1,4 @@
-import { LIMITS, type SystemTemplate } from '@tabula/domain';
+import { LIMITS, type FieldValue, type SystemTemplate } from '@tabula/domain';
 import * as encoding from 'lib0/encoding';
 import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
@@ -12,7 +12,7 @@ import {
   type Hello,
   type Reject,
 } from './protocol';
-import { readSheet, type SheetSnapshot } from './sheet-doc';
+import { deepEqual, readSheet, VALUES, type SheetSnapshot } from './sheet-doc';
 import type { SyncTransport } from './transport';
 
 export interface HostCampaign {
@@ -23,6 +23,9 @@ export interface HostCampaign {
   /** O sistema da campanha, enviado a quem pedir (jogador que ainda não o tem instalado). */
   template?: SystemTemplate;
 }
+
+/** Origem das alterações feitas pelo próprio Mestre. */
+const GM_EDIT = Symbol('alteração do Mestre');
 
 /** Um jogador da sessão, do ponto de vista do Mestre. */
 export interface HostPlayer {
@@ -133,6 +136,23 @@ export class SessionHost {
     return () => this.listeners.delete(listener);
   }
 
+  /**
+   * O Mestre altera valores da ficha de um jogador. Seguem na hora se ele estiver online;
+   * senão, ficam no documento e chegam quando ele reconectar.
+   * @returns `false` se a ficha não é conhecida nesta campanha.
+   */
+  setValues(sheetId: string, values: Record<string, FieldValue>): boolean {
+    const entry = this.entries.get(sheetId);
+    if (!entry || this.stopped) return false;
+    const map = entry.doc.getMap<unknown>(VALUES);
+    entry.doc.transact(() => {
+      for (const [fieldId, value] of Object.entries(values)) {
+        if (!deepEqual(map.get(fieldId), value)) map.set(fieldId, value);
+      }
+    }, GM_EDIT);
+    return true;
+  }
+
   /** Estado das fichas para salvar e continuar numa próxima sessão. */
   exportState(): Map<string, SavedSheetState> {
     return new Map(
@@ -234,7 +254,7 @@ export class SessionHost {
     };
     entry.doc.on('update', (update: Uint8Array, origin: unknown) => {
       entry.snapshot = undefined;
-      // Alterações feitas pelo Mestre (fases futuras) seguem para o dono da ficha.
+      // Alterações do Mestre (e de estados salvos) seguem para o dono da ficha.
       if (entry.peerId !== null && origin !== entry.peerId) {
         const message = syncEncoder(sheetId);
         syncProtocol.writeUpdate(message, update);

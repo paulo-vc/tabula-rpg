@@ -14,6 +14,7 @@ import {
   DexieSessionStateRepository,
   DexieDeviceRepository,
   DexieDraftRepository,
+  DexieSecretValuesRepository,
   DexieSheetRepository,
   DexieTemplateRepository,
   InvalidDataError,
@@ -261,7 +262,7 @@ describe('migração do banco', () => {
     try {
       expect(await new DexieSheetRepository(current).get('antiga')).toBeDefined();
       expect(await new DexieCampaignRepository(current).list()).toEqual([]);
-      expect(current.verno).toBe(4);
+      expect(current.verno).toBe(5);
     } finally {
       current.close();
       await Dexie.delete(name);
@@ -369,5 +370,31 @@ describe('DexieDraftRepository', () => {
       current.close();
       await Dexie.delete(name);
     }
+  });
+});
+
+describe('DexieSecretValuesRepository', () => {
+  it('altera só os campos informados, por campanha e ficha', async () => {
+    const secrets = new DexieSecretValuesRepository(db);
+    await secrets.update('c1', 's1', { maldicao: 'Lua cheia', marcas: 2 }, 1);
+    await secrets.update('c1', 's1', { marcas: 3 }, 2);
+    await secrets.update('c2', 's1', { maldicao: 'Outra' }, 3);
+
+    expect(await secrets.get('c1', 's1')).toEqual({
+      campaignId: 'c1',
+      sheetId: 's1',
+      values: { maldicao: 'Lua cheia', marcas: 3 },
+      updatedAt: 2,
+    });
+    await secrets.deleteCampaign('c1');
+    expect(await secrets.get('c1', 's1')).toBeUndefined();
+    expect(await secrets.get('c2', 's1')).toBeDefined();
+  });
+
+  it('recusa valores fora do formato', async () => {
+    const secrets = new DexieSecretValuesRepository(db);
+    await expect(secrets.update('c1', 's1', { x: { a: 1 } as never }, 1)).rejects.toBeInstanceOf(
+      InvalidDataError,
+    );
   });
 });

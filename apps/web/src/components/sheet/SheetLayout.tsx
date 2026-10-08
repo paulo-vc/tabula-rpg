@@ -5,6 +5,7 @@ import type {
   LayoutNode,
   SheetValues,
 } from '@tabula/domain';
+import { EyeOffIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldControl } from './fields';
@@ -49,9 +50,21 @@ export interface SheetLayoutProps {
   derived: DerivedValues;
   onChange: (fieldId: string, value: FieldValue) => void;
   newItemId: () => string;
+  /** Campos que não aparecem (ex.: os secretos, na ficha do jogador). */
+  hiddenFieldIds?: ReadonlySet<string>;
+  /** Campos destacados como "só o Mestre vê" (na visão do Mestre). */
+  secretFieldIds?: ReadonlySet<string>;
 }
 
-export function SheetLayout({ compiled, values, derived, onChange, newItemId }: SheetLayoutProps) {
+export function SheetLayout({
+  compiled,
+  values,
+  derived,
+  onChange,
+  newItemId,
+  hiddenFieldIds,
+  secretFieldIds,
+}: SheetLayoutProps) {
   const renderNodes = (nodes: readonly LayoutNode[], columns: Columns, depth: number) =>
     nodes.map((node, index) => {
       if (node.kind === 'section') {
@@ -81,7 +94,8 @@ export function SheetLayout({ compiled, values, derived, onChange, newItemId }: 
       }
 
       const field = compiled.fieldsById.get(node.fieldId);
-      if (!field) return null;
+      if (!field || hiddenFieldIds?.has(field.id)) return null;
+      const secret = secretFieldIds?.has(field.id) ?? false;
       const isWide = field.type === 'list' || field.type === 'longtext';
       const span = node.span ?? (isWide ? columns : 1);
       const derivedValue =
@@ -93,8 +107,17 @@ export function SheetLayout({ compiled, values, derived, onChange, newItemId }: 
       return (
         <div
           key={field.id}
-          className={cn('min-w-0', depth === 0 ? 'col-span-full' : spanClass(columns, span))}
+          className={cn(
+            'min-w-0',
+            depth === 0 ? 'col-span-full' : spanClass(columns, span),
+            secret && 'rounded-md border border-dashed border-violet-500/50 p-2',
+          )}
         >
+          {secret && (
+            <p className="mb-1 flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400">
+              <EyeOffIcon className="size-3" /> Só o Mestre vê
+            </p>
+          )}
           <FieldControl
             field={field}
             value={values[field.id]}
@@ -109,7 +132,9 @@ export function SheetLayout({ compiled, values, derived, onChange, newItemId }: 
   const { full } = compiled.template.layouts;
   // Campos que o template não posicionou no layout continuam acessíveis.
   const shown = new Set(layoutFieldIds(full));
-  const others = compiled.template.fields.filter((field) => !shown.has(field.id));
+  const others = compiled.template.fields.filter(
+    (field) => !shown.has(field.id) && !hiddenFieldIds?.has(field.id),
+  );
   const nodes: LayoutNode[] =
     others.length === 0
       ? full

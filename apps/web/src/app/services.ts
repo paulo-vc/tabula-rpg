@@ -2,6 +2,7 @@ import {
   DexieCampaignRepository,
   DexieDeviceRepository,
   DexieDraftRepository,
+  DexieSecretValuesRepository,
   DexieSessionStateRepository,
   DexieSheetRepository,
   DexieTemplateRepository,
@@ -66,6 +67,7 @@ export function createServices(
   const catalog = new TemplateCatalog(templateRepository, BUILTIN_TEMPLATES);
   const sheets = new SheetService(sheetRepository, catalog, device, clock, ids);
   const sessionStates = new DexieSessionStateRepository(db);
+  const secrets = new DexieSecretValuesRepository(db);
   const files = new FileService(sheetRepository, templateRepository, catalog, clock, ids);
   return {
     catalog,
@@ -91,10 +93,12 @@ export function createServices(
       clock,
       catalog,
       files,
+      secrets,
     ),
     campaigns: new CampaignService(
       campaignRepository,
       sessionStates,
+      secrets,
       sheetRepository,
       sheets,
       catalog,
