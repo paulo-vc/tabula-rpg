@@ -124,20 +124,29 @@ function validateLayout(
         visit(node.children, [...nodePath, 'children'], depth + 1);
         return;
       }
-      if (!fieldIds.has(node.fieldId)) {
+      const placed: [string, 'fieldId' | 'secondary'][] = [[node.fieldId, 'fieldId']];
+      if (node.secondary !== undefined) placed.push([node.secondary, 'secondary']);
+      if (node.secondary === node.fieldId) {
         issues.push(
           issue(
-            'campo-inexistente',
-            [...nodePath, 'fieldId'],
-            `Campo inexistente: "${node.fieldId}"`,
+            'campo-repetido',
+            [...nodePath, 'secondary'],
+            'O campo não pode acompanhar a si mesmo',
           ),
         );
-      } else if (seen.has(node.fieldId)) {
-        issues.push(
-          issue('campo-repetido', [...nodePath, 'fieldId'], 'O campo aparece mais de uma vez'),
-        );
       }
-      seen.add(node.fieldId);
+      for (const [fieldId, property] of placed) {
+        if (!fieldIds.has(fieldId)) {
+          issues.push(
+            issue('campo-inexistente', [...nodePath, property], `Campo inexistente: "${fieldId}"`),
+          );
+        } else if (seen.has(fieldId) && !(property === 'secondary' && fieldId === node.fieldId)) {
+          issues.push(
+            issue('campo-repetido', [...nodePath, property], 'O campo aparece mais de uma vez'),
+          );
+        }
+        seen.add(fieldId);
+      }
     });
   };
   visit(nodes, path, 1);
