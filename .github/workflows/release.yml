@@ -42,12 +42,22 @@ jobs:
       - uses: tauri-apps/tauri-action@action-v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Assina os instaladores para a atualização automática (o app só aceita
+          # atualizações assinadas com esta chave). Sem os segredos, o build falha.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
           tagName: ${{ github.ref_name }}
           releaseName: 'Tabula RPG ${{ github.ref_name }}'
           releaseDraft: true
-          prerelease: true
+          # Versão normal (não pré-lançamento): o app procura a atualização em
+          # releases/latest, que ignora pré-lançamentos.
+          prerelease: false
           args: ${{ matrix.args }}
           # Também publica o .exe solto: "executável único" que roda sem instalar.
           uploadPlainBinary: true
+          # latest.json: o arquivo que o app consulta. No Windows, atualiza pelo
+          # instalador NSIS (o mesmo do download recomendado).
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true

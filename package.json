@@ -20,7 +20,8 @@
     "depcheck": "depcruise packages apps/web/src --config .dependency-cruiser.cjs",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm depcheck && pnpm test",
     "desktop:dev": "pnpm --filter @tabula/desktop tauri dev",
-    "desktop:build": "pnpm --filter @tabula/desktop tauri build"
+    "desktop:build": "pnpm --filter @tabula/desktop tauri build",
+    "desktop:build:local": "pnpm --filter @tabula/desktop tauri build --config src-tauri/tauri.local.conf.json"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

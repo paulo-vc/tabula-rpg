@@ -53,5 +53,5 @@ Publicado o rascunho, o app desktop das próximas versões avisa sozinho quando 
 ## 4. Depois do lançamento
 
 - **Assinatura do Windows:** pedir à [SignPath Foundation](https://signpath.org/apply) (gratuito para projetos open source, exige o repositório público). Remove o aviso do SmartScreen.
-- **Atualização automática completa** (baixar e instalar sozinho): plugin updater do Tauri, com par de chaves de assinatura; a chave privada vai para os segredos do repositório e precisa de backup (perdê-la impede atualizar quem já instalou).
+- **Atualização automática:** feita (plugin updater do Tauri). A chave privada de assinatura fica nos segredos `TAURI_SIGNING_PRIVATE_KEY` e `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, com backup fora do computador: perdê-la impede atualizar quem já instalou. Releases deixam de ser pré-lançamento, porque o app procura a atualização em `releases/latest`.
 - **Ordem Paranormal:** só com autorização da Jambô, ou como ficha "inspirada", com outro nome e sem textos dos livros.

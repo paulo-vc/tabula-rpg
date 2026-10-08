@@ -20,6 +20,8 @@
     "@tabula/sync": "workspace:*",
     "@tabula/templates": "workspace:*",
     "@tauri-apps/plugin-opener": "^2.7.0",
+    "@tauri-apps/plugin-process": "^2.4.0",
+    "@tauri-apps/plugin-updater": "^2.13.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "dexie": "^4.4.6",

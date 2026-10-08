@@ -41,7 +41,22 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser",
-        "languages": ["PortugueseBR", "English"]
+        "languages": [
+          "PortugueseBR",
+          "English"
+        ]
+      }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "CHAVE_PUBLICA_PENDENTE",
+      "endpoints": [
+        "https://github.com/paulo-vc/tabula-rpg/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
       }
     }
   }
