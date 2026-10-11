@@ -40,6 +40,7 @@ import {
   type Issue,
   type LayoutNode,
   type NodePath,
+  type SectionDisplay,
   type SystemTemplate,
 } from '@tabula/domain';
 import {
@@ -110,7 +111,24 @@ const TYPE_HINTS: Record<FieldType, string> = {
 };
 
 const fieldsIn = (nodes: readonly LayoutNode[]): string[] =>
-  nodes.flatMap((n) => (n.kind === 'field' ? [n.fieldId] : fieldsIn(n.children)));
+  nodes.flatMap((n) =>
+    n.kind === 'field'
+      ? n.secondary === undefined
+        ? [n.fieldId]
+        : [n.fieldId, n.secondary]
+      : fieldsIn(n.children),
+  );
+
+const DISPLAY_LABELS: Record<SectionDisplay, string> = {
+  padrao: 'Padrão',
+  compacto: 'Blocos (atributos)',
+  linhas: 'Linhas (perícias)',
+};
+
+/** Abas já usadas no sistema, para sugerir ao nomear a aba de uma seção. */
+const tabsOf = (nodes: readonly LayoutNode[]) => [
+  ...new Set(nodes.flatMap((n) => (n.kind === 'section' && n.tab ? [n.tab] : []))),
+];
 
 /** Seções do layout, com caminho, para os menus "mover para". */
 function sectionsOf(nodes: readonly LayoutNode[], prefix: number[] = []) {
@@ -244,10 +262,16 @@ export function StructureEditor({
     if (over) apply((t) => applyDrop(t, String(active.id), String(over.id)));
   };
 
-  const rowFor = (field: FieldDef, path: NodePath | null, siblings: number) => (
+  const rowFor = (
+    field: FieldDef,
+    path: NodePath | null,
+    siblings: number,
+    secondary?: FieldDef,
+  ) => (
     <FieldRow
       key={field.id}
       field={field}
+      secondary={secondary}
       path={path}
       siblings={siblings}
       issues={issues.get(field.id)}
@@ -274,13 +298,16 @@ export function StructureEditor({
         const path = [...prefix, index];
         if (node.kind === 'field') {
           const field = fieldsById.get(node.fieldId);
-          return field ? rowFor(field, path, nodes.length) : null;
+          const secondary =
+            node.secondary === undefined ? undefined : fieldsById.get(node.secondary);
+          return field ? rowFor(field, path, nodes.length, secondary) : null;
         }
         return (
           <SectionCard
             key={`s${path.join('.')}`}
             node={node}
             path={path}
+            tabs={tabsOf(template.layouts.full)}
             isFirst={index === 0}
             isLast={index === nodes.length - 1}
             apply={apply}
@@ -402,6 +429,7 @@ export function StructureEditor({
 
 function FieldRow({
   field,
+  secondary,
   path,
   siblings,
   issues,
@@ -412,6 +440,8 @@ function FieldRow({
   onDuplicate,
 }: {
   field: FieldDef;
+  /** Campo mostrado junto deste, pequeno (não tem linha própria). */
+  secondary?: FieldDef | undefined;
   path: NodePath | null;
   siblings: number;
   issues: Issue[] | undefined;
@@ -466,6 +496,11 @@ function FieldRow({
       {issues && (
         <Badge variant="destructive" title={issues.map((i) => i.message).join('\n')}>
           <CircleAlertIcon /> {issues.length}
+        </Badge>
+      )}
+      {secondary && (
+        <Badge variant="outline" title="Mostrado junto, pequeno">
+          + {secondary.label || secondary.key}
         </Badge>
       )}
       {field.visibility === 'gm' && (
@@ -530,6 +565,7 @@ function FieldRow({
 function SectionCard({
   node,
   path,
+  tabs,
   isFirst,
   isLast,
   apply,
@@ -538,6 +574,7 @@ function SectionCard({
 }: {
   node: LayoutNode & { kind: 'section' };
   path: NodePath;
+  tabs: string[];
   isFirst: boolean;
   isLast: boolean;
   apply: Apply;
@@ -638,6 +675,48 @@ function SectionCard({
             <Trash2Icon />
           </Button>
         </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 pl-8">
+        {!nested && (
+          <>
+            <Input
+              aria-label="Aba da seção"
+              placeholder="Aba (ex.: Combate)"
+              list={`${base}-abas`}
+              className="h-8 w-44"
+              value={node.tab ?? ''}
+              maxLength={40}
+              onChange={(event) =>
+                apply(
+                  (t) => updateSection(t, path, { tab: event.target.value }),
+                  `aba:${path.join('.')}`,
+                )
+              }
+            />
+            <datalist id={`${base}-abas`}>
+              {tabs.map((tab) => (
+                <option key={tab} value={tab} />
+              ))}
+            </datalist>
+          </>
+        )}
+        <Select
+          value={node.display ?? 'padrao'}
+          onValueChange={(value) =>
+            apply((t) => updateSection(t, path, { display: value as SectionDisplay }))
+          }
+        >
+          <SelectTrigger aria-label="Exibição da seção" className="h-8 w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(DISPLAY_LABELS) as SectionDisplay[]).map((display) => (
+              <SelectItem key={display} value={display}>
+                {DISPLAY_LABELS[display]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <ul className="space-y-2">{children}</ul>
       {/* Área de soltar no fim da seção (também recebe campos numa seção vazia). */}

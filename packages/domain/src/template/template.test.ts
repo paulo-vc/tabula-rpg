@@ -119,6 +119,17 @@ describe('compileTemplate', () => {
     ['campo-inexistente', (t) => t.layouts.full.push({ kind: 'field', fieldId: 'f_fantasma' })],
     ['dado-de-teste-invalido', (t) => (t.checkDice = '1d20*2')],
     ['campo-repetido', (t) => t.layouts.full.push({ kind: 'field', fieldId: 'f_hp' })],
+    [
+      'campo-repetido',
+      (t) => t.layouts.full.push({ kind: 'field', fieldId: 'f_fantasma2', secondary: 'f_hp' }),
+    ],
+    [
+      'campo-inexistente',
+      (t) => {
+        const section = t.layouts.full[0] as { children: { secondary?: string }[] };
+        (section.children[0] as { secondary?: string }).secondary = 'f_fantasma';
+      },
+    ],
     ['campo-inexistente', (t) => (t.layouts.gmSummary = ['f_fantasma'])],
     [
       'layout-aninhado-demais',

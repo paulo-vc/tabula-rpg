@@ -90,6 +90,7 @@ describe('ficha', () => {
 
   it('não perde cliques rápidos nos botões de recurso', async () => {
     const { user, sheet } = await openNewSheet();
+    await user.click(screen.getByRole('tab', { name: 'Combate' }));
     const plus = screen.getByRole('button', { name: 'Aumentar Pontos de Vida' });
     await user.click(plus);
     await user.click(plus);
@@ -104,6 +105,7 @@ describe('ficha', () => {
 
   it('marca e desmarca condições', async () => {
     const { user, sheet } = await openNewSheet();
+    await user.click(screen.getByRole('tab', { name: 'Combate' }));
     const conditions = screen.getByRole('group', { name: 'Condições' });
     const poisoned = within(conditions).getByRole('button', { name: 'Envenenado' });
 
@@ -119,6 +121,7 @@ describe('ficha', () => {
 
   it('adiciona, edita e remove itens de uma lista', async () => {
     const { user, sheet } = await openNewSheet();
+    await user.click(screen.getByRole('tab', { name: 'Inventário' }));
     const equipment = screen.getByRole('group', { name: 'Equipamento' });
 
     await user.click(within(equipment).getByRole('button', { name: 'Adicionar' }));
@@ -128,7 +131,7 @@ describe('ficha', () => {
       expect(items[0]?.values).toMatchObject({ nome: 'Corda' });
     });
 
-    await user.click(within(equipment).getByRole('button', { name: 'Remover item 1' }));
+    await user.click(within(equipment).getByRole('button', { name: 'Remover Corda' }));
     await waitFor(async () => expect(await storedValue(sheet.id, 'equipamento')).toEqual([]));
   });
 

@@ -17,7 +17,11 @@ function compile(template: SystemTemplate): CompiledTemplate {
 }
 
 const layoutFieldIds = (nodes: readonly LayoutNode[]): string[] =>
-  nodes.flatMap((node) => (node.kind === 'field' ? [node.fieldId] : layoutFieldIds(node.children)));
+  nodes.flatMap((node) =>
+    node.kind === 'field'
+      ? [node.fieldId, ...(node.secondary ? [node.secondary] : [])]
+      : layoutFieldIds(node.children),
+  );
 
 describe.each(BUILTIN_TEMPLATES.map((template) => [template.id, template] as const))(
   'template nativo %s',
@@ -168,10 +172,49 @@ describe('D&D 5e: fórmulas avançadas (1.1.0)', () => {
     old.values = { ...old.values, for: 17, mod_conjuracao: 3 } as never;
     delete (old.values as Record<string, unknown>).atributo_conjuracao;
     const { sheet, report } = migrateSheet(old, compiled, 1);
-    expect(sheet.templateRef.version).toBe('1.1.0');
+    expect(sheet.templateRef.version).toBe('1.2.0');
     expect(sheet.values.for).toBe(17);
     expect(report.orphaned).toEqual(['mod_conjuracao']); // guardado, não perdido
     expect(sheet.orphaned).toEqual({ mod_conjuracao: 3 });
+  });
+});
+
+describe('D&D 5e: nova ficha (1.2.0)', () => {
+  const template = getBuiltinTemplate('dnd5e-srd');
+  if (!template) throw new Error('template ausente');
+  const compiled = compile(template);
+
+  it('organiza a ficha em abas, com o que se usa em jogo na primeira', () => {
+    const tabs = template.layouts.full.flatMap((n) =>
+      n.kind === 'section' && n.tab ? [n.tab] : [],
+    );
+    expect(tabs).toEqual([
+      'Principal',
+      'Combate',
+      'Magias',
+      'Inventário',
+      'Personagem',
+      'Anotações',
+    ]);
+    expect(template.layouts.full[0]).toMatchObject({ title: 'Atributos', display: 'compacto' });
+    expect(template.layouts.full[0]).toMatchObject({
+      children: expect.arrayContaining([{ kind: 'field', fieldId: 'for_mod', secondary: 'for' }]),
+    });
+  });
+
+  it('migra uma ficha da 1.1.0 sem perder nada (só ganha campos novos)', () => {
+    const old = {
+      ...createSheet(compiled, { id: 's', name: 'Antiga', ownerId: 'u', now: 0 }),
+      templateRef: { id: 'dnd5e-srd', version: '1.1.0', source: 'builtin' as const },
+    };
+    const values = old.values as Record<string, unknown>;
+    delete values.habilidades;
+    values.equipamento = [{ id: 'i1', values: { nome: 'Corda', qtd: 1, peso: 5 } }];
+    const { sheet, report } = migrateSheet(old, compiled, 1);
+    expect(sheet.templateRef.version).toBe('1.2.0');
+    expect(report.orphaned).toEqual([]);
+    expect(report.added).toEqual(['habilidades']);
+    expect(sheet.values.equipamento).toEqual(values.equipamento);
   });
 });
 

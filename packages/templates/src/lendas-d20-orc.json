@@ -1,9 +1,9 @@
 {
   "id": "lendas-d20-orc",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Lendas d20 (ORC)",
   "description": "Ficha para fantasia heroica d20 com graus de proficiência (destreinado a lendário), atributos como modificadores e três ações por turno. ORC Notice: This product is licensed under the ORC License held in the Library of Congress at TX 9-307-067 and available online at various locations including www.azoralaw.com/orclicense, www.gencon.com/orclicense and others. All warranties are disclaimed as set forth therein. Attribution: This product is based on the following Licensed Material: Player Core © 2023 Paizo Inc., Designed by Logan Bonner, Jason Bulmahn, Stephen Radney-MacFarland, and Mark Seifter. Reserved Material: nomes, cenário e marcas da Paizo não são usados. Expressed Material: esta ficha (layout e textos) não é material licenciado.",
-  "author": "Tabula RPG",
+  "author": "Tabularium",
   "license": "ORC",
   "language": "pt-BR",
   "tags": ["fantasia", "d20", "orc"],
@@ -1592,6 +1592,12 @@
           "key": "acoes",
           "label": "Ações",
           "type": "text"
+        },
+        {
+          "id": "descricao",
+          "key": "descricao",
+          "label": "Descrição",
+          "type": "longtext"
         }
       ]
     },
@@ -1653,7 +1659,7 @@
           "id": "descricao",
           "key": "descricao",
           "label": "Descrição",
-          "type": "text"
+          "type": "longtext"
         }
       ]
     },
@@ -1692,6 +1698,12 @@
           "key": "investido",
           "label": "Investido",
           "type": "boolean"
+        },
+        {
+          "id": "descricao",
+          "key": "descricao",
+          "label": "Descrição",
+          "type": "longtext"
         }
       ]
     },
@@ -1826,70 +1838,8 @@
     "full": [
       {
         "kind": "section",
-        "title": "Personagem",
-        "columns": 4,
-        "children": [
-          {
-            "kind": "field",
-            "fieldId": "nome",
-            "span": 2
-          },
-          {
-            "kind": "field",
-            "fieldId": "jogador"
-          },
-          {
-            "kind": "field",
-            "fieldId": "nivel"
-          },
-          {
-            "kind": "field",
-            "fieldId": "ancestralidade"
-          },
-          {
-            "kind": "field",
-            "fieldId": "heranca"
-          },
-          {
-            "kind": "field",
-            "fieldId": "formacao"
-          },
-          {
-            "kind": "field",
-            "fieldId": "classe"
-          },
-          {
-            "kind": "field",
-            "fieldId": "tamanho"
-          },
-          {
-            "kind": "field",
-            "fieldId": "deslocamento"
-          },
-          {
-            "kind": "field",
-            "fieldId": "px"
-          },
-          {
-            "kind": "field",
-            "fieldId": "heroismo"
-          },
-          {
-            "kind": "field",
-            "fieldId": "idiomas",
-            "span": 2
-          },
-          {
-            "kind": "field",
-            "fieldId": "tracos",
-            "span": 2
-          }
-        ]
-      },
-      {
-        "kind": "section",
         "title": "Atributos",
-        "columns": 4,
+        "columns": 3,
         "children": [
           {
             "kind": "field",
@@ -1914,11 +1864,19 @@
           {
             "kind": "field",
             "fieldId": "car"
-          },
+          }
+        ],
+        "tab": "Principal",
+        "display": "compacto"
+      },
+      {
+        "kind": "section",
+        "title": "Atributo-chave",
+        "columns": 2,
+        "children": [
           {
             "kind": "field",
-            "fieldId": "atributo_chave",
-            "span": 2
+            "fieldId": "atributo_chave"
           },
           {
             "kind": "field",
@@ -1929,7 +1887,7 @@
       {
         "kind": "section",
         "title": "Defesas e Percepção",
-        "columns": 4,
+        "columns": 2,
         "children": [
           {
             "kind": "field",
@@ -1963,122 +1921,13 @@
             "kind": "field",
             "fieldId": "percepcao"
           }
-        ]
-      },
-      {
-        "kind": "section",
-        "title": "Combate",
-        "columns": 4,
-        "children": [
-          {
-            "kind": "field",
-            "fieldId": "ca"
-          },
-          {
-            "kind": "field",
-            "fieldId": "prof_armadura"
-          },
-          {
-            "kind": "field",
-            "fieldId": "bonus_armadura"
-          },
-          {
-            "kind": "field",
-            "fieldId": "limite_des"
-          },
-          {
-            "kind": "field",
-            "fieldId": "pv"
-          },
-          {
-            "kind": "field",
-            "fieldId": "pv_temp"
-          },
-          {
-            "kind": "field",
-            "fieldId": "pv_ancestralidade"
-          },
-          {
-            "kind": "field",
-            "fieldId": "pv_classe"
-          },
-          {
-            "kind": "field",
-            "fieldId": "moribundo"
-          },
-          {
-            "kind": "field",
-            "fieldId": "ferido"
-          },
-          {
-            "kind": "field",
-            "fieldId": "prof_classe"
-          },
-          {
-            "kind": "field",
-            "fieldId": "cd_classe"
-          },
-          {
-            "kind": "field",
-            "fieldId": "resistencias_dano",
-            "span": 4
-          },
-          {
-            "kind": "field",
-            "fieldId": "condicoes",
-            "span": 4
-          }
-        ]
-      },
-      {
-        "kind": "section",
-        "title": "Escudo",
-        "columns": 4,
-        "children": [
-          {
-            "kind": "field",
-            "fieldId": "escudo_erguido"
-          },
-          {
-            "kind": "field",
-            "fieldId": "escudo_ca"
-          },
-          {
-            "kind": "field",
-            "fieldId": "escudo_dureza"
-          },
-          {
-            "kind": "field",
-            "fieldId": "escudo_pv"
-          }
-        ]
-      },
-      {
-        "kind": "section",
-        "title": "Efeitos temporários",
-        "columns": 1,
-        "children": [
-          {
-            "kind": "field",
-            "fieldId": "efeitos"
-          }
-        ]
-      },
-      {
-        "kind": "section",
-        "title": "Golpes",
-        "columns": 1,
-        "children": [
-          {
-            "kind": "field",
-            "fieldId": "ataques"
-          }
-        ]
+        ],
+        "display": "linhas"
       },
       {
         "kind": "section",
         "title": "Perícias",
-        "columns": 4,
+        "columns": 2,
         "children": [
           {
             "kind": "field",
@@ -2207,11 +2056,129 @@
           {
             "kind": "field",
             "fieldId": "sociedade"
+          }
+        ],
+        "display": "linhas"
+      },
+      {
+        "kind": "section",
+        "title": "Saberes",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "saberes"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Combate",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "ca"
           },
           {
             "kind": "field",
-            "fieldId": "saberes",
-            "span": 2
+            "fieldId": "prof_armadura"
+          },
+          {
+            "kind": "field",
+            "fieldId": "bonus_armadura"
+          },
+          {
+            "kind": "field",
+            "fieldId": "limite_des"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pv"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pv_temp"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pv_ancestralidade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "pv_classe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "moribundo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "ferido"
+          },
+          {
+            "kind": "field",
+            "fieldId": "prof_classe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "cd_classe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "resistencias_dano",
+            "span": 4
+          },
+          {
+            "kind": "field",
+            "fieldId": "condicoes",
+            "span": 4
+          }
+        ],
+        "tab": "Combate"
+      },
+      {
+        "kind": "section",
+        "title": "Escudo",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "escudo_erguido"
+          },
+          {
+            "kind": "field",
+            "fieldId": "escudo_ca"
+          },
+          {
+            "kind": "field",
+            "fieldId": "escudo_dureza"
+          },
+          {
+            "kind": "field",
+            "fieldId": "escudo_pv"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Golpes",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "ataques"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Efeitos temporários",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "efeitos"
           }
         ]
       },
@@ -2253,18 +2220,8 @@
             "fieldId": "magias",
             "span": 3
           }
-        ]
-      },
-      {
-        "kind": "section",
-        "title": "Talentos",
-        "columns": 1,
-        "children": [
-          {
-            "kind": "field",
-            "fieldId": "talentos"
-          }
-        ]
+        ],
+        "tab": "Magias"
       },
       {
         "kind": "section",
@@ -2300,22 +2257,105 @@
             "kind": "field",
             "fieldId": "pc"
           }
+        ],
+        "tab": "Inventário"
+      },
+      {
+        "kind": "section",
+        "title": "Personagem",
+        "columns": 4,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "nome",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "jogador"
+          },
+          {
+            "kind": "field",
+            "fieldId": "nivel"
+          },
+          {
+            "kind": "field",
+            "fieldId": "ancestralidade"
+          },
+          {
+            "kind": "field",
+            "fieldId": "heranca"
+          },
+          {
+            "kind": "field",
+            "fieldId": "formacao"
+          },
+          {
+            "kind": "field",
+            "fieldId": "classe"
+          },
+          {
+            "kind": "field",
+            "fieldId": "tamanho"
+          },
+          {
+            "kind": "field",
+            "fieldId": "deslocamento"
+          },
+          {
+            "kind": "field",
+            "fieldId": "px"
+          },
+          {
+            "kind": "field",
+            "fieldId": "heroismo"
+          },
+          {
+            "kind": "field",
+            "fieldId": "idiomas",
+            "span": 2
+          },
+          {
+            "kind": "field",
+            "fieldId": "tracos",
+            "span": 2
+          }
+        ],
+        "tab": "Personagem"
+      },
+      {
+        "kind": "section",
+        "title": "Talentos e habilidades",
+        "columns": 1,
+        "children": [
+          {
+            "kind": "field",
+            "fieldId": "talentos"
+          }
         ]
       },
       {
         "kind": "section",
-        "title": "Personalidade e anotações",
-        "columns": 2,
+        "title": "Personalidade",
+        "columns": 1,
         "children": [
           {
             "kind": "field",
             "fieldId": "personalidade"
-          },
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "title": "Anotações",
+        "columns": 1,
+        "children": [
           {
             "kind": "field",
             "fieldId": "anotacoes"
           }
-        ]
+        ],
+        "tab": "Anotações"
       }
     ],
     "gmSummary": [

@@ -10,8 +10,15 @@ import type {
   Result,
 } from '@tabula/domain';
 import { defaultValue, listItemValue } from '@tabula/domain';
-import { InfoIcon, MinusIcon, PlusIcon, Trash2Icon } from 'lucide-react';
-import { useId } from 'react';
+import {
+  ChevronUpIcon,
+  InfoIcon,
+  MinusIcon,
+  NotebookPenIcon,
+  PlusIcon,
+  Trash2Icon,
+} from 'lucide-react';
+import { useId, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,7 +38,7 @@ import { formatNumber, parseNumber } from './format';
 import { CheckButton, RollButton } from './roll-context';
 import { useDraft } from './use-draft';
 
-type Derived = Result<number, EvaluationError> | undefined;
+export type Derived = Result<number, EvaluationError> | undefined;
 
 export interface FieldControlProps {
   field: FieldDef;
@@ -73,7 +80,7 @@ function FieldLabel({
 
 // ---------- Controles primitivos (também usados dentro de listas) ----------
 
-interface PrimitiveProps<F extends ListItemFieldDef> {
+export interface PrimitiveProps<F extends ListItemFieldDef> {
   field: F;
   value: PrimitiveValue;
   onChange: (value: PrimitiveValue) => void;
@@ -82,7 +89,7 @@ interface PrimitiveProps<F extends ListItemFieldDef> {
   compact?: boolean;
 }
 
-function NumberInput({
+export function NumberInput({
   field,
   value,
   onChange,
@@ -211,7 +218,7 @@ function SelectInput({
   );
 }
 
-function PrimitiveInput(props: PrimitiveProps<ListItemFieldDef>) {
+export function PrimitiveInput(props: PrimitiveProps<ListItemFieldDef>) {
   const { field } = props;
   switch (field.type) {
     case 'number':
@@ -372,60 +379,115 @@ function ListControl({
   onChange: (items: ListItem[]) => void;
   newItemId: () => string;
 }) {
+  const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
   const full = field.maxItems !== undefined && items.length >= field.maxItems;
+  // Textos longos (descrição de uma habilidade, de um item) ficam num painel que abre por
+  // item: a linha continua curta, e o texto tem espaço quando é preciso.
+  const inline = field.itemFields.filter((f) => f.type !== 'longtext');
+  const details = field.itemFields.filter((f) => f.type === 'longtext');
   const update = (itemId: string, fieldId: string, value: PrimitiveValue) =>
     onChange(
       items.map((item) =>
         item.id === itemId ? { ...item, values: { ...item.values, [fieldId]: value } } : item,
       ),
     );
+  const toggle = (itemId: string) =>
+    setOpen((current) => {
+      const next = new Set(current);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
+  const itemName = (item: ListItem, index: number) => {
+    const first = inline.find((f) => f.type === 'text');
+    const name = first ? listItemValue(first, item) : '';
+    return typeof name === 'string' && name.trim() ? name : `item ${index + 1}`;
+  };
 
   return (
     <div className="space-y-2">
       {items.length === 0 && <p className="text-muted-foreground text-sm">Nenhum item.</p>}
       <ul className="space-y-2">
-        {items.map((item, index) => (
-          <li
-            key={item.id}
-            className="flex flex-wrap items-end gap-2 rounded-md border p-2 sm:flex-nowrap"
-          >
-            {field.itemFields.map((itemField) => (
-              <div
-                key={itemField.id}
-                className={cn(
-                  'min-w-0',
-                  itemField.type === 'boolean'
-                    ? 'flex flex-col items-center gap-2 pb-2'
-                    : itemField.type === 'number'
-                      ? 'w-20 shrink-0'
-                      : 'min-w-32 flex-1',
+        {items.map((item, index) => {
+          const expanded = open.has(item.id);
+          const hasText = details.some((f) => {
+            const value = listItemValue(f, item);
+            return typeof value === 'string' && value.trim() !== '';
+          });
+          return (
+            <li key={item.id} className="rounded-md border p-2">
+              <div className="flex flex-wrap items-end gap-2 sm:flex-nowrap">
+                {inline.map((itemField) => (
+                  <div
+                    key={itemField.id}
+                    className={cn(
+                      'min-w-0',
+                      itemField.type === 'boolean'
+                        ? 'flex flex-col items-center gap-2 pb-2'
+                        : itemField.type === 'number'
+                          ? 'w-20 shrink-0'
+                          : 'min-w-32 flex-1',
+                    )}
+                  >
+                    {index === 0 && (
+                      <span className="text-muted-foreground mb-1 block text-xs">
+                        {itemField.label}
+                      </span>
+                    )}
+                    <PrimitiveInput
+                      compact
+                      field={itemField}
+                      label={`${itemField.label} (item ${index + 1})`}
+                      value={listItemValue(itemField, item)}
+                      onChange={(value) => update(item.id, itemField.id, value)}
+                    />
+                  </div>
+                ))}
+                {details.length > 0 && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-expanded={expanded}
+                    aria-label={`${expanded ? 'Fechar' : 'Abrir'} descrição de ${itemName(item, index)}`}
+                    title={hasText ? 'Tem descrição' : 'Escrever descrição'}
+                    onClick={() => toggle(item.id)}
+                  >
+                    {expanded ? (
+                      <ChevronUpIcon />
+                    ) : (
+                      <NotebookPenIcon className={cn(!hasText && 'opacity-50')} />
+                    )}
+                  </Button>
                 )}
-              >
-                {index === 0 && (
-                  <span className="text-muted-foreground mb-1 block text-xs">
-                    {itemField.label}
-                  </span>
-                )}
-                <PrimitiveInput
-                  compact
-                  field={itemField}
-                  label={`${itemField.label} (item ${index + 1})`}
-                  value={listItemValue(itemField, item)}
-                  onChange={(value) => update(item.id, itemField.id, value)}
-                />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  aria-label={`Remover ${itemName(item, index)}`}
+                  onClick={() => onChange(items.filter((i) => i.id !== item.id))}
+                >
+                  <Trash2Icon />
+                </Button>
               </div>
-            ))}
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              aria-label={`Remover item ${index + 1}`}
-              onClick={() => onChange(items.filter((i) => i.id !== item.id))}
-            >
-              <Trash2Icon />
-            </Button>
-          </li>
-        ))}
+              {expanded && (
+                <div className="mt-2 space-y-2 border-t pt-2">
+                  {details.map((itemField) => (
+                    <div key={itemField.id} className="space-y-1">
+                      <span className="text-muted-foreground block text-xs">{itemField.label}</span>
+                      <PrimitiveInput
+                        field={itemField}
+                        label={`${itemField.label} de ${itemName(item, index)}`}
+                        value={listItemValue(itemField, item)}
+                        onChange={(value) => update(item.id, itemField.id, value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
       <Button
         type="button"

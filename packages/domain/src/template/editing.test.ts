@@ -22,6 +22,7 @@ import {
   removeField,
   removeSection,
   renameReference,
+  setFieldSecondary,
   setFieldSpan,
   setInGmSummary,
   templateIdFromName,
@@ -454,5 +455,50 @@ describe('6b: colunas, duplicar e arrastar', () => {
         ),
       );
     });
+  });
+});
+
+describe('nova ficha: abas, exibição e campo secundário', () => {
+  /** Seção "Atributos" com for (valor) e for_mod (modificador). */
+  const attributes = () => {
+    let template = blank();
+    ({ template } = addField(template, 'number', 'For', [0]));
+    ({ template } = addField(template, 'computed', 'For mod', [0]));
+    return template;
+  };
+
+  it('o secundário sai do próprio lugar e acompanha o campo principal', () => {
+    const template = setFieldSecondary(attributes(), 'for_mod', 'for');
+    expect(template.layouts.full[0]).toMatchObject({
+      children: [{ fieldId: 'nome' }, { fieldId: 'for_mod', secondary: 'for' }],
+    });
+    expect(compiles(template)).toBe(true);
+  });
+
+  it('trocar ou desfazer o secundário devolve o anterior à ficha', () => {
+    let template = setFieldSecondary(attributes(), 'for_mod', 'for');
+    template = setFieldSecondary(template, 'for_mod', undefined);
+    expect(outline(template.layouts.full)).toEqual([{ Personagem: ['nome', 'for_mod', 'for'] }]);
+    expect(compiles(template)).toBe(true);
+
+    template = setFieldSecondary(setFieldSecondary(template, 'for_mod', 'for'), 'for_mod', 'nome');
+    expect(template.layouts.full[0]).toMatchObject({
+      children: [{ fieldId: 'for_mod', secondary: 'nome' }, { fieldId: 'for' }],
+    });
+    expect(compiles(template)).toBe(true);
+  });
+
+  it('excluir o campo secundário limpa a referência', () => {
+    const template = removeField(setFieldSecondary(attributes(), 'for_mod', 'for'), 'for');
+    expect(template.layouts.full[0]).toMatchObject({ children: [{}, { fieldId: 'for_mod' }] });
+    expect(JSON.stringify(template.layouts)).not.toContain('secondary');
+  });
+
+  it('aba e exibição da seção; valores vazios saem do arquivo', () => {
+    let template = updateSection(blank(), [0], { tab: 'Principal', display: 'compacto' });
+    expect(template.layouts.full[0]).toMatchObject({ tab: 'Principal', display: 'compacto' });
+    template = updateSection(template, [0], { tab: '  ', display: 'padrao' });
+    expect(template.layouts.full[0]).not.toHaveProperty('tab');
+    expect(template.layouts.full[0]).not.toHaveProperty('display');
   });
 });

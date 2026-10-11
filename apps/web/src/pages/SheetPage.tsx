@@ -14,6 +14,7 @@ import { Link, useLocation } from 'wouter';
 import type { OpenedSheet } from '@/app/sheets';
 import { useServices } from '@/app/services-context';
 import { SheetLayout } from '@/components/sheet/SheetLayout';
+import { SheetVitals } from '@/components/sheet/SheetVitals';
 import { useDraft } from '@/components/sheet/use-draft';
 import { useSheetEditing } from '@/components/sheet/use-sheet-editing';
 import { RollContext } from '@/components/sheet/roll-context';
@@ -200,6 +201,13 @@ function SheetEditor({ id, compiled }: { id: string; compiled: OpenedReady['comp
       </div>
 
       <RollContext value={roller}>
+        <SheetVitals
+          compiled={compiled}
+          values={values}
+          derived={derived}
+          onChange={onChange}
+          hiddenFieldIds={hidden}
+        />
         <SheetLayout
           compiled={compiled}
           values={values}

@@ -4,6 +4,7 @@ import {
   KeySchema,
   nodeAt,
   pathOfField,
+  setFieldSecondary,
   setFieldSpan,
   setInGmSummary,
   updateField,
@@ -50,7 +51,11 @@ interface Settings {
   field: FieldDef;
   inSummary: boolean;
   span: Columns | undefined;
+  /** Campo mostrado junto, pequeno (ex.: o valor do atributo junto do modificador). */
+  secondary: string | undefined;
 }
+
+const NO_SECONDARY = '__nenhum';
 
 function settingsOf(template: SystemTemplate, fieldId: string): Settings | null {
   const field = template.fields.find((f) => f.id === fieldId);
@@ -61,6 +66,7 @@ function settingsOf(template: SystemTemplate, fieldId: string): Settings | null 
     field,
     inSummary: template.layouts.gmSummary?.includes(fieldId) ?? false,
     span: node?.kind === 'field' ? node.span : undefined,
+    secondary: node?.kind === 'field' ? node.secondary : undefined,
   };
 }
 
@@ -68,6 +74,7 @@ function settingsOf(template: SystemTemplate, fieldId: string): Settings | null 
 function applySettings(template: SystemTemplate, settings: Settings): SystemTemplate {
   let next = updateField(template, settings.field);
   next = setInGmSummary(next, settings.field.id, settings.inSummary);
+  next = setFieldSecondary(next, settings.field.id, settings.secondary);
   return setFieldSpan(next, settings.field.id, settings.span);
 }
 
@@ -213,6 +220,36 @@ function FieldForm({
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor={`${base}-secundario`}>Mostrar junto (pequeno)</Label>
+        <Select
+          value={settings.secondary ?? NO_SECONDARY}
+          onValueChange={(value) =>
+            change({ secondary: value === NO_SECONDARY ? undefined : value })
+          }
+        >
+          <SelectTrigger id={`${base}-secundario`} className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_SECONDARY}>Nenhum</SelectItem>
+            {template.fields
+              .filter(
+                (other) =>
+                  other.id !== field.id && other.type !== 'list' && other.type !== 'resource',
+              )
+              .map((other) => (
+                <SelectItem key={other.id} value={other.id}>
+                  {other.label || other.key}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+        <p className="text-muted-foreground text-xs">
+          Ex.: no modificador de Força, mostre o valor de Força pequeno embaixo.
+        </p>
       </div>
 
       <div className="space-y-1.5">

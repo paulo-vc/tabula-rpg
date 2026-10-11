@@ -8,6 +8,7 @@ import {
 } from '@tabula/domain';
 import { useMemo, useState } from 'react';
 import { SheetLayout } from '@/components/sheet/SheetLayout';
+import { SheetVitals } from '@/components/sheet/SheetVitals';
 
 /**
  * Ficha de teste do sistema em edição. Os valores digitados aqui servem só para
@@ -43,6 +44,14 @@ export function EditorPreview({ compiled, stale }: { compiled: CompiledTemplate;
           atualizá-la.
         </p>
       )}
+      <SheetVitals
+        compiled={compiled}
+        values={values}
+        derived={derived}
+        onChange={(fieldId: string, value: FieldValue) =>
+          setEdited((current) => ({ ...current, [fieldId]: value }))
+        }
+      />
       <SheetLayout
         compiled={compiled}
         values={values}

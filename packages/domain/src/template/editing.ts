@@ -1,7 +1,14 @@
 import type { Issue } from '../result';
 import { LIMITS } from '../schema/primitives';
 import { parseVersion } from '../version';
-import type { FieldDef, FieldType, LayoutNode, ListItemFieldDef, SystemTemplate } from './schema';
+import type {
+  FieldDef,
+  FieldType,
+  LayoutNode,
+  ListItemFieldDef,
+  SectionDisplay,
+  SystemTemplate,
+} from './schema';
 
 /**
  * Operações do criador visual de sistemas. Todas são puras: recebem o template e devolvem
@@ -305,14 +312,53 @@ export function removeField(template: SystemTemplate, fieldId: string): SystemTe
   };
 }
 
+/** Tira o campo do layout: o nó dele e a referência como campo secundário de outro. */
 function removeFieldNodes(nodes: readonly LayoutNode[], fieldId: string): LayoutNode[] {
   return nodes
     .filter((node) => node.kind !== 'field' || node.fieldId !== fieldId)
-    .map((node) =>
-      node.kind === 'section'
-        ? { ...node, children: removeFieldNodes(node.children, fieldId) }
-        : node,
-    );
+    .map((node) => {
+      if (node.kind === 'section') {
+        return { ...node, children: removeFieldNodes(node.children, fieldId) };
+      }
+      if (node.secondary !== fieldId) return node;
+      const { secondary: _, ...rest } = node;
+      return rest;
+    });
+}
+
+/**
+ * Mostra `secondary` junto de `fieldId`, pequeno (ex.: o valor do atributo junto do
+ * modificador). O campo secundário sai do lugar onde estava. `undefined` desfaz.
+ */
+export function setFieldSecondary(
+  template: SystemTemplate,
+  fieldId: string,
+  secondary: string | undefined,
+): SystemTemplate {
+  if (secondary === fieldId) return template;
+  const current = pathOfField(template.layouts.full, fieldId);
+  if (!current) return template;
+  const node = nodeAt(template.layouts.full, current);
+  if (node?.kind !== 'field' || node.secondary === secondary) return template;
+
+  let full: LayoutNode[] = [...template.layouts.full];
+  const previous = node.secondary;
+  if (secondary !== undefined) full = removeFieldNodes(full, secondary);
+  const path = pathOfField(full, fieldId);
+  if (!path) return template;
+  full = updateNode(full, path, (target) => {
+    if (target.kind !== 'field') return target;
+    const { secondary: _, ...rest } = target;
+    return secondary === undefined ? rest : { ...rest, secondary };
+  });
+  // O secundário anterior volta a aparecer logo depois do campo, sem sumir da ficha.
+  if (previous !== undefined) {
+    full = insertAt(full, path.slice(0, -1), (path.at(-1) as number) + 1, {
+      kind: 'field',
+      fieldId: previous,
+    });
+  }
+  return withFull(template, full);
 }
 
 /** Campos cujas fórmulas usam o apelido (para avisar antes de excluir). */
@@ -400,13 +446,18 @@ export function addSection(
 export function updateSection(
   template: SystemTemplate,
   path: NodePath,
-  change: { title?: string; columns?: Columns },
+  change: { title?: string; columns?: Columns; tab?: string; display?: SectionDisplay },
 ): SystemTemplate {
   return withFull(
     template,
-    updateNode(template.layouts.full, path, (node) =>
-      node.kind === 'section' ? { ...node, ...change } : node,
-    ),
+    updateNode(template.layouts.full, path, (node) => {
+      if (node.kind !== 'section') return node;
+      const next = { ...node, ...change };
+      // Valores vazios (aba sem nome, exibição padrão) saem do arquivo.
+      if (!next.tab?.trim()) delete next.tab;
+      if (next.display === 'padrao') delete next.display;
+      return next;
+    }),
   );
 }
 
