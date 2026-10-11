@@ -35,6 +35,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatNumber, parseNumber } from './format';
+import { markCount, Marks } from './Marks';
 import { CheckButton, RollButton } from './roll-context';
 import { useDraft } from './use-draft';
 
@@ -47,6 +48,11 @@ export interface FieldControlProps {
   /** Valor calculado (campos `computed`) ou máximo calculado (`resource` com fórmula). */
   derived?: Derived;
   newItemId: () => string;
+  /**
+   * Sem rótulo nem botão de adicionar: quem mostra o campo já exibe os dois (ex.: uma seção
+   * que só contém esta lista, com o título e o "Adicionar" no cabeçalho).
+   */
+  bare?: boolean | undefined;
 }
 
 /** Rótulo do campo, com a descrição (se houver) num ícone de ajuda. */
@@ -221,8 +227,21 @@ function SelectInput({
 export function PrimitiveInput(props: PrimitiveProps<ListItemFieldDef>) {
   const { field } = props;
   switch (field.type) {
-    case 'number':
+    case 'number': {
+      const count = field.display === 'marcadores' ? markCount(field.max) : null;
+      if (count !== null) {
+        return (
+          <Marks
+            label={props.label ?? field.label}
+            value={typeof props.value === 'number' ? props.value : 0}
+            count={count}
+            onChange={props.onChange}
+            size={props.compact ? 'sm' : 'md'}
+          />
+        );
+      }
       return <NumberInput {...props} field={field} />;
+    }
     case 'text':
     case 'dice':
       return <TextInput {...props} field={field} />;
@@ -298,8 +317,41 @@ function ResourceControl({
     type: 'number',
   });
 
+  // Marcadores (ex.: espaços de magia). Sem máximo ainda (0), mostra só onde digitá-lo; com
+  // um máximo grande demais para marcadores, volta ao campo numérico abaixo.
+  const count = field.display === 'marcadores' ? markCount(max) : null;
+  const awaitingMax = field.display === 'marcadores' && field.max === undefined && !max;
+  if (count !== null || awaitingMax) {
+    return (
+      <div className="flex min-h-9 flex-wrap items-center gap-x-3 gap-y-1">
+        {count !== null ? (
+          <Marks label={field.label} value={value.current} count={count} onChange={setCurrent} />
+        ) : (
+          <span className="text-muted-foreground text-sm">—</span>
+        )}
+        {field.max === undefined && (
+          <label className="text-muted-foreground flex items-center gap-1 text-xs">
+            máx.
+            <span className="w-14">
+              <NumberInput
+                compact
+                label={`${field.label}: máximo`}
+                field={{ ...asNumber('max'), integer: true, min: 0 }}
+                value={value.max ?? 0}
+                onChange={(newMax) => {
+                  const next = newMax as number;
+                  onChange({ ...value, max: next, current: Math.min(value.current, next) });
+                }}
+              />
+            </span>
+          </label>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-1.5">
+    <div className="max-w-72 space-y-1.5">
       <div className="flex items-center gap-1.5">
         <Button
           type="button"
@@ -310,7 +362,7 @@ function ResourceControl({
         >
           <MinusIcon />
         </Button>
-        <div className="flex-1">
+        <div className="w-20">
           <NumberInput
             id={id}
             label={`${field.label}: atual`}
@@ -373,11 +425,13 @@ function ListControl({
   items,
   onChange,
   newItemId,
+  bare,
 }: {
   field: FieldOf<'list'>;
   items: ListItem[];
   onChange: (items: ListItem[]) => void;
   newItemId: () => string;
+  bare?: boolean | undefined;
 }) {
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
   const full = field.maxItems !== undefined && items.length >= field.maxItems;
@@ -406,8 +460,7 @@ function ListControl({
 
   return (
     <div className="space-y-2">
-      {items.length === 0 && <p className="text-muted-foreground text-sm">Nenhum item.</p>}
-      <ul className="space-y-2">
+      <ul className="space-y-2 empty:hidden">
         {items.map((item, index) => {
           const expanded = open.has(item.id);
           const hasText = details.some((f) => {
@@ -489,21 +542,50 @@ function ListControl({
           );
         })}
       </ul>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={full}
-        onClick={() => onChange([...items, { id: newItemId(), values: {} }])}
-      >
-        <PlusIcon /> Adicionar
-      </Button>
+      {!bare && (
+        <AddItemButton
+          label={field.label}
+          disabled={full}
+          onAdd={() => onChange([...items, { id: newItemId(), values: {} }])}
+        />
+      )}
     </div>
   );
 }
 
+/** Acrescenta um item vazio a uma lista. */
+export function AddItemButton({
+  label,
+  disabled,
+  onAdd,
+}: {
+  label: string;
+  disabled?: boolean | undefined;
+  onAdd: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      disabled={disabled}
+      aria-label={`Adicionar em ${label}`}
+      onClick={onAdd}
+    >
+      <PlusIcon /> Adicionar
+    </Button>
+  );
+}
+
 /** Controle de edição de um campo da ficha, escolhido pelo tipo. */
-export function FieldControl({ field, value, onChange, derived, newItemId }: FieldControlProps) {
+export function FieldControl({
+  field,
+  value,
+  onChange,
+  derived,
+  newItemId,
+  bare,
+}: FieldControlProps) {
   const id = useId();
   const current = value ?? defaultValue(field);
 
@@ -542,6 +624,7 @@ export function FieldControl({ field, value, onChange, derived, newItemId }: Fie
             items={current as ListItem[]}
             onChange={onChange}
             newItemId={newItemId}
+            bare={bare}
           />
         );
       default:
@@ -559,16 +642,25 @@ export function FieldControl({ field, value, onChange, derived, newItemId }: Fie
   // Listas e seleções múltiplas são grupos de controles, sem um único `input` para o rótulo.
   // (A seleção múltipla já se declara como grupo.)
   const isList = field.type === 'list';
+  const marks =
+    (field.type === 'number' || field.type === 'resource') && field.display === 'marcadores';
   const labelsInput =
-    !isList && field.type !== 'computed' && !(field.type === 'select' && field.multiple);
+    !isList && !marks && field.type !== 'computed' && !(field.type === 'select' && field.multiple);
+  // Um número ocupa o espaço de um número, não a largura inteira da coluna.
+  const width =
+    (field.type === 'number' && !marks) || field.type === 'computed'
+      ? 'max-w-32'
+      : field.type === 'dice'
+        ? 'max-w-56'
+        : undefined;
   return (
     <div
       className="space-y-1"
-      role={isList ? 'group' : undefined}
-      aria-label={isList ? field.label : undefined}
+      role={isList && !bare ? 'group' : undefined}
+      aria-label={isList && !bare ? field.label : undefined}
     >
-      <FieldLabel field={field} htmlFor={labelsInput ? id : undefined} />
-      {control}
+      {!bare && <FieldLabel field={field} htmlFor={labelsInput ? id : undefined} />}
+      {width ? <div className={width}>{control}</div> : control}
     </div>
   );
 }

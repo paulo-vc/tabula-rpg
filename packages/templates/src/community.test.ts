@@ -27,6 +27,12 @@ describe.each(COMMUNITY.map((template) => [template.id, template] as const))(
     it('não vem embutido no app', () => {
       expect(BUILTIN_TEMPLATES.some((t) => t.id === template.id)).toBe(false);
     });
+
+    it('pede a v0.2 se usa recursos da ficha nova (a v0.1 esconderia campos)', () => {
+      const json = JSON.stringify(template);
+      const usesNewSheet = /"(tab|secondary|display)":/.test(json);
+      if (usesNewSheet) expect(template.minAppVersion).toBe('0.2.0');
+    });
   },
 );
 

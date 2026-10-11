@@ -8,7 +8,7 @@ import {
 } from '@tabula/domain';
 import { useMemo, useState } from 'react';
 import { SheetLayout } from '@/components/sheet/SheetLayout';
-import { SheetVitals } from '@/components/sheet/SheetVitals';
+import { pinnedFieldIds, SheetVitals } from '@/components/sheet/SheetVitals';
 
 /**
  * Ficha de teste do sistema em edição. Os valores digitados aqui servem só para
@@ -60,6 +60,7 @@ export function EditorPreview({ compiled, stale }: { compiled: CompiledTemplate;
           setEdited((current) => ({ ...current, [fieldId]: value }))
         }
         newItemId={() => crypto.randomUUID()}
+        pinnedFieldIds={pinnedFieldIds(compiled)}
       />
     </div>
   );

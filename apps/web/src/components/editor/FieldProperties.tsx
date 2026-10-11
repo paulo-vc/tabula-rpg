@@ -4,6 +4,7 @@ import {
   ITEM_FIELD_TYPES,
   KeySchema,
   keyFromLabel,
+  MAX_MARKS,
   uniqueName,
   withType,
   type FieldDef,
@@ -461,6 +462,19 @@ export function FieldProperties({
           >
             Só números inteiros
           </CheckRow>
+          <CheckRow
+            id={`${base}-marcadores`}
+            checked={field.display === 'marcadores'}
+            onChange={(marks) =>
+              onChange(
+                marks
+                  ? { ...field, display: 'marcadores', integer: true, max: field.max ?? 3 }
+                  : set(field, 'display', undefined),
+              )
+            }
+          >
+            Mostrar como marcadores (bolinhas), de 0 até o máximo (no máximo {MAX_MARKS})
+          </CheckRow>
         </div>
       );
     case 'text':
@@ -495,6 +509,15 @@ export function FieldProperties({
             onChange={(calculated) => onChange(set(field, 'max', calculated ? '10' : undefined))}
           >
             Máximo calculado por fórmula
+          </CheckRow>
+          <CheckRow
+            id={`${base}-marcadores`}
+            checked={field.display === 'marcadores'}
+            onChange={(marks) =>
+              onChange(set(field, 'display', marks ? ('marcadores' as const) : undefined))
+            }
+          >
+            Mostrar como marcadores (bolinhas) quando o máximo for até {MAX_MARKS}
           </CheckRow>
           {field.max !== undefined && (
             <Field label="Fórmula do máximo" htmlFor={`${base}-max`}>

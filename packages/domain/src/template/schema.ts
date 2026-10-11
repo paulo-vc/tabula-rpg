@@ -23,6 +23,15 @@ const fieldBase = {
   visibility: z.enum(['all', 'gm']).optional(),
 };
 
+/**
+ * Mostra um número (ou o valor atual de um recurso) como marcadores clicáveis, como as
+ * bolinhas de uma ficha de papel: testes contra a morte, Esperança, espaços de magia.
+ * Vale até `MAX_MARKS`; acima disso (ex.: um máximo calculado que cresceu), a ficha volta
+ * ao campo numérico.
+ */
+export const FIELD_DISPLAYS = ['marcadores'] as const;
+export const MAX_MARKS = 10;
+
 const NumberFieldSchema = z.object({
   ...fieldBase,
   type: z.literal('number'),
@@ -30,6 +39,7 @@ const NumberFieldSchema = z.object({
   min: FiniteNumberSchema.optional(),
   max: FiniteNumberSchema.optional(),
   integer: z.boolean().optional(),
+  display: z.enum(FIELD_DISPLAYS).optional(),
 });
 
 const TextFieldSchema = z.object({
@@ -80,6 +90,7 @@ const ResourceFieldSchema = z.object({
   max: FormulaSourceSchema.optional(),
   /** Valor inicial (atual e, se não houver fórmula, também do máximo). */
   default: FiniteNumberSchema.optional(),
+  display: z.enum(FIELD_DISPLAYS).optional(),
 });
 
 /** Campo derivado: nunca é armazenado na ficha, é sempre calculado. */

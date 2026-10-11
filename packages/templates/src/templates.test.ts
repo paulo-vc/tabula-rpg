@@ -172,7 +172,7 @@ describe('D&D 5e: fórmulas avançadas (1.1.0)', () => {
     old.values = { ...old.values, for: 17, mod_conjuracao: 3 } as never;
     delete (old.values as Record<string, unknown>).atributo_conjuracao;
     const { sheet, report } = migrateSheet(old, compiled, 1);
-    expect(sheet.templateRef.version).toBe('1.2.0');
+    expect(sheet.templateRef.version).toBe(compiled.template.version);
     expect(sheet.values.for).toBe(17);
     expect(report.orphaned).toEqual(['mod_conjuracao']); // guardado, não perdido
     expect(sheet.orphaned).toEqual({ mod_conjuracao: 3 });
@@ -211,7 +211,7 @@ describe('D&D 5e: nova ficha (1.2.0)', () => {
     delete values.habilidades;
     values.equipamento = [{ id: 'i1', values: { nome: 'Corda', qtd: 1, peso: 5 } }];
     const { sheet, report } = migrateSheet(old, compiled, 1);
-    expect(sheet.templateRef.version).toBe('1.2.0');
+    expect(sheet.templateRef.version).toBe(compiled.template.version);
     expect(report.orphaned).toEqual([]);
     expect(report.added).toEqual(['habilidades']);
     expect(sheet.values.equipamento).toEqual(values.equipamento);

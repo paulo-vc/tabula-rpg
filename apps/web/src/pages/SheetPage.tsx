@@ -14,7 +14,7 @@ import { Link, useLocation } from 'wouter';
 import type { OpenedSheet } from '@/app/sheets';
 import { useServices } from '@/app/services-context';
 import { SheetLayout } from '@/components/sheet/SheetLayout';
-import { SheetVitals } from '@/components/sheet/SheetVitals';
+import { pinnedFieldIds, SheetVitals } from '@/components/sheet/SheetVitals';
 import { useDraft } from '@/components/sheet/use-draft';
 import { useSheetEditing } from '@/components/sheet/use-sheet-editing';
 import { RollContext } from '@/components/sheet/roll-context';
@@ -215,6 +215,7 @@ function SheetEditor({ id, compiled }: { id: string; compiled: OpenedReady['comp
           onChange={onChange}
           newItemId={() => crypto.randomUUID()}
           {...(hidden && { hiddenFieldIds: hidden })}
+          pinnedFieldIds={pinnedFieldIds(compiled, hidden)}
         />
       </RollContext>
 
