@@ -12,6 +12,7 @@ import {
   type CampaignRepository,
   type CharacterSheet,
   type DeviceRepository,
+  type GmKeyRepository,
   type Issue,
   type Result,
   type RollLogRepository,
@@ -19,6 +20,7 @@ import {
   type SessionStateRepository,
   type SheetRepository,
 } from '@tabula/domain';
+import type { GmKeyPair } from '@tabula/sync';
 import type { TemplateCatalog } from './catalog';
 import { inviteUrl } from './invite-link';
 import type { Clock, IdGenerator, SheetService } from './sheets';
@@ -40,6 +42,8 @@ export class CampaignService {
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
     private readonly newSecret: () => string,
+    private readonly gmKeys: GmKeyRepository,
+    private readonly newGmKey: () => GmKeyPair,
   ) {}
 
   /** O Mestre cria a campanha e define o sistema oficial dela. */
@@ -47,14 +51,17 @@ export class CampaignService {
     const template = await this.catalog.get(input.templateId);
     if (!template) throw new Error(`Sistema não encontrado: ${input.templateId}`);
     await this.device.setDisplayName(input.gmName);
+    const identity = this.newGmKey();
     const campaign = createCampaign({
       id: this.ids.newId(),
       name: input.name,
       template,
       gm: { userId: await this.device.getDeviceId(), displayName: input.gmName },
       secret: this.newSecret(),
+      gmKey: identity.publicKey,
       now: this.clock.now(),
     });
+    await this.gmKeys.save({ campaignId: campaign.id, secretKey: identity.secretKey });
     await this.campaigns.save(campaign);
     return campaign;
   }
@@ -129,6 +136,7 @@ export class CampaignService {
     await this.sessionStates.deleteCampaign(campaignId);
     await this.secrets.deleteCampaign(campaignId);
     await this.rollLog.deleteCampaign(campaignId);
+    await this.gmKeys.deleteCampaign(campaignId);
     await this.campaigns.delete(campaignId);
   }
 

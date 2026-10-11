@@ -198,6 +198,27 @@ export function PlayerSession({ campaign, hasSheet }: { campaign: Campaign; hasS
               {failed && ` ${DIRECT_FAILURE}`}
             </span>
           </p>
+          {active && live.impersonations > 0 && live.status.state !== 'conectado' && (
+            <p
+              role="alert"
+              className="mt-2 flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400"
+            >
+              <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
+              <span>
+                Alguém tentou se passar por {campaign.gmName} sem provar a identidade e foi
+                ignorado. Confira o convite com o Mestre.
+              </span>
+            </p>
+          )}
+          {active && live.gmIdentity === 'declarada' && (
+            <p className="mt-2 flex items-start gap-2 text-sm text-muted-foreground">
+              <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
+              <span>
+                Não foi possível verificar a identidade de {campaign.gmName}: o app do Mestre é de
+                uma versão antiga do Tabularium. Peça para atualizar.
+              </span>
+            </p>
+          )}
         </CardContent>
       )}
     </Card>

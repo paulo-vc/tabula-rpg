@@ -27,6 +27,7 @@ export {
   linkedSheetId,
   linkSheet,
   roleOf,
+  withGmKey,
   type CampaignRole,
   type NewCampaignInput,
 } from './campaign/operations';
@@ -35,6 +36,8 @@ export type {
   CampaignRepository,
   DeviceRepository,
   DraftRepository,
+  GmKeyRecord,
+  GmKeyRepository,
   RollLogRepository,
   SecretValuesRecord,
   SecretValuesRepository,

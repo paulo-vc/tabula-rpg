@@ -10,6 +10,18 @@ export const CampaignSecretSchema = z
   .string()
   .regex(/^[A-Za-z0-9_-]{22}$/, 'Segredo da campanha inválido');
 
+/**
+ * Chave pública do Mestre (Ed25519, 32 bytes em base64url). Quem a tem no convite só aceita
+ * como Mestre quem provar que possui a chave privada correspondente. Opcional: campanhas
+ * e convites da v0.1 não têm chave (o jogador a fixa na primeira conexão).
+ */
+export const GmKeySchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/, 'Chave do Mestre inválida');
+
+/** Chave privada do Mestre (mesmo formato da pública). Nunca sai do aparelho dele. */
+export const GmSecretKeySchema = z
+  .string()
+  .regex(/^[A-Za-z0-9_-]{43}$/, 'Chave privada do Mestre inválida');
+
 export const CampaignMemberSchema = z.object({
   userId: IdSchema,
   displayName: LabelSchema,
@@ -28,6 +40,7 @@ export const CampaignSchema = z.object({
   /** Usuário local do Mestre. */
   gmId: IdSchema,
   gmName: LabelSchema,
+  gmKey: GmKeySchema.optional(),
   /** Template oficial da campanha: toda ficha vinculada deve ser deste sistema. */
   templateRef: TemplateRefSchema,
   /** Nome do sistema, para exibir mesmo antes de ele estar instalado no dispositivo. */
@@ -49,6 +62,7 @@ export const CampaignInviteSchema = z.object({
   name: LabelSchema,
   gmId: IdSchema,
   gmName: LabelSchema,
+  gmKey: GmKeySchema.optional(),
   templateRef: TemplateRefSchema,
   templateName: LabelSchema,
   secret: CampaignSecretSchema,
