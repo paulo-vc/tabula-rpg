@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    tabula_desktop_lib::run();
+    tabularium_lib::run();
 }

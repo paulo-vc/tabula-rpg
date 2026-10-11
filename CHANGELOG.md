@@ -2,6 +2,11 @@
 
 As mudanças de cada versão, para quem usa o Tabularium. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
+## Próxima versão
+
+- **Windows:** instalar remove o antigo "Tabula RPG" (v0.1) que ficava instalado ao lado do Tabularium, sem tocar nas suas fichas.
+- O executável passa a se chamar `tabularium` (no Windows, `tabularium.exe`; o que roda sem instalar, `tabularium_windows_x64.exe`). Os atalhos são atualizados sozinhos.
+
 ## v0.2.0
 
 O Tabula RPG agora se chama **Tabularium**, com nome, ícone e visual novos. Fichas, campanhas e sistemas continuam onde estavam, e a mesa funciona com quem ainda está na v0.1.
@@ -36,7 +41,9 @@ O Tabula RPG agora se chama **Tabularium**, com nome, ícone e visual novos. Fic
 
 ### Para quem tem a v0.1 instalada
 
-A v0.1 não tem a atualização automática: o app avisa que há versão nova e leva à página de download. Instale a v0.2.0 por cima; nada se perde. Daqui em diante, as atualizações chegam sozinhas.
+A v0.1 não tem a atualização automática: o app avisa que há versão nova e leva à página de download. Instale a v0.2.0: suas fichas e campanhas continuam lá. Daqui em diante, as atualizações chegam sozinhas.
+
+**No Windows, o "Tabula RPG" (v0.1) continua instalado ao lado do Tabularium.** Os dois usam os mesmos dados: se for desinstalar o antigo, **não marque "Excluir dados do aplicativo"**, ou as fichas do Tabularium também serão apagadas. A próxima versão remove o app antigo sozinha, sem tocar nos dados.
 
 ## v0.1.0
 
