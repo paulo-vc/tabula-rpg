@@ -8,6 +8,7 @@ export {
   DexieCampaignRepository,
   DexieDeviceRepository,
   DexieDraftRepository,
+  DexieGmKeyRepository,
   DexieRollLogRepository,
   DexieSecretValuesRepository,
   DexieSessionStateRepository,

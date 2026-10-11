@@ -16,6 +16,7 @@ import {
   type Hello,
   type Reject,
 } from './protocol';
+import { newChallenge, verifyChallenge } from './identity';
 import { reconcile, VALUES } from './sheet-doc';
 import type { SyncTransport } from './transport';
 
@@ -32,7 +33,19 @@ export type ClientStatus =
 export interface ClientCampaign {
   id: string;
   gmId: string;
+  /**
+   * Chave pública do Mestre (do convite). Com ela, só é Mestre quem provar que a possui.
+   * Sem ela (campanha da v0.1), a primeira chave provada é fixada (`onGmKeyLearned`).
+   */
+  gmKey?: string;
 }
+
+/**
+ * Como o Mestre foi reconhecido nesta conexão:
+ * - `verificada`: provou possuir a chave do Mestre;
+ * - `declarada`: apenas se apresentou com o ID dele (Mestre de uma versão sem assinatura).
+ */
+export type GmIdentity = 'verificada' | 'declarada';
 
 const LOCAL = Symbol('alteração local');
 
@@ -44,6 +57,8 @@ export interface ClientCallbacks {
   onRemoteChange?: (changes: RemoteChanges) => void;
   /** Rolagens da mesa chegaram (de outros jogadores, do Mestre ou do histórico recente). */
   onRolls?: (entries: RollEntry[]) => void;
+  /** Campanha sem chave do Mestre: a primeira provada foi fixada e deve ser gravada. */
+  onGmKeyLearned?: (gmKey: string) => void;
 }
 
 /**
@@ -63,10 +78,16 @@ export class SessionClient {
   private latest: CharacterSheet;
   private ready: boolean;
   private gmPeer: string | null = null;
+  private gmIdentity: GmIdentity | null = null;
+  /** Chave do Mestre conhecida: a do convite ou a fixada na primeira prova. */
+  private gmKey: string | undefined;
+  /** Desafio desta conexão; a prova do Mestre só vale para ele (impede reaproveitar provas). */
+  private readonly challenge = newChallenge();
   private current: ClientStatus = { state: 'procurando-mestre' };
   private readonly listeners = new Set<() => void>();
   private stopped = false;
   private failures = 0;
+  private forgeries = 0;
 
   constructor(
     private readonly transport: SyncTransport,
@@ -78,6 +99,7 @@ export class SessionClient {
   ) {
     this.latest = sheet;
     this.ready = false;
+    this.gmKey = campaign.gmKey;
     if (savedState) {
       try {
         Y.applyUpdate(this.doc, savedState, LOCAL);
@@ -142,6 +164,19 @@ export class SessionClient {
     return this.current;
   }
 
+  /**
+   * Quantas vezes alguém se apresentou como Mestre com uma prova inválida (chave errada
+   * ou assinatura que não confere). Indica tentativa de se passar por ele.
+   */
+  impersonations(): number {
+    return this.forgeries;
+  }
+
+  /** Como o Mestre atual foi reconhecido (`null` enquanto não há Mestre). */
+  identity(): GmIdentity | null {
+    return this.gmPeer === null ? null : this.gmIdentity;
+  }
+
   subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -177,6 +212,7 @@ export class SessionClient {
       displayName: this.me.displayName,
       sheetId: this.latest.id,
       templateId: this.latest.templateRef.id,
+      challenge: this.challenge,
     };
   }
 
@@ -187,11 +223,16 @@ export class SessionClient {
 
     if (message.type === 'hello') {
       const { hello } = message;
-      // Só aceita como Mestre quem se apresenta com o ID do Mestre desta campanha.
       if (hello.role !== 'mestre' || hello.userId !== this.campaign.gmId) return;
       if (hello.campaignId !== this.campaign.id || this.current.state === 'recusado') return;
+      const identity = this.authenticate(hello);
+      if (identity === null) return;
       const isNew = this.gmPeer !== peerId;
-      this.gmPeer = peerId;
+      // Uma prova válida vale mais que uma simples declaração anterior.
+      if (isNew || identity === 'verificada') {
+        this.gmPeer = peerId;
+        this.gmIdentity = identity;
+      }
       if (isNew) {
         this.setStatus({ state: this.ready ? 'conectado' : 'sincronizando' });
         const step1 = syncEncoder(this.latest.id);
@@ -233,6 +274,32 @@ export class SessionClient {
       }
       this.setStatus({ state: 'conectado' });
     }
+  }
+
+  /**
+   * Confere quem se apresenta como Mestre. Devolve `null` se não deve ser aceito.
+   * Com a chave do Mestre conhecida, só a prova do desafio desta conexão vale. Sem chave
+   * (campanha da v0.1), uma declaração sem prova ainda é aceita, e a primeira chave
+   * provada passa a ser a da campanha.
+   */
+  private authenticate(hello: Extract<Hello, { role: 'mestre' }>): GmIdentity | null {
+    const { gmKey, proof } = hello;
+    if (gmKey !== undefined && proof !== undefined) {
+      const genuine =
+        (this.gmKey === undefined || gmKey === this.gmKey) &&
+        verifyChallenge(gmKey, proof, this.campaign.id, this.challenge, this.campaign.gmId);
+      if (!genuine) {
+        this.forgeries++;
+        for (const listener of this.listeners) listener();
+        return null;
+      }
+      if (this.gmKey === undefined) {
+        this.gmKey = gmKey;
+        this.callbacks.onGmKeyLearned?.(gmKey);
+      }
+      return 'verificada';
+    }
+    return this.gmKey === undefined ? 'declarada' : null;
   }
 
   private setStatus(status: ClientStatus): void {

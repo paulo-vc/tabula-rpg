@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
-import { inviteFor } from '@tabula/domain';
+import { inviteFor, type Campaign } from '@tabula/domain';
 import { TabulaDatabase } from '@tabula/storage';
-import { MemoryNetwork } from '@tabula/sync';
+import { generateGmKeyPair, MemoryNetwork, SessionHost } from '@tabula/sync';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createServices, type Services } from './services';
 
@@ -433,5 +433,115 @@ describe('rolagens (Fase 7b)', () => {
     await gm.session.stop();
     await gm.campaigns.delete(campaign.id);
     expect(await gm.session.rolls(campaign.id)).toEqual([]);
+  });
+});
+
+describe('identidade do Mestre', () => {
+  const playerSnapshot = () => {
+    const snapshot = player.session.getSnapshot();
+    if (snapshot.kind !== 'jogador') throw new Error('o jogador não está em sessão');
+    return snapshot;
+  };
+
+  it('a campanha nova tem chave, e a privada fica só no aparelho do Mestre', async () => {
+    const { campaign } = await setUpTable();
+    expect(campaign.gmKey).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(await gmDb.gmKeys.get(campaign.id)).toBeDefined();
+    expect(await playerDb.gmKeys.count()).toBe(0);
+    expect(JSON.stringify(inviteFor(campaign))).not.toContain(
+      (await gmDb.gmKeys.get(campaign.id))?.secretKey,
+    );
+    expect((await player.campaignRepository.get(campaign.id))?.gmKey).toBe(campaign.gmKey);
+  });
+
+  it('o jogador reconhece o Mestre pela prova da chave', async () => {
+    const { campaign } = await setUpTable();
+    await gm.session.startAsGameMaster(campaign.id);
+    await player.session.joinAsPlayer(campaign.id);
+    await eventually(() =>
+      expect(playerSnapshot()).toMatchObject({
+        status: { state: 'conectado' },
+        gmIdentity: 'verificada',
+        impersonations: 0,
+      }),
+    );
+  });
+
+  it('quem tem o convite, mas não a chave, não se passa pelo Mestre', async () => {
+    const { campaign } = await setUpTable();
+    await player.session.joinAsPlayer(campaign.id);
+    // O impostor sabe sala, ID do Mestre e segredo, e assina com uma chave que inventou.
+    const impostor = new SessionHost(
+      network.join(),
+      {
+        id: campaign.id,
+        gmId: campaign.gmId,
+        gmName: campaign.gmName,
+        templateId: campaign.templateRef.id,
+        identity: generateGmKeyPair(),
+      },
+      new Map(),
+    );
+    impostor.start();
+
+    await eventually(() =>
+      expect(playerSnapshot()).toMatchObject({
+        status: { state: 'procurando-mestre' },
+        gmIdentity: null,
+        impersonations: expect.any(Number),
+      }),
+    );
+    expect(playerSnapshot().impersonations).toBeGreaterThan(0);
+
+    // O Mestre verdadeiro chega depois e a sessão acontece normalmente.
+    await gm.session.startAsGameMaster(campaign.id);
+    await eventually(() =>
+      expect(playerSnapshot()).toMatchObject({
+        status: { state: 'conectado' },
+        gmIdentity: 'verificada',
+      }),
+    );
+    await impostor.stop();
+  });
+
+  it('campanha da v0.1 ganha chave na primeira sessão e o jogador a fixa', async () => {
+    const { campaign } = await setUpTable();
+    // Reproduz uma campanha criada antes da assinatura: nenhum dos dois lados tem chave.
+    const withoutKey = ({ gmKey: _removed, ...rest }: Campaign): Campaign => rest;
+    await gmDb.campaigns.put(withoutKey(campaign));
+    const playerCopy = await player.campaignRepository.get(campaign.id);
+    if (!playerCopy) throw new Error('o jogador não tem a campanha');
+    await playerDb.campaigns.put(withoutKey(playerCopy));
+    await gmDb.gmKeys.clear();
+
+    await gm.session.startAsGameMaster(campaign.id);
+    const upgraded = await gm.campaignRepository.get(campaign.id);
+    expect(upgraded?.gmKey).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect((await gmDb.gmKeys.get(campaign.id))?.secretKey).toBeDefined();
+
+    await player.session.joinAsPlayer(campaign.id);
+    await eventually(async () => {
+      expect(playerSnapshot()).toMatchObject({
+        status: { state: 'conectado' },
+        gmIdentity: 'verificada',
+      });
+      expect((await player.campaignRepository.get(campaign.id))?.gmKey).toBe(upgraded?.gmKey);
+    });
+  });
+
+  it('sem a chave privada, o Mestre não inicia a sessão (e a campanha não muda)', async () => {
+    const { campaign } = await setUpTable();
+    await gmDb.gmKeys.clear();
+
+    const result = await gm.session.startAsGameMaster(campaign.id);
+    expect(result).toMatchObject({ ok: false, error: { code: 'chave-do-mestre-ausente' } });
+    expect(gm.session.getSnapshot()).toEqual({ kind: 'nenhuma' });
+    expect((await gm.campaignRepository.get(campaign.id))?.gmKey).toBe(campaign.gmKey);
+  });
+
+  it('apagar a campanha apaga a chave privada', async () => {
+    const { campaign } = await setUpTable();
+    await gm.campaigns.delete(campaign.id);
+    expect(await gmDb.gmKeys.get(campaign.id)).toBeUndefined();
   });
 });
