@@ -2,7 +2,11 @@ import { joinRoom } from 'trystero/nostr';
 import { MAX_MESSAGE_BYTES } from './protocol';
 import type { SyncTransport, TransportHandlers } from './transport';
 
-/** Identifica o app nos relays de sinalização (separa as salas do Tabula das de outros apps). */
+/**
+ * Identifica o app nos relays de sinalização (separa as nossas salas das de outros apps).
+ * Continua com o nome antigo de propósito: mudá-lo separaria a mesa de quem está numa
+ * versão anterior à mudança de nome (Tabularium).
+ */
 export const APP_ID = 'tabula-rpg';
 
 export interface WebRtcRoom {

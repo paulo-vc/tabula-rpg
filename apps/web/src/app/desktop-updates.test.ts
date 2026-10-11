@@ -4,7 +4,7 @@ import { findUpdate, type PendingUpdate, type Updater } from './desktop-updates'
 const pending: PendingUpdate = { version: '0.2.0', install: async () => {} };
 const manualOffer = {
   version: '0.2.0',
-  url: 'https://github.com/paulo-vc/tabula-rpg/releases/tag/v0.2.0',
+  url: 'https://github.com/paulo-vc/tabularium/releases/tag/v0.2.0',
 };
 
 const updater = (check: Updater['check']): Updater => ({ check, relaunch: async () => {} });
