@@ -3,6 +3,10 @@ import {
   linkedSheetId,
   ok,
   parseDice,
+  publicView,
+  TrackerSchema,
+  type PublicTracker,
+  type Tracker,
   roleOf,
   rollDice,
   valueProblem,
@@ -44,17 +48,28 @@ import type { Clock } from './sheets';
 /** Estado da sessão ao vivo deste dispositivo (no máximo uma por vez). */
 export type LiveSession =
   | { kind: 'nenhuma' }
-  | { kind: 'mestre'; campaignId: string; players: HostPlayer[]; connectionFailures: number }
+  | {
+      kind: 'mestre';
+      campaignId: string;
+      players: HostPlayer[];
+      connectionFailures: number;
+      /** Ordem de turno completa (com os ocultos), ou `null` fora de combate. */
+      initiative: Tracker | null;
+    }
   | {
       kind: 'jogador';
       campaignId: string;
       sheetId: string;
+      /** Este jogador (para reconhecer a própria vez na ordem de turno). */
+      userId: string;
       status: ClientStatus;
       connectionFailures: number;
       /** Como o Mestre foi reconhecido (`null` enquanto não há Mestre conectado). */
       gmIdentity: GmIdentity | null;
       /** Tentativas de se passar pelo Mestre (prova inválida) nesta sessão. */
       impersonations: number;
+      /** Ordem de turno como o Mestre a mostra (sem os ocultos), ou `null` fora de combate. */
+      initiative: PublicTracker | null;
       /** Última alteração feita pelo Mestre na ficha (IDs dos campos), para avisar o jogador. */
       gmChange?: { fieldIds: string[]; count: number };
     };
@@ -70,6 +85,20 @@ export type TransportFactory = (room: { roomId: string; secret: string }) => Syn
 const SAVE_DELAY = 2000;
 
 const IDLE: LiveSession = { kind: 'nenhuma' };
+
+/** Onde a ordem de turno do Mestre fica salva, junto do estado da sessão. */
+const INITIATIVE_KEY = 'iniciativa';
+
+/** Lê a ordem de turno salva; qualquer coisa inválida vira "sem combate". */
+function readInitiative(bytes: Uint8Array | undefined): Tracker | null {
+  if (!bytes) return null;
+  try {
+    const parsed = TrackerSchema.safeParse(JSON.parse(new TextDecoder().decode(bytes)));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Liga o motor de sincronização ao banco local e ao transporte. Expõe um retrato imutável
@@ -88,6 +117,8 @@ export class LiveSessionManager {
     author: { id: string; name: string };
     /** Envia a rolagem à mesa (o Mestre não envia as secretas). */
     shareRoll: (entry: RollEntry) => void;
+    /** Só na sessão do Mestre: troca a ordem de turno. */
+    setInitiative?: (tracker: Tracker | null) => void;
   } | null = null;
   private readonly rollListeners = new Set<(entry: RollEntry) => void>();
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -161,6 +192,9 @@ export class LiveSessionManager {
       saved,
     );
     host.seedRolls(await this.rollLog.list(campaignId));
+    const records = await this.states.list(campaignId);
+    let initiative = readInitiative(records.find((r) => r.key === INITIATIVE_KEY)?.state);
+    host.setTurnOrder(initiative && publicView(initiative));
     const stopRolls = host.onRoll((entry) => this.recordRolls(campaignId, [entry]));
 
     const publish = () =>
@@ -169,6 +203,7 @@ export class LiveSessionManager {
         campaignId,
         players: host.players(),
         connectionFailures: host.connectionFailures(),
+        initiative,
       });
     const unsubscribe = host.subscribe(() => {
       publish();
@@ -176,8 +211,8 @@ export class LiveSessionManager {
     });
 
     const save = () =>
-      this.states.save(
-        [...host.exportState()].map(([sheetId, entry]) => ({
+      this.states.save([
+        ...[...host.exportState()].map(([sheetId, entry]) => ({
           campaignId,
           key: `mestre:${sheetId}`,
           userId: entry.userId,
@@ -185,7 +220,13 @@ export class LiveSessionManager {
           state: entry.state,
           updatedAt: this.clock.now(),
         })),
-      );
+        {
+          campaignId,
+          key: INITIATIVE_KEY,
+          state: new TextEncoder().encode(JSON.stringify(initiative)),
+          updatedAt: this.clock.now(),
+        },
+      ]);
 
     this.active = {
       save,
@@ -198,6 +239,12 @@ export class LiveSessionManager {
       campaignId,
       author: { id: campaign.gmId, name: campaign.gmName },
       shareRoll: (entry) => host.roll(entry),
+      setInitiative: (tracker) => {
+        initiative = tracker;
+        host.setTurnOrder(tracker && publicView(tracker));
+        publish();
+        this.scheduleSave();
+      },
     };
     host.start();
     publish();
@@ -221,6 +268,7 @@ export class LiveSessionManager {
     const member = campaign.members.find((m) => m.userId === userId);
     const compiled = await this.compiledFor(campaign);
     let gmChange: { fieldIds: string[]; count: number } | undefined;
+    let initiative: PublicTracker | null = null;
 
     // O Mestre alterou a ficha: grava na ficha local o que for válido para o sistema.
     const applyGmChanges = async (changes: RemoteChanges) => {
@@ -245,6 +293,10 @@ export class LiveSessionManager {
           );
         },
         onRolls: (entries) => this.recordRolls(campaignId, entries),
+        onTurnOrder: (tracker) => {
+          initiative = tracker;
+          publish();
+        },
         // Campanha da v0.1: a primeira chave provada pelo Mestre passa a ser a da campanha.
         onGmKeyLearned: (gmKey) => {
           this.pinGmKey(campaignId, gmKey).catch((error: unknown) =>
@@ -259,9 +311,11 @@ export class LiveSessionManager {
         kind: 'jogador',
         campaignId,
         sheetId,
+        userId,
         status: client.status(),
         connectionFailures: client.connectionFailures(),
         gmIdentity: client.identity(),
+        initiative,
         impersonations: client.impersonations(),
         ...(gmChange && { gmChange }),
       });
@@ -408,6 +462,26 @@ export class LiveSessionManager {
     });
     if (!result.ok) return result;
     return this.files.installTemplate(result.template);
+  }
+
+  /**
+   * O Mestre altera a ordem de turno (iniciar, definir iniciativas, passar a vez,
+   * encerrar com `null`). Os jogadores recebem a versão sem os ocultos.
+   */
+  updateInitiative(
+    campaignId: string,
+    change: (current: Tracker | null) => Tracker | null,
+  ): Result<void, Issue> {
+    const snapshot = this.snapshot;
+    if (snapshot.kind !== 'mestre' || snapshot.campaignId !== campaignId) {
+      return failure('sem-sessao', 'Abra a sessão para conduzir o combate.');
+    }
+    const next = change(snapshot.initiative);
+    if (next !== null && !TrackerSchema.safeParse(next).success) {
+      return failure('ordem-invalida', 'Ordem de turno inválida.');
+    }
+    this.active?.setInitiative?.(next);
+    return ok(undefined);
   }
 
   /** Encerra a sessão atual, salvando o estado para continuar depois. */

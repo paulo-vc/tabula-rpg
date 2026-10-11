@@ -2,6 +2,7 @@ import {
   FieldValueSchema,
   type CharacterSheet,
   type FieldValue,
+  type PublicTracker,
   type RollEntry,
 } from '@tabula/domain';
 import * as encoding from 'lib0/encoding';
@@ -57,6 +58,8 @@ export interface ClientCallbacks {
   onRemoteChange?: (changes: RemoteChanges) => void;
   /** Rolagens da mesa chegaram (de outros jogadores, do Mestre ou do histórico recente). */
   onRolls?: (entries: RollEntry[]) => void;
+  /** A ordem de turno do combate mudou (`null`: o Mestre encerrou o combate). */
+  onTurnOrder?: (tracker: PublicTracker | null) => void;
   /** Campanha sem chave do Mestre: a primeira provada foi fixada e deve ser gravada. */
   onGmKeyLearned?: (gmKey: string) => void;
 }
@@ -251,6 +254,11 @@ export class SessionClient {
 
     if (message.type === 'log') {
       this.callbacks.onRolls?.(message.entries);
+      return;
+    }
+
+    if (message.type === 'turn') {
+      this.callbacks.onTurnOrder?.(message.tracker);
       return;
     }
 

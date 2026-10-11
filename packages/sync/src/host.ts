@@ -2,6 +2,7 @@ import {
   LIMITS,
   LOG_CATCH_UP,
   type FieldValue,
+  type PublicTracker,
   type RollEntry,
   type SystemTemplate,
 } from '@tabula/domain';
@@ -15,6 +16,7 @@ import {
   encodeLog,
   encodeReject,
   encodeTemplate,
+  encodeTurn,
   PROTOCOL_VERSION,
   syncEncoder,
   type Hello,
@@ -79,6 +81,8 @@ export class SessionHost {
   private readonly rollListeners = new Set<(entry: RollEntry) => void>();
   /** Rolagens públicas recentes, enviadas a quem entra no meio da sessão. */
   private recentRolls: RollEntry[] = [];
+  /** Ordem de turno atual (versão pública), enviada também a quem entra no meio do combate. */
+  private turnOrder: PublicTracker | null = null;
   private stopped = false;
   private failures = 0;
 
@@ -182,6 +186,17 @@ export class SessionHost {
     if (entry.secret || this.stopped) return;
     this.remember(entry);
     this.broadcast(entry, null);
+  }
+
+  /**
+   * Atualiza a ordem de turno da mesa (`null` encerra o combate). Recebe só a versão
+   * pública: participantes ocultos nunca chegam a este motor.
+   */
+  setTurnOrder(view: PublicTracker | null): void {
+    if (this.stopped) return;
+    this.turnOrder = view;
+    const message = encodeTurn(view);
+    for (const peerId of this.sheetOfPeer.keys()) this.send(peerId, message);
   }
 
   /** Avisa quando um jogador rola (a rolagem já foi validada e repassada à mesa). */
@@ -324,6 +339,7 @@ export class SessionHost {
     // O HELLO pode se repetir (o transporte reanuncia quem já está conectado): o histórico
     // vai uma vez por conexão.
     if (firstHello && this.recentRolls.length > 0) this.send(peerId, encodeLog(this.recentRolls));
+    if (firstHello && this.turnOrder) this.send(peerId, encodeTurn(this.turnOrder));
     this.notify();
   }
 
