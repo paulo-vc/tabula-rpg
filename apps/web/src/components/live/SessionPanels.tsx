@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useServices } from '@/app/services-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { describeConnection, describeDuration, useNow } from './connection';
 import { PlayerCard } from './PlayerCard';
 import { useLiveSession } from './use-live-session';
 
@@ -112,7 +113,12 @@ export function GameMasterSession({ campaign }: { campaign: Campaign }) {
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {players.map((player) => (
                 <li key={player.sheetId}>
-                  <PlayerCard player={player} compiled={compiled} campaignId={campaign.id} />
+                  <PlayerCard
+                    player={player}
+                    compiled={compiled}
+                    campaignId={campaign.id}
+                    connection={active ? live.connections[player.sheetId] : undefined}
+                  />
                 </li>
               ))}
             </ul>
@@ -146,6 +152,22 @@ export function PlayerSession({ campaign, hasSheet }: { campaign: Campaign; hasS
 
   const status = active ? live.status : null;
   const failed = active && live.status.state === 'procurando-mestre' && live.connectionFailures > 0;
+  const searchingSince = active ? live.searchingSince : null;
+  const now = useNow(searchingSince !== null);
+  // Progresso: quanto tempo procurando; ao conectar, quanto levou e como ficou a conexão.
+  const progress =
+    !active || !status
+      ? null
+      : searchingSince !== null && status.state !== 'recusado'
+        ? `(${describeDuration(Math.max(0, now - searchingSince))})`
+        : status.state === 'conectado'
+          ? [
+              live.connectedInMs !== null && `Conectou em ${describeDuration(live.connectedInMs)}`,
+              live.connection && describeConnection(live.connection),
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          : null;
 
   return (
     <Card>
@@ -196,6 +218,7 @@ export function PlayerSession({ campaign, hasSheet }: { campaign: Campaign; hasS
                 ? `${PLAYER_STATUS.recusado} ${status.reason.message}`
                 : PLAYER_STATUS[status.state]}
               {failed && ` ${DIRECT_FAILURE}`}
+              {progress && <span className="text-muted-foreground"> {progress}</span>}
             </span>
           </p>
           {active && live.impersonations > 0 && live.status.state !== 'conectado' && (

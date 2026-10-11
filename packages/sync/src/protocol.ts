@@ -25,6 +25,7 @@ import { z } from 'zod';
  *   TEMPLATE         [4][json]        o sistema (validado como um arquivo importado)
  *   LOG              [5][json]        rolagens do registro da sessão
  *   TURN             [6][json]        ordem de turno do combate (versão pública), ou nenhuma
+ *   BYE              [7]              saí da sessão (a conexão pode continuar aberta)
  *
  * Topologia em estrela: jogadores só conversam com o Mestre; cada ficha é um documento
  * separado, sincronizado apenas entre o dono e o Mestre (jogadores não recebem as fichas
@@ -43,6 +44,7 @@ const MessageType = {
   Template: 4,
   Log: 5,
   Turn: 6,
+  Bye: 7,
 } as const;
 
 const base = {
@@ -97,7 +99,8 @@ export type IncomingMessage =
   | { type: 'template-request'; request: TemplateRequest }
   | { type: 'template'; template: SystemTemplate }
   | { type: 'log'; entries: RollEntry[] }
-  | { type: 'turn'; tracker: PublicTracker | null };
+  | { type: 'turn'; tracker: PublicTracker | null }
+  | { type: 'bye' };
 
 const LogSchema = z.object({ entries: z.array(RollEntrySchema).min(1).max(LOG_CATCH_UP) });
 
@@ -107,6 +110,16 @@ export function encodeLog(entries: RollEntry[]): Uint8Array {
 
 /** Ordem de turno: só a versão pública (sem os ocultos) sai do aparelho do Mestre. */
 const TurnSchema = z.object({ tracker: PublicTrackerSchema.nullable() });
+
+/**
+ * Saí da sessão. A conexão WebRTC pode continuar aberta (o app mantém a sala para entrar de
+ * novo na hora), então a saída precisa ser avisada. Versões antigas ignoram a mensagem.
+ */
+export function encodeBye(): Uint8Array {
+  const encoder = encoding.createEncoder();
+  encoding.writeVarUint(encoder, MessageType.Bye);
+  return encoding.toUint8Array(encoder);
+}
 
 export function encodeTurn(tracker: PublicTracker | null): Uint8Array {
   return encodeJson(MessageType.Turn, { tracker });
@@ -188,6 +201,8 @@ export function decodeMessage(data: Uint8Array): IncomingMessage | null {
         const log = LogSchema.safeParse(parseJson(decoding.readVarString(decoder)));
         return log.success ? { type: 'log', entries: log.data.entries } : null;
       }
+      case MessageType.Bye:
+        return { type: 'bye' };
       case MessageType.Turn: {
         const turn = TurnSchema.safeParse(parseJson(decoding.readVarString(decoder)));
         return turn.success ? { type: 'turn', tracker: turn.data.tracker } : null;
