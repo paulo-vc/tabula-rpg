@@ -4,7 +4,7 @@
 
 Fichas de RPG de mesa com **sessão ao vivo** (antes chamado Tabula RPG): o Mestre acompanha a ficha de cada jogador em tempo real. Gratuito, sem contas e sem servidor: os dados ficam no seu aparelho e a mesa conversa direto entre os participantes.
 
-> **v0.1:** primeira versão pública. Funciona, mas é cedo: [conte o que deu errado](https://github.com/paulo-vc/tabularium/issues/new/choose).
+> **v0.2:** ficha nova, ordem de turno no combate e Mestre com identidade verificada ([novidades](CHANGELOG.md)). Ainda é cedo: [conte o que deu errado](https://github.com/paulo-vc/tabularium/issues/new/choose).
 
 ## Usar
 
@@ -17,9 +17,10 @@ O app desktop e a versão web são o mesmo app; jogadores podem usar um e o Mest
 
 ## O que ele faz
 
-- **Fichas** de D&D 5ª Edição (SRD 5.1) e **Lendas d20** (regras ORC), com cálculos automáticos: modificadores, CA, PV, perícias, carga, efeitos temporários.
+- **Fichas** de D&D 5ª Edição (SRD 5.1) e **Lendas d20** (regras ORC), com cálculos automáticos: modificadores, CA, PV, perícias, carga, efeitos temporários. O que muda a cada turno fica num painel fixo, a ficha se divide em abas e contadores como testes contra a morte viram marcadores clicáveis.
 - **Sessão ao vivo:** o Mestre cria a campanha e envia um convite. Cada jogador entra com a própria ficha, e o Mestre vê tudo mudar na hora. O Mestre também pode alterar as fichas e guardar campos secretos que só ele vê.
 - **Rolagens:** botão de dados em perícias, ataques e testes; as rolagens aparecem para toda a mesa. O Mestre pode rolar em segredo.
+- **Combate:** ordem de turno com as iniciativas, rodadas e criaturas ocultas; cada jogador vê quando é a vez dele.
 - **Criador de sistemas:** monte o seu sistema (campos, seções, fórmulas) com prévia ao vivo, sem programar.
 - **Sistemas da comunidade:** instale sistemas feitos por outros jogadores e publique os seus, direto pelo app.
 - Funciona offline; exporte fichas e sistemas em arquivo.
