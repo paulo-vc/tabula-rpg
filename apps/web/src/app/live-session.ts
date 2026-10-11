@@ -37,6 +37,7 @@ import {
   type HostPlayer,
   type RemoteChanges,
   type SavedSheetState,
+  type ConnectionInfo,
   type SyncTransport,
 } from '@tabula/sync';
 import { liveQuery, type Subscription } from 'dexie';
@@ -44,6 +45,9 @@ import type { TemplateCatalog } from './catalog';
 import { ensureGmIdentity } from './gm-identity';
 import type { FileService, ImportResult } from './files';
 import type { Clock } from './sheets';
+import { TransportPool, type TransportFactory } from './transport-pool';
+
+export type { TransportFactory };
 
 /** Estado da sessão ao vivo deste dispositivo (no máximo uma por vez). */
 export type LiveSession =
@@ -55,6 +59,8 @@ export type LiveSession =
       connectionFailures: number;
       /** Ordem de turno completa (com os ocultos), ou `null` fora de combate. */
       initiative: Tracker | null;
+      /** Caminho e latência da conexão com cada jogador online, por ficha. */
+      connections: Record<string, ConnectionInfo>;
     }
   | {
       kind: 'jogador';
@@ -70,6 +76,12 @@ export type LiveSession =
       impersonations: number;
       /** Ordem de turno como o Mestre a mostra (sem os ocultos), ou `null` fora de combate. */
       initiative: PublicTracker | null;
+      /** Desde quando procura o Mestre (`null` quando conectado), para mostrar o tempo. */
+      searchingSince: number | null;
+      /** Quanto levou a última conexão com o Mestre, em ms. */
+      connectedInMs: number | null;
+      /** Caminho e latência da conexão com o Mestre. */
+      connection: ConnectionInfo | null;
       /** Última alteração feita pelo Mestre na ficha (IDs dos campos), para avisar o jogador. */
       gmChange?: { fieldIds: string[]; count: number };
     };
@@ -79,12 +91,13 @@ export type TemplateReceipt =
   | ImportResult
   | { ok: false; reason: 'mestre-ausente' | 'falha-de-conexao' | 'cancelado' | 'campanha-ausente' };
 
-export type TransportFactory = (room: { roomId: string; secret: string }) => SyncTransport;
-
 /** Pausa antes de salvar o estado da sessão (as alterações chegam em rajadas). */
 const SAVE_DELAY = 2000;
 
 const IDLE: LiveSession = { kind: 'nenhuma' };
+
+/** De quanto em quanto tempo medir a conexão (caminho e latência) durante a sessão. */
+const MEASURE_EVERY_MS = 5000;
 
 /** Onde a ordem de turno do Mestre fica salva, junto do estado da sessão. */
 const INITIATIVE_KEY = 'iniciativa';
@@ -122,6 +135,8 @@ export class LiveSessionManager {
   } | null = null;
   private readonly rollListeners = new Set<(entry: RollEntry) => void>();
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Mantém a sala aberta um tempo depois de sair, para reentrar na hora. */
+  private readonly rooms: TransportPool;
 
   constructor(
     private readonly campaigns: CampaignRepository,
@@ -138,7 +153,9 @@ export class LiveSessionManager {
     private readonly newId: () => string,
     private readonly gmKeys: GmKeyRepository,
     private readonly newGmKey: () => GmKeyPair,
-  ) {}
+  ) {
+    this.rooms = new TransportPool(createTransport);
+  }
 
   getSnapshot = (): LiveSession => this.snapshot;
 
@@ -204,7 +221,23 @@ export class LiveSessionManager {
         players: host.players(),
         connectionFailures: host.connectionFailures(),
         initiative,
+        connections,
       });
+    // Mede a conexão com cada jogador online (caminho e latência), para diagnóstico.
+    let connections: Record<string, ConnectionInfo> = {};
+    const measure = async () => {
+      const next: Record<string, ConnectionInfo> = {};
+      for (const player of host.players()) {
+        if (!player.online) continue;
+        const info = await host.connectionInfo(player.sheetId);
+        if (info) next[player.sheetId] = info;
+      }
+      if (JSON.stringify(next) !== JSON.stringify(connections)) {
+        connections = next;
+        publish();
+      }
+    };
+    const measuring = setInterval(() => void measure(), MEASURE_EVERY_MS);
     const unsubscribe = host.subscribe(() => {
       publish();
       this.scheduleSave();
@@ -231,6 +264,7 @@ export class LiveSessionManager {
     this.active = {
       save,
       stop: async () => {
+        clearInterval(measuring);
         stopRolls();
         unsubscribe();
         await host.stop();
@@ -269,6 +303,9 @@ export class LiveSessionManager {
     const compiled = await this.compiledFor(campaign);
     let gmChange: { fieldIds: string[]; count: number } | undefined;
     let initiative: PublicTracker | null = null;
+    let searchingSince: number | null = this.clock.now();
+    let connectedInMs: number | null = null;
+    let connection: ConnectionInfo | null = null;
 
     // O Mestre alterou a ficha: grava na ficha local o que for válido para o sistema.
     const applyGmChanges = async (changes: RemoteChanges) => {
@@ -317,9 +354,30 @@ export class LiveSessionManager {
         gmIdentity: client.identity(),
         initiative,
         impersonations: client.impersonations(),
+        searchingSince,
+        connectedInMs,
+        connection,
         ...(gmChange && { gmChange }),
       });
-    const unsubscribe = client.subscribe(publish);
+    // Tempo até conectar (e reconectar), para o jogador ver o progresso e relatar demoras.
+    const unsubscribe = client.subscribe(() => {
+      const connected = client.status().state === 'conectado';
+      if (connected && searchingSince !== null) {
+        connectedInMs = this.clock.now() - searchingSince;
+        searchingSince = null;
+      } else if (!connected && searchingSince === null) {
+        searchingSince = this.clock.now();
+        connection = null;
+      }
+      publish();
+    });
+    const measuring = setInterval(() => {
+      void client.connectionInfo().then((info) => {
+        if (JSON.stringify(info) === JSON.stringify(connection)) return;
+        connection = info;
+        publish();
+      });
+    }, MEASURE_EVERY_MS);
 
     // Cada alteração na ficha local (feita em qualquer tela) segue para o Mestre.
     const watch: Subscription = liveQuery(() => this.sheets.get(sheetId)).subscribe({
@@ -338,6 +396,7 @@ export class LiveSessionManager {
     this.active = {
       save,
       stop: async () => {
+        clearInterval(measuring);
         watch.unsubscribe();
         unsubscribe();
         await client.stop();
@@ -508,7 +567,7 @@ export class LiveSessionManager {
   }
 
   private transportFor(campaign: Campaign): SyncTransport {
-    return this.createTransport({ roomId: campaign.id, secret: campaign.secret });
+    return this.rooms.lease({ roomId: campaign.id, secret: campaign.secret });
   }
 
   private scheduleSave(): void {
