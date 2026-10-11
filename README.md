@@ -1,6 +1,8 @@
-# Tabula RPG
+<img src="apps/web/public/icon.svg" alt="" width="88" />
 
-Fichas de RPG de mesa com **sessão ao vivo**: o Mestre acompanha a ficha de cada jogador em tempo real. Gratuito, sem contas e sem servidor: os dados ficam no seu aparelho e a mesa conversa direto entre os participantes.
+# Tabularium
+
+Fichas de RPG de mesa com **sessão ao vivo** (antes chamado Tabula RPG): o Mestre acompanha a ficha de cada jogador em tempo real. Gratuito, sem contas e sem servidor: os dados ficam no seu aparelho e a mesa conversa direto entre os participantes.
 
 > **v0.1:** primeira versão pública. Funciona, mas é cedo: [conte o que deu errado](https://github.com/paulo-vc/tabula-rpg/issues/new/choose).
 
@@ -24,7 +26,7 @@ O app desktop e a versão web são o mesmo app; jogadores podem usar um e o Mest
 
 ## Como a mesa se conecta
 
-Os participantes se conectam **diretamente** (WebRTC), sem servidor do Tabula no meio: por isso é gratuito para todos. Um servidor público só ajuda os aparelhos a se encontrarem.
+Os participantes se conectam **diretamente** (WebRTC), sem servidor do Tabularium no meio: por isso é gratuito para todos. Um servidor público só ajuda os aparelhos a se encontrarem.
 
 A conexão direta funciona na grande maioria das redes domésticas e no 4G. Em algumas redes de empresa, escola ou faculdade ela é bloqueada; nesses casos, troque de rede (por exemplo, para o Wi-Fi de casa ou o 4G).
 
@@ -39,7 +41,7 @@ A conexão direta funciona na grande maioria das redes domésticas e no 4G. Em a
 - **D&D 5ª Edição (SRD 5.1):** inclui material do System Reference Document 5.1 da Wizards of the Coast LLC, sob a [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
 - **Lendas d20 (ORC):** baseado no Player Core © 2023 Paizo Inc., sob a [ORC License](https://www.azoralaw.com/orclicense). Nomes, cenário e marcas da Paizo não são usados.
 
-O Tabula RPG não é afiliado, patrocinado nem endossado por nenhuma dessas empresas.
+O Tabularium não é afiliado, patrocinado nem endossado por nenhuma dessas empresas.
 
 ## Desenvolvimento
 

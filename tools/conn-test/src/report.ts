@@ -56,7 +56,7 @@ function browserName(userAgent: string): string {
 /** Resumo em texto para colar no chat. Não inclui endereços IP. */
 export function formatReport(input: ReportInput): string {
   const lines = [
-    '== Tabula RPG — teste de conexão ==',
+    '== Tabularium — teste de conexão ==',
     `Participante: ${input.name || '(sem nome)'}`,
     `Rede: ${input.network || '(não informada)'}`,
     `Navegador: ${browserName(input.userAgent)}`,

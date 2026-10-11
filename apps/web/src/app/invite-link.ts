@@ -68,7 +68,9 @@ export function decodeInvite(input: string): Result<CampaignInvite, Issue> {
   if (!parsed.success) {
     const version = (json as { v?: unknown } | null)?.v;
     if (typeof version === 'number' && version > 1) {
-      return invalid('Este convite foi criado por uma versão mais nova do Tabula. Atualize o app.');
+      return invalid(
+        'Este convite foi criado por uma versão mais nova do Tabularium. Atualize o app.',
+      );
     }
     return invalid('Convite inválido ou incompleto.');
   }

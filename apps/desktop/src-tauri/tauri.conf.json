@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Tabula RPG",
+  "productName": "Tabularium",
   "version": "0.1.0",
   "identifier": "io.github.paulovc.tabularpg",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Tabula RPG",
+        "title": "Tabularium",
         "width": 1280,
         "height": 800,
         "minWidth": 400,
