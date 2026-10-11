@@ -57,6 +57,14 @@ Publicado o rascunho, o app desktop das próximas versões avisa sozinho quando 
 - **Ordem Paranormal:** só com autorização da Jambô, ou como ficha "inspirada", com outro nome e sem textos dos livros.
 - **Nome do repositório:** `tabula-rpg` passou a `tabularium` (2026-10-10). O GitHub redireciona o `git`, as páginas e os downloads das releases, então o desktop instalado continua achando as atualizações. O endereço da versão web mudou para `paulo-vc.github.io/tabularium` e o antigo **não** redireciona: convites gerados antes da mudança e apps web instalados pelo endereço antigo deixam de abrir. Nunca criar um repositório novo chamado `tabula-rpg`: isso desliga o redirecionamento do GitHub e quebra a atualização do desktop.
 
+## Identificadores do app desktop
+
+Mudar estes nomes tem efeito em quem já instalou:
+
+- `identifier` (`tauri.conf.json`): define a pasta de dados (fichas, campanhas). **Nunca mudar.**
+- `productName`: no Windows, define a pasta de instalação e a entrada em "Aplicativos instalados". Ao mudar de "Tabula RPG" para "Tabularium", a versão nova passou a se instalar **ao lado** da antiga, com os mesmos dados; o gancho `src-tauri/windows/hooks.nsh` remove a instalação antiga.
+- Nome do pacote Rust (`Cargo.toml`): é o nome do executável. O instalador do Windows troca o executável e os atalhos sozinho; no Linux, o pacote `.deb`/`.rpm` (chamado `tabularium`) remove o arquivo antigo.
+
 ## v0.2.0
 
 1. Mesclar o PR da versão (números de versão em `apps/web/package.json`, `tauri.conf.json` e `Cargo.toml`, e o [CHANGELOG](../CHANGELOG.md)).

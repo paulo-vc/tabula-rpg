@@ -1,5 +1,5 @@
 [package]
-name = "tabula-desktop"
+name = "tabularium"
 version = "0.2.0"
 description = "Tabularium — shell desktop"
 authors = ["Paulo Vinicius"]
@@ -9,7 +9,7 @@ edition = "2024"
 rust-version = "1.90"
 
 [lib]
-name = "tabula_desktop_lib"
+name = "tabularium_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
