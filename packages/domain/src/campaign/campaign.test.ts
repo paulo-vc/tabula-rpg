@@ -8,6 +8,7 @@ import {
   linkedSheetId,
   linkSheet,
   roleOf,
+  withGmKey,
 } from './operations';
 import { CampaignInviteSchema, CampaignSchema } from './schema';
 
@@ -136,5 +137,49 @@ describe('linkSheet', () => {
   it('aceita versão diferente do mesmo sistema (a migração resolve ao abrir)', () => {
     const sheet = { ...sheetOf(), templateRef: { ...sheetOf().templateRef, version: '0.9.0' } };
     expect(linkSheet(joined(), player, sheet, 30).ok).toBe(true);
+  });
+});
+
+describe('chave do Mestre', () => {
+  const KEY = 'A'.repeat(43);
+  const OTHER = 'B'.repeat(43);
+  const withKey = () =>
+    createCampaign({
+      id: 'c1',
+      name: 'A Mina Perdida',
+      template: miniTemplate(),
+      gm,
+      secret: SECRET,
+      gmKey: KEY,
+      now: 10,
+    });
+
+  it('vai da campanha para o convite e do convite para a cópia do jogador', () => {
+    const invite = inviteFor(withKey());
+    expect(invite.gmKey).toBe(KEY);
+    const joined = joinCampaign(invite, player, 20);
+    expect(joined.ok && joined.value.gmKey).toBe(KEY);
+  });
+
+  it('é opcional: campanhas e convites da v0.1 continuam válidos', () => {
+    const invite = inviteFor(newCampaign());
+    expect('gmKey' in invite).toBe(false);
+    expect(CampaignInviteSchema.safeParse(invite).success).toBe(true);
+    expect(CampaignSchema.safeParse(newCampaign()).success).toBe(true);
+  });
+
+  it('recusa chave malformada no convite e na campanha', () => {
+    for (const gmKey of ['curta', 'A'.repeat(44), `${'A'.repeat(42)}=`, '']) {
+      expect(CampaignInviteSchema.safeParse({ ...inviteFor(withKey()), gmKey }).success).toBe(
+        false,
+      );
+      expect(CampaignSchema.safeParse({ ...withKey(), gmKey }).success).toBe(false);
+    }
+  });
+
+  it('withGmKey fixa a primeira chave e nunca troca uma já fixada', () => {
+    const pinned = withGmKey(newCampaign(), KEY, 50);
+    expect(pinned).toMatchObject({ gmKey: KEY, updatedAt: 50 });
+    expect(withGmKey(pinned, OTHER, 60)).toBe(pinned);
   });
 });

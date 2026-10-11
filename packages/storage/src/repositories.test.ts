@@ -19,6 +19,7 @@ import {
   DexieDeviceRepository,
   DexieDraftRepository,
   DexieRollLogRepository,
+  DexieGmKeyRepository,
   DexieSecretValuesRepository,
   DexieSheetRepository,
   DexieTemplateRepository,
@@ -267,7 +268,7 @@ describe('migração do banco', () => {
     try {
       expect(await new DexieSheetRepository(current).get('antiga')).toBeDefined();
       expect(await new DexieCampaignRepository(current).list()).toEqual([]);
-      expect(current.verno).toBe(6);
+      expect(current.verno).toBe(7);
     } finally {
       current.close();
       await Dexie.delete(name);
@@ -401,6 +402,30 @@ describe('DexieSecretValuesRepository', () => {
     await expect(secrets.update('c1', 's1', { x: { a: 1 } as never }, 1)).rejects.toBeInstanceOf(
       InvalidDataError,
     );
+  });
+});
+
+describe('DexieGmKeyRepository', () => {
+  const KEY = 'A'.repeat(43);
+
+  it('guarda a chave privada por campanha e a apaga com ela', async () => {
+    const keys = new DexieGmKeyRepository(db);
+    await keys.save({ campaignId: 'c1', secretKey: KEY });
+    await keys.save({ campaignId: 'c2', secretKey: 'B'.repeat(43) });
+
+    expect(await keys.get('c1')).toEqual({ campaignId: 'c1', secretKey: KEY });
+    await keys.deleteCampaign('c1');
+    expect(await keys.get('c1')).toBeUndefined();
+    expect(await keys.get('c2')).toBeDefined();
+  });
+
+  it('recusa chave fora do formato e não grava campos extras', async () => {
+    const keys = new DexieGmKeyRepository(db);
+    await expect(keys.save({ campaignId: 'c1', secretKey: 'curta' })).rejects.toBeInstanceOf(
+      InvalidDataError,
+    );
+    await keys.save({ campaignId: 'c1', secretKey: KEY, extra: 1 } as never);
+    expect(await keys.get('c1')).toEqual({ campaignId: 'c1', secretKey: KEY });
   });
 });
 

@@ -9,12 +9,15 @@ import {
   type DeviceRepository,
   type DraftRepository,
   FieldValueSchema,
+  GmSecretKeySchema,
   type FieldValue,
   type Issue,
   LOG_LIMIT,
   RollEntrySchema,
   type RollEntry,
   type RollLogRepository,
+  type GmKeyRecord,
+  type GmKeyRepository,
   type SecretValuesRecord,
   type SecretValuesRepository,
   type SessionStateRecord,
@@ -259,6 +262,26 @@ export class DexieSecretValuesRepository implements SecretValuesRepository {
 
   async deleteCampaign(campaignId: string): Promise<void> {
     await this.db.secretValues.where('campaignId').equals(campaignId).delete();
+  }
+}
+
+export class DexieGmKeyRepository implements GmKeyRepository {
+  constructor(private readonly db: TabulaDatabase) {}
+
+  get(campaignId: string): Promise<GmKeyRecord | undefined> {
+    return this.db.gmKeys.get(campaignId);
+  }
+
+  async save(record: GmKeyRecord): Promise<void> {
+    const parsed = GmSecretKeySchema.safeParse(record.secretKey);
+    if (!parsed.success) {
+      throw new InvalidDataError('Chave do Mestre inválida', zodIssues(parsed.error.issues));
+    }
+    await this.db.gmKeys.put({ campaignId: record.campaignId, secretKey: parsed.data });
+  }
+
+  async deleteCampaign(campaignId: string): Promise<void> {
+    await this.db.gmKeys.delete(campaignId);
   }
 }
 

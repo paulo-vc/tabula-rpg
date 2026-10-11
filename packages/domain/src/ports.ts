@@ -125,6 +125,21 @@ export interface SecretValuesRepository {
   deleteCampaign(campaignId: string): Promise<void>;
 }
 
+/**
+ * Chave privada do Mestre de uma campanha (assina a prova de identidade). Fica só no
+ * aparelho do Mestre: nunca vai ao convite, ao documento sincronizado nem a exportações.
+ */
+export interface GmKeyRecord {
+  campaignId: string;
+  secretKey: string;
+}
+
+export interface GmKeyRepository {
+  get(campaignId: string): Promise<GmKeyRecord | undefined>;
+  save(record: GmKeyRecord): Promise<void>;
+  deleteCampaign(campaignId: string): Promise<void>;
+}
+
 /** Registro de rolagens da sessão, por campanha (as mais antigas saem após `LOG_LIMIT`). */
 export interface RollLogRepository {
   /** Da mais antiga para a mais recente. */

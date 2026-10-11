@@ -8,6 +8,7 @@ import {
 import * as encoding from 'lib0/encoding';
 import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
+import { signChallenge, type GmKeyPair } from './identity';
 import {
   decodeMessage,
   encodeHello,
@@ -29,6 +30,11 @@ export interface HostCampaign {
   templateId: string;
   /** O sistema da campanha, enviado a quem pedir (jogador que ainda não o tem instalado). */
   template?: SystemTemplate;
+  /**
+   * Par de chaves do Mestre. Com ele, o Mestre prova sua identidade a cada jogador
+   * (desafio-resposta). Sem ele (campanhas da v0.1), apenas se declara.
+   */
+  identity?: GmKeyPair;
 }
 
 /** Origem das alterações feitas pelo próprio Mestre. */
@@ -225,13 +231,23 @@ export class SessionHost {
     );
   }
 
-  private hello(): Hello {
+  /**
+   * Apresentação do Mestre. Com `challenge` (o desafio do jogador) e uma identidade, vai
+   * assinada; sem eles, é só uma declaração, que jogadores com a chave do Mestre ignoram.
+   */
+  private hello(challenge?: string): Hello {
+    const { identity } = this.campaign;
     return {
       protocol: PROTOCOL_VERSION,
       role: 'mestre',
       campaignId: this.campaign.id,
       userId: this.campaign.gmId,
       displayName: this.campaign.gmName,
+      ...(identity &&
+        challenge !== undefined && {
+          gmKey: identity.publicKey,
+          proof: signChallenge(identity.secretKey, this.campaign.id, challenge, this.campaign.gmId),
+        }),
     };
   }
 
@@ -270,10 +286,14 @@ export class SessionHost {
     const reject = (code: Reject['code'], message: string) =>
       this.send(peerId, encodeReject({ code, message }));
 
+    if (hello.userId === this.campaign.gmId) return; // ninguém entra como jogador com o ID do Mestre
+    // A prova de identidade vem antes de qualquer resposta: o jogador só dá ouvidos (inclusive
+    // a recusas) a um Mestre autenticado. O HELLO pode se repetir; reenviar é inofensivo.
+    this.send(peerId, encodeHello(this.hello(hello.challenge)));
+
     if (hello.campaignId !== this.campaign.id) {
       return reject('campanha-diferente', 'Este convite é de outra campanha.');
     }
-    if (hello.userId === this.campaign.gmId) return; // ninguém entra como jogador com o ID do Mestre
     if (hello.templateId !== this.campaign.templateId) {
       return reject('sistema-diferente', 'A ficha não é do sistema desta campanha.');
     }
@@ -298,7 +318,6 @@ export class SessionHost {
     entry.displayName = hello.displayName;
     this.sheetOfPeer.set(peerId, hello.sheetId);
 
-    this.send(peerId, encodeHello(this.hello()));
     const step1 = syncEncoder(hello.sheetId);
     syncProtocol.writeSyncStep1(step1, entry.doc);
     this.send(peerId, encoding.toUint8Array(step1));

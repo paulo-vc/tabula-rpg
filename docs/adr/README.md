@@ -12,6 +12,7 @@ Cada decisão estrutural do projeto é registrada aqui, com contexto, alternativ
 | [0006](0006-repositorio-de-templates.md) | Repositório de templates estilo plugins do Obsidian | Aceita                          |
 | [0007](0007-fluxo-git.md)                | Fluxo de Git e proteção da `main`                   | Aceita                          |
 | [0008](0008-lancar-sem-relay.md)         | Lançar a v0.1 sem relay (apenas P2P)                | Aceita                          |
+| [0009](0009-identidade-do-mestre.md)     | Identidade do Mestre provada por assinatura         | Aceita                          |
 
 ## Como criar uma ADR
 

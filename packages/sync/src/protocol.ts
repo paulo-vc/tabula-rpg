@@ -1,5 +1,6 @@
 import {
   compileTemplate,
+  GmKeySchema,
   IdSchema,
   LabelSchema,
   LOG_CATCH_UP,
@@ -47,9 +48,29 @@ const base = {
   displayName: LabelSchema,
 };
 
+/** Desafio do jogador (128 bits, base64url) e prova do Mestre (assinatura Ed25519). */
+const ChallengeSchema = z.string().regex(/^[A-Za-z0-9_-]{22}$/);
+const ProofSchema = z.string().regex(/^[A-Za-z0-9_-]{86}$/);
+
+/**
+ * Identidade do Mestre: o jogador manda um `challenge` aleatório; o Mestre responde com a
+ * chave pública (`gmKey`) e a assinatura do desafio (`proof`). Os campos são opcionais para
+ * continuar falando com a v0.1, que não os conhece (e ignora).
+ */
 export const HelloSchema = z.discriminatedUnion('role', [
-  z.object({ ...base, role: z.literal('mestre') }),
-  z.object({ ...base, role: z.literal('jogador'), sheetId: IdSchema, templateId: IdSchema }),
+  z.object({
+    ...base,
+    role: z.literal('mestre'),
+    gmKey: GmKeySchema.optional(),
+    proof: ProofSchema.optional(),
+  }),
+  z.object({
+    ...base,
+    role: z.literal('jogador'),
+    sheetId: IdSchema,
+    templateId: IdSchema,
+    challenge: ChallengeSchema.optional(),
+  }),
 ]);
 export type Hello = z.infer<typeof HelloSchema>;
 
