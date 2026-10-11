@@ -23,3 +23,4 @@ Leia [`docs/architecture.md`](docs/architecture.md) antes de contribuir. Em resu
 - Toda regra de domínio nova vem com teste unitário.
 - Bugs corrigidos vêm com um teste que falhava antes da correção.
 - `pnpm test` roda todos os pacotes.
+- `pnpm e2e` roda os testes de ponta a ponta (`apps/e2e`): o app de verdade, com Mestre e jogadores em navegadores separados. Na primeira vez, instale o navegador com `pnpm --filter @tabula/e2e exec playwright install chromium`. A rede dos testes é um relay local em vez de WebRTC + relays públicos (o app de teste é construído com `VITE_E2E_RELAY`; o build normal não inclui esse transporte). Fluxos novos da mesa ao vivo ganham um teste ali.

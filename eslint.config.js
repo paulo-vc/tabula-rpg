@@ -5,7 +5,16 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/coverage/**', 'apps/desktop/src-tauri/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/dist-e2e/**',
+      '**/coverage/**',
+      'apps/desktop/src-tauri/**',
+      '**/test-results/**',
+      '**/playwright-report/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.strict,
   {

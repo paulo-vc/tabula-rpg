@@ -32,3 +32,26 @@ jobs:
       - run: pnpm depcheck
       - run: pnpm test
       - run: pnpm build
+
+  e2e:
+    name: Ponta a ponta (Playwright, Mestre e jogadores)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Instalar o Chromium do Playwright
+        run: pnpm --filter @tabula/e2e exec playwright install --with-deps chromium
+      - run: pnpm e2e
+      - name: Relatório (em caso de falha)
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: relatorio-e2e
+          path: apps/e2e/playwright-report
+          retention-days: 7

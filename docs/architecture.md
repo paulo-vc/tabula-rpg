@@ -25,6 +25,8 @@ packages/
 apps/
   web/         Interface React. Também é o frontend do app desktop.
   desktop/     Shell Tauri que empacota o `web` como instalador/executável.
+  e2e/         Testes de ponta a ponta (Playwright): o app de verdade, com Mestre e jogadores em
+               navegadores separados, ligados por um relay local (`VITE_E2E_RELAY`).
 tools/
   conn-test/   Protótipo de teste de conexão P2P (Fase 3).
   registry/    Automação do repositório de sistemas da comunidade (CLI empacotada num

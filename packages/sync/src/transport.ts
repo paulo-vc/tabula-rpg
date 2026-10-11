@@ -15,6 +15,12 @@ export interface TransportHandlers {
   onConnectionFailure?: (peerId: string) => void;
 }
 
+/**
+ * Quantas mensagens um transporte guarda enquanto ninguém escuta (antes de `setHandlers`).
+ * Ex.: o app entra na sala e ainda está lendo o banco quando o primeiro HELLO chega.
+ */
+export const MAX_EARLY_MESSAGES = 100;
+
 export interface SyncTransport {
   /** Envia para um participante. Ignorado se ele não estiver conectado. */
   send(peerId: string, data: Uint8Array): void;

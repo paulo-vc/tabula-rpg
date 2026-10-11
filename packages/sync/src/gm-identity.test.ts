@@ -239,3 +239,20 @@ describe('compatibilidade com campanhas da v0.1 (sem chave)', () => {
     expect(host.players().find((p) => p.userId === 'bia')?.online).toBe(true);
   });
 });
+
+describe('entrada robusta (o primeiro HELLO do jogador pode se perder)', () => {
+  it('o Mestre que começa a escutar depois ainda é reconhecido', async () => {
+    const network = new MemoryNetwork();
+    // O transporte do Mestre já está na sala, mas ele ainda não escuta (ex.: lendo o banco
+    // ao retomar a sessão depois de recarregar a página): o HELLO do jogador se perde.
+    const gmTransport = network.join();
+    const client = startPlayer(network, INVITE);
+    await network.settle();
+    expect(client.status()).toEqual({ state: 'procurando-mestre' });
+
+    new SessionHost(gmTransport, { ...HOST_CAMPAIGN, identity: gm }).start();
+    await network.settle();
+    expect(client.status()).toEqual({ state: 'conectado' });
+    expect(client.identity()).toBe('verificada');
+  });
+});

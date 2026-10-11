@@ -11,7 +11,7 @@ export { generateGmKeyPair, type GmKeyPair } from './identity';
 export { MemoryNetwork, MemoryTransport } from './memory-transport';
 export { MAX_MESSAGE_BYTES, PROTOCOL_VERSION } from './protocol';
 export { type SheetSnapshot } from './sheet-doc';
-export type { SyncTransport, TransportHandlers } from './transport';
+export { MAX_EARLY_MESSAGES, type SyncTransport, type TransportHandlers } from './transport';
 export {
   fetchTemplate,
   type TemplateFetchOptions,

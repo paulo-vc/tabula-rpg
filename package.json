@@ -13,6 +13,7 @@
     "dev": "pnpm --filter @tabula/web dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "e2e": "pnpm --filter @tabula/e2e e2e",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
