@@ -41,7 +41,7 @@ export function UpdateNotice() {
       const offer = await findUpdate(updater, __APP_VERSION__);
       if (!active || !offer) return;
       if (offer.kind === 'automatica' && updater) {
-        toast.info(`Tabula RPG ${offer.update.version} disponível`, {
+        toast.info(`Tabularium ${offer.update.version} disponível`, {
           description: 'A atualização é baixada e instalada sozinha; o app reabre em seguida.',
           duration: Infinity,
           action: {
@@ -50,7 +50,7 @@ export function UpdateNotice() {
           },
         });
       } else if (offer.kind === 'manual') {
-        toast.info(`Tabula RPG ${offer.update.version} disponível`, {
+        toast.info(`Tabularium ${offer.update.version} disponível`, {
           description: 'Baixe a nova versão para receber as novidades e correções.',
           duration: Infinity,
           action: { label: 'Baixar', onClick: () => void openExternal(offer.update.url) },

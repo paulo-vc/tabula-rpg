@@ -37,7 +37,7 @@ const issue = (code: string, message: string, path: Issue['path'] = []): Issue =
 });
 
 /**
- * Lê um arquivo exportado pelo Tabula. Todo dado externo entra no sistema por aqui:
+ * Lê um arquivo exportado pelo Tabularium. Todo dado externo entra no sistema por aqui:
  * tamanho, JSON, versão do formato, schema e regras semânticas do template são verificados.
  */
 export function parseExport(text: string): Result<ExportEnvelope, Issue[]> {
@@ -57,7 +57,7 @@ export function parseExport(text: string): Result<ExportEnvelope, Issue[]> {
     return err([
       issue(
         'formato-mais-novo',
-        'Este arquivo foi criado por uma versão mais nova do Tabula. Atualize o app.',
+        'Este arquivo foi criado por uma versão mais nova do Tabularium. Atualize o app.',
       ),
     ]);
   }

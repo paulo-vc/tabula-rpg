@@ -49,7 +49,7 @@ jobs:
         with:
           projectPath: apps/desktop
           tagName: ${{ github.ref_name }}
-          releaseName: 'Tabula RPG ${{ github.ref_name }}'
+          releaseName: 'Tabularium ${{ github.ref_name }}'
           releaseDraft: true
           # Versão normal (não pré-lançamento): o app procura a atualização em
           # releases/latest, que ignora pré-lançamentos.

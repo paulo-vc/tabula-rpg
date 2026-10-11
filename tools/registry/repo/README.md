@@ -1,7 +1,7 @@
-# Sistemas da comunidade — Tabula RPG
+# Sistemas da comunidade — Tabularium
 
 Catálogo de sistemas de RPG (templates de ficha) feitos por jogadores para o
-[Tabula RPG](https://github.com/paulo-vc/tabula-rpg). Os sistemas aparecem dentro do app,
+[Tabularium](https://github.com/paulo-vc/tabula-rpg). Os sistemas aparecem dentro do app,
 em **Sistemas → Explorar comunidade**, e são instalados com um clique.
 
 Sistemas são **dados, não código**: um arquivo JSON com campos, fórmulas e layout. Instalar

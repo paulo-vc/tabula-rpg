@@ -15,6 +15,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource/cinzel": "^5.3.0",
     "@tabula/domain": "workspace:*",
     "@tabula/storage": "workspace:*",
     "@tabula/sync": "workspace:*",

@@ -196,7 +196,7 @@ function StatusAction({
     case 'requer-app-novo':
       return (
         <p className="text-muted-foreground text-sm">
-          Precisa do Tabula {status.minAppVersion} ou mais novo.
+          Precisa do Tabularium {status.minAppVersion} ou mais novo.
         </p>
       );
   }
