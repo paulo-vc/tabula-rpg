@@ -153,3 +153,83 @@ describe('sistema que a jogadora não tem', () => {
     expect(screen.queryByRole('button', { name: 'Receber do Mestre' })).not.toBeInTheDocument();
   });
 });
+
+describe('combate', () => {
+  it('o Mestre monta a ordem pela tela; um oculto não aparece para a jogadora', async () => {
+    const { campaign } = await setUpTable();
+    const user = renderApp(gm, `#/campanhas/${campaign.id}`);
+    await user.click(await screen.findByRole('button', { name: 'Iniciar sessão' }));
+    await player.session.joinAsPlayer(campaign.id);
+    await until(() =>
+      expect(screen.getByRole('article', { name: 'Jogador Ana' })).toBeInTheDocument(),
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Iniciar combate' }));
+    const lia = screen.getByRole('textbox', { name: 'Iniciativa de Lia' });
+    await user.clear(lia);
+    await user.type(lia, '14{Enter}');
+
+    await user.type(screen.getByRole('textbox', { name: 'Criatura' }), 'Goblin');
+    await user.type(screen.getByRole('textbox', { name: 'Iniciativa' }), '18');
+    await user.click(screen.getByRole('checkbox', { name: 'Oculto' }));
+    await user.click(screen.getByRole('button', { name: 'Adicionar' }));
+
+    const order = screen.getByRole('list', { name: 'Ordem de turno' });
+    expect(
+      within(order)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual([expect.stringContaining('Goblin'), expect.stringContaining('Lia')]);
+
+    await user.click(screen.getByRole('button', { name: 'Começar' }));
+    expect(within(order).getAllByRole('listitem')[0]).toHaveAttribute('aria-current', 'step');
+
+    await until(() => {
+      const snapshot = player.session.getSnapshot();
+      expect(snapshot.kind === 'jogador' && snapshot.initiative).toMatchObject({
+        phase: 'combate',
+        activeId: null,
+        combatants: [expect.objectContaining({ name: 'Lia', initiative: 14 })],
+      });
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Próximo turno' }));
+    expect(within(order).getAllByRole('listitem')[1]).toHaveAttribute('aria-current', 'step');
+  });
+});
+
+describe('combate, do lado da jogadora', () => {
+  it('vê a ordem e o aviso quando é a vez dela', async () => {
+    const { campaign, sheet } = await setUpTable();
+    await gm.session.startAsGameMaster(campaign.id);
+    const user = renderApp(player, `#/campanhas/${campaign.id}`);
+    await user.click(await screen.findByRole('button', { name: 'Entrar na sessão' }));
+    await until(() => {
+      const snapshot = gm.session.getSnapshot();
+      expect(snapshot.kind === 'mestre' && snapshot.players[0]?.online).toBe(true);
+    });
+
+    gm.session.updateInitiative(campaign.id, () => ({
+      phase: 'combate',
+      round: 2,
+      activeId: sheet.id,
+      combatants: [
+        {
+          id: sheet.id,
+          name: 'Lia',
+          initiative: 14,
+          kind: 'jogador',
+          userId: sheet.ownerId,
+          hidden: false,
+        },
+        { id: 'orc', name: 'Orc', initiative: 9, kind: 'npc', hidden: false },
+      ],
+    }));
+
+    await until(() => expect(screen.getByText('Rodada 2')).toBeInTheDocument());
+    expect(screen.getAllByText('É a sua vez!').length).toBeGreaterThan(0);
+    const order = screen.getByRole('list', { name: 'Ordem de turno' });
+    expect(within(order).getByText('Você')).toBeInTheDocument();
+    expect(within(order).getByText('Orc')).toBeInTheDocument();
+  });
+});

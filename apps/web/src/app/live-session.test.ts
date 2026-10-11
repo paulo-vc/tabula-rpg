@@ -1,5 +1,12 @@
 import 'fake-indexeddb/auto';
-import { inviteFor, type Campaign } from '@tabula/domain';
+import {
+  addCombatant,
+  inviteFor,
+  nextTurn,
+  startCombat,
+  updateCombatant,
+  type Campaign,
+} from '@tabula/domain';
 import { TabulaDatabase } from '@tabula/storage';
 import { generateGmKeyPair, MemoryNetwork, SessionHost } from '@tabula/sync';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -543,5 +550,102 @@ describe('identidade do Mestre', () => {
     const { campaign } = await setUpTable();
     await gm.campaigns.delete(campaign.id);
     expect(await gmDb.gmKeys.get(campaign.id)).toBeUndefined();
+  });
+});
+
+describe('ordem de turno', () => {
+  const gmInitiative = () => {
+    const snapshot = gm.session.getSnapshot();
+    return snapshot.kind === 'mestre' ? snapshot.initiative : undefined;
+  };
+  const playerInitiative = () => {
+    const snapshot = player.session.getSnapshot();
+    return snapshot.kind === 'jogador' ? snapshot.initiative : undefined;
+  };
+
+  /** Mestre e jogadora em sessão; combate com a Lia (14) e um goblin oculto (18). */
+  async function combat() {
+    const { campaign, sheet } = await setUpTable();
+    await gm.session.startAsGameMaster(campaign.id);
+    await player.session.joinAsPlayer(campaign.id);
+    await eventually(() => expect(gmPlayers()[0]?.online).toBe(true));
+    const ok = gm.session.updateInitiative(campaign.id, () =>
+      addCombatant(
+        updateCombatant(
+          startCombat(
+            gmPlayers().map((p) => ({
+              id: p.sheetId,
+              name: p.sheet?.name ?? p.displayName,
+              userId: p.userId,
+            })),
+          ),
+          sheet.id,
+          { initiative: 14 },
+        ),
+        { id: 'goblin', name: 'Goblin', initiative: 18, kind: 'npc', hidden: true },
+      ),
+    );
+    expect(ok).toEqual({ ok: true, value: undefined });
+    return { campaign, sheet };
+  }
+
+  it('a jogadora vê a ordem sem o oculto; na vez dele, "vez do Mestre"', async () => {
+    const { campaign, sheet } = await combat();
+    gm.session.updateInitiative(campaign.id, (t) => t && nextTurn(t)); // vez do goblin
+    expect(gmInitiative()).toMatchObject({ phase: 'combate', activeId: 'goblin' });
+    await eventually(() =>
+      expect(playerInitiative()).toEqual({
+        phase: 'combate',
+        round: 1,
+        activeId: null,
+        combatants: [
+          {
+            id: sheet.id,
+            name: 'Lia',
+            initiative: 14,
+            kind: 'jogador',
+            userId: expect.any(String),
+          },
+        ],
+      }),
+    );
+
+    gm.session.updateInitiative(campaign.id, (t) => t && nextTurn(t)); // vez da Lia
+    await eventually(() => expect(playerInitiative()?.activeId).toBe(sheet.id));
+    const snapshot = player.session.getSnapshot();
+    expect(snapshot.kind === 'jogador' && snapshot.userId).toBe(
+      playerInitiative()?.combatants[0]?.userId,
+    );
+  });
+
+  it('encerrar o combate limpa a ordem dos dois lados', async () => {
+    const { campaign } = await combat();
+    await eventually(() => expect(playerInitiative()).not.toBeNull());
+    gm.session.updateInitiative(campaign.id, () => null);
+    expect(gmInitiative()).toBeNull();
+    await eventually(() => expect(playerInitiative()).toBeNull());
+  });
+
+  it('a ordem sobrevive ao Mestre encerrar e reabrir a sessão', async () => {
+    const { campaign } = await combat();
+    gm.session.updateInitiative(campaign.id, (t) => t && nextTurn(t));
+    await gm.session.stop();
+    await gm.session.startAsGameMaster(campaign.id);
+    expect(gmInitiative()).toMatchObject({ phase: 'combate', activeId: 'goblin' });
+    expect(gmInitiative()?.combatants).toHaveLength(2);
+  });
+
+  it('só o Mestre com a sessão aberta conduz o combate; ordem inválida é recusada', async () => {
+    const { campaign } = await combat();
+    expect(player.session.updateInitiative(campaign.id, () => null)).toMatchObject({
+      ok: false,
+      error: { code: 'sem-sessao' },
+    });
+    const invalid = gm.session.updateInitiative(
+      campaign.id,
+      (t) => t && { ...t, activeId: 'fantasma' },
+    );
+    expect(invalid).toMatchObject({ ok: false, error: { code: 'ordem-invalida' } });
+    expect(gmInitiative()?.activeId).toBeNull();
   });
 });

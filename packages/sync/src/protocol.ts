@@ -4,6 +4,8 @@ import {
   IdSchema,
   LabelSchema,
   LOG_CATCH_UP,
+  PublicTrackerSchema,
+  type PublicTracker,
   RollEntrySchema,
   type RollEntry,
   SystemTemplateSchema,
@@ -22,6 +24,7 @@ import { z } from 'zod';
  *   TEMPLATE_REQUEST [3][json]        pede o sistema da campanha ao Mestre
  *   TEMPLATE         [4][json]        o sistema (validado como um arquivo importado)
  *   LOG              [5][json]        rolagens do registro da sessão
+ *   TURN             [6][json]        ordem de turno do combate (versão pública), ou nenhuma
  *
  * Topologia em estrela: jogadores só conversam com o Mestre; cada ficha é um documento
  * separado, sincronizado apenas entre o dono e o Mestre (jogadores não recebem as fichas
@@ -39,6 +42,7 @@ const MessageType = {
   TemplateRequest: 3,
   Template: 4,
   Log: 5,
+  Turn: 6,
 } as const;
 
 const base = {
@@ -92,12 +96,20 @@ export type IncomingMessage =
   | { type: 'reject'; reject: Reject }
   | { type: 'template-request'; request: TemplateRequest }
   | { type: 'template'; template: SystemTemplate }
-  | { type: 'log'; entries: RollEntry[] };
+  | { type: 'log'; entries: RollEntry[] }
+  | { type: 'turn'; tracker: PublicTracker | null };
 
 const LogSchema = z.object({ entries: z.array(RollEntrySchema).min(1).max(LOG_CATCH_UP) });
 
 export function encodeLog(entries: RollEntry[]): Uint8Array {
   return encodeJson(MessageType.Log, { entries });
+}
+
+/** Ordem de turno: só a versão pública (sem os ocultos) sai do aparelho do Mestre. */
+const TurnSchema = z.object({ tracker: PublicTrackerSchema.nullable() });
+
+export function encodeTurn(tracker: PublicTracker | null): Uint8Array {
+  return encodeJson(MessageType.Turn, { tracker });
 }
 
 /** Pedido do sistema da campanha (quem ainda não o tem instalado, nem ficha). */
@@ -175,6 +187,10 @@ export function decodeMessage(data: Uint8Array): IncomingMessage | null {
       case MessageType.Log: {
         const log = LogSchema.safeParse(parseJson(decoding.readVarString(decoder)));
         return log.success ? { type: 'log', entries: log.data.entries } : null;
+      }
+      case MessageType.Turn: {
+        const turn = TurnSchema.safeParse(parseJson(decoding.readVarString(decoder)));
+        return turn.success ? { type: 'turn', tracker: turn.data.tracker } : null;
       }
       case MessageType.Hello: {
         const hello = HelloSchema.safeParse(parseJson(decoding.readVarString(decoder)));
