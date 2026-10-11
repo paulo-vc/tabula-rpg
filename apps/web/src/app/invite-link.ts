@@ -6,6 +6,7 @@ import {
   type Issue,
   type Result,
 } from '@tabula/domain';
+import { COMPACT_FORMAT, packInvite, unpackInvite } from './invite-codec';
 
 /** Rota do convite dentro do app (rotas com hash: tudo fica no fragmento da URL). */
 export const INVITE_ROUTE = '/convite/';
@@ -30,9 +31,26 @@ export function randomSecret(): string {
   return toBase64Url(crypto.getRandomValues(new Uint8Array(16)));
 }
 
-/** Código do convite: o convite em JSON, codificado em base64url (seguro em URLs). */
+/**
+ * Código do convite em base64url (seguro em URLs). Usa o formato compacto (binário, ~190
+ * caracteres); se algum convite incomum não sobreviver à ida e volta, cai no JSON antigo,
+ * que todas as versões leem.
+ */
 export function encodeInvite(invite: CampaignInvite): string {
+  try {
+    const compact = toBase64Url(packInvite(invite));
+    if (sameInvite(unpackInvite(fromBase64Url(compact)), invite)) return compact;
+  } catch {
+    // formato compacto indisponível para este convite
+  }
   return toBase64Url(new TextEncoder().encode(JSON.stringify(invite)));
+}
+
+function sameInvite(a: unknown, b: CampaignInvite): boolean {
+  const parsed = CampaignInviteSchema.safeParse(a);
+  return (
+    parsed.success && JSON.stringify(parsed.data) === JSON.stringify(CampaignInviteSchema.parse(b))
+  );
 }
 
 /**
@@ -60,7 +78,18 @@ export function decodeInvite(input: string): Result<CampaignInvite, Issue> {
 
   let json: unknown;
   try {
-    json = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(fromBase64Url(code)));
+    const bytes = fromBase64Url(code);
+    const format = bytes[0] ?? 0;
+    if (format !== 0x7b && format > COMPACT_FORMAT && format < 0x20) {
+      return invalid(
+        'Este convite foi criado por uma versão mais nova do Tabularium. Atualize o app.',
+      );
+    }
+    // JSON (v0.1/v0.2) começa com "{"; o formato compacto, com o número do formato.
+    json =
+      bytes[0] === 0x7b
+        ? JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes))
+        : unpackInvite(bytes);
   } catch {
     return invalid('Convite inválido ou incompleto.');
   }
