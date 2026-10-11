@@ -84,3 +84,10 @@ git tag v0.2.0 && git push origin v0.2.0
    - Mesclar o PR do `tabula-templates` com o nome novo e a verificação do formato novo.
    - Publicar a Dualidade 1.2.0 no `tabula-templates` (ela pede o app 0.2.0; quem está na v0.1 vê "requer app novo").
    - Na v0.3, conferir a primeira **atualização automática** de verdade (da v0.2.0 instalada para a seguinte).
+
+## v0.2.1
+
+Mesmo roteiro da v0.2.0 (tag `v0.2.1`, conferir o rascunho, publicar como versão normal), com duas conferências a mais:
+
+- [ ] **Primeira atualização automática:** na v0.2.0 instalada, o app deve oferecer a v0.2.1 e se atualizar sozinho.
+- [ ] **Windows com a v0.1 ainda instalada ao lado:** depois de instalar a v0.2.1, só o Tabularium aparece em "Aplicativos instalados", os atalhos "Tabula RPG" somem e as fichas continuam lá.
