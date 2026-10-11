@@ -105,7 +105,7 @@ A sincronização existe apenas enquanto a sessão está aberta. Edições offli
 ### Campanhas e convites
 
 - Cada dispositivo guarda **a sua cópia** da campanha. O Mestre a cria; o jogador a recebe pelo convite. O papel é derivado de `gmId` comparado ao ID do dispositivo.
-- A campanha tem um **segredo de 128 bits** que cifrará a sessão. O convite (id, nome, Mestre, sistema e segredo) vai codificado em base64url **depois do `#`** do link, a parte que os navegadores nunca enviam a servidores.
+- A campanha tem um **segredo de 128 bits** que cifrará a sessão. O convite (id, nome, Mestre, chave do Mestre, sistema e segredo) vai codificado em base64url **depois do `#`** do link, a parte que os navegadores nunca enviam a servidores. Desde a v0.2.1 o código é binário e compacto (`app/invite-codec.ts`, ~190 caracteres; o JSON antigo tinha ~460): IDs UUID viram 16 bytes, segredo e chave vão em bytes crus e os textos levam o tamanho na frente. Códigos no formato antigo continuam válidos; um formato futuro mostra "atualize o app".
 - O link usa o endereço público do app (`VITE_PUBLIC_URL` no build, ou o endereço atual quando é um site). No app desktop não há endereço público, e o convite é compartilhado como **código** para colar em "Entrar com convite".
 - O jogador vincula uma ficha do **sistema da campanha** (existente ou nova). Versões diferentes do mesmo sistema são aceitas, porque a migração resolve ao abrir a ficha.
 
