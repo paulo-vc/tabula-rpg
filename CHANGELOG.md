@@ -2,10 +2,18 @@
 
 As mudanças de cada versão, para quem usa o Tabularium. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
-## Próxima versão
+## v0.2.1
 
-- **Windows:** instalar remove o antigo "Tabula RPG" (v0.1) que ficava instalado ao lado do Tabularium, sem tocar nas suas fichas.
-- O executável passa a se chamar `tabularium` (no Windows, `tabularium.exe`; o que roda sem instalar, `tabularium_windows_x64.exe`). Os atalhos são atualizados sozinhos.
+### Mesa ao vivo
+
+- **Sair e entrar de novo na sessão é instantâneo.** Antes, voltar depois de sair podia levar uns 9 segundos; o mesmo vale para o Mestre encerrar e reabrir a sessão.
+- **Progresso da conexão:** enquanto procura o Mestre, o jogador vê há quanto tempo; ao conectar, quanto levou e como ficou a conexão (direta ou via servidor, com o atraso). O Mestre vê a conexão de cada jogador no card. Se a entrada demorar, esses números ajudam a descobrir o porquê.
+- **Convite menor:** o código do convite caiu de cerca de 460 para 190 caracteres. Convites antigos continuam valendo. Quem ainda estiver na v0.2.0 precisa atualizar para ler os convites novos (o app desktop se atualiza sozinho).
+
+### Windows
+
+- **Instalar remove o antigo "Tabula RPG"** (v0.1) que ficava instalado ao lado do Tabularium, sem tocar nas suas fichas.
+- O executável passa a se chamar `tabularium.exe` (o que roda sem instalar, `tabularium_windows_x64.exe`; no Linux, `tabularium`). Os atalhos são atualizados sozinhos.
 
 ## v0.2.0
 
