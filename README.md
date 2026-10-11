@@ -4,12 +4,12 @@
 
 Fichas de RPG de mesa com **sessão ao vivo** (antes chamado Tabula RPG): o Mestre acompanha a ficha de cada jogador em tempo real. Gratuito, sem contas e sem servidor: os dados ficam no seu aparelho e a mesa conversa direto entre os participantes.
 
-> **v0.1:** primeira versão pública. Funciona, mas é cedo: [conte o que deu errado](https://github.com/paulo-vc/tabula-rpg/issues/new/choose).
+> **v0.1:** primeira versão pública. Funciona, mas é cedo: [conte o que deu errado](https://github.com/paulo-vc/tabularium/issues/new/choose).
 
 ## Usar
 
-- **Windows ou Linux:** baixe o instalador (ou o executável que roda sem instalar) em [Releases](https://github.com/paulo-vc/tabula-rpg/releases).
-- **Navegador (qualquer sistema, inclusive celular e Mac):** [paulo-vc.github.io/tabula-rpg](https://paulo-vc.github.io/tabula-rpg/). Dá para instalar como app pelo navegador.
+- **Windows ou Linux:** baixe o instalador (ou o executável que roda sem instalar) em [Releases](https://github.com/paulo-vc/tabularium/releases).
+- **Navegador (qualquer sistema, inclusive celular e Mac):** [paulo-vc.github.io/tabularium](https://paulo-vc.github.io/tabularium/). Dá para instalar como app pelo navegador.
 
 O app desktop e a versão web são o mesmo app; jogadores podem usar um e o Mestre o outro.
 

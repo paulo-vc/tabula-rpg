@@ -11,7 +11,7 @@ gh repo create paulo-vc/tabula-templates --public --description "Sistemas da com
 gh repo clone paulo-vc/tabula-templates ../tabula-templates
 pnpm --filter @tabula/registry export ../tabula-templates
 cd ../tabula-templates
-node scripts/tabula-registry.mjs add ../tabula-rpg/packages/templates/community/dualidade.json paulo-vc
+node scripts/tabula-registry.mjs add ../tabularium/packages/templates/community/dualidade.json paulo-vc
 node scripts/tabula-registry.mjs index
 git add -A && git commit -m "Esqueleto do repositório e Dualidade" && git push
 gh label create publicar --color 5319e7 --description "Pedido de publicação de sistema"
@@ -27,13 +27,13 @@ Conferir: `https://cdn.jsdelivr.net/gh/paulo-vc/tabula-templates@main/index.json
 - Depois de público, aplicar a proteção da `main` e ligar o GitHub Pages (por Actions):
 
 ```bash
-gh repo edit paulo-vc/tabula-rpg --visibility public --accept-visibility-change-consequences
-gh api -X POST repos/paulo-vc/tabula-rpg/rulesets --input .github/rulesets/main.json
-gh api -X POST repos/paulo-vc/tabula-rpg/pages -f build_type=workflow
+gh repo edit paulo-vc/tabularium --visibility public --accept-visibility-change-consequences
+gh api -X POST repos/paulo-vc/tabularium/rulesets --input .github/rulesets/main.json
+gh api -X POST repos/paulo-vc/tabularium/pages -f build_type=workflow
 gh workflow run pages.yml
 ```
 
-Conferir: `https://paulo-vc.github.io/tabula-rpg/` abre o app, e um convite gerado ali começa com esse endereço.
+Conferir: `https://paulo-vc.github.io/tabularium/` abre o app, e um convite gerado ali começa com esse endereço.
 
 ## 3. Release
 
@@ -55,3 +55,4 @@ Publicado o rascunho, o app desktop das próximas versões avisa sozinho quando 
 - **Assinatura do Windows:** pedir à [SignPath Foundation](https://signpath.org/apply) (gratuito para projetos open source, exige o repositório público). Remove o aviso do SmartScreen.
 - **Atualização automática:** feita (plugin updater do Tauri). A chave privada de assinatura fica nos segredos `TAURI_SIGNING_PRIVATE_KEY` e `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, com backup fora do computador: perdê-la impede atualizar quem já instalou. Releases deixam de ser pré-lançamento, porque o app procura a atualização em `releases/latest`.
 - **Ordem Paranormal:** só com autorização da Jambô, ou como ficha "inspirada", com outro nome e sem textos dos livros.
+- **Nome do repositório:** `tabula-rpg` passou a `tabularium` (2026-10-10). O GitHub redireciona o `git`, as páginas e os downloads das releases, então o desktop instalado continua achando as atualizações. O endereço da versão web mudou para `paulo-vc.github.io/tabularium` e o antigo **não** redireciona: convites gerados antes da mudança e apps web instalados pelo endereço antigo deixam de abrir. Nunca criar um repositório novo chamado `tabula-rpg`: isso desliga o redirecionamento do GitHub e quebra a atualização do desktop.

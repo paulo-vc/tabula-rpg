@@ -1,5 +1,5 @@
 {
-  "name": "tabula-rpg",
+  "name": "tabularium",
   "private": true,
   "description": "Gerenciador de fichas de RPG de mesa com sincronização em tempo real, local-first e gratuito.",
   "license": "MIT",

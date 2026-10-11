@@ -2,7 +2,7 @@ import { compareVersions, SemVerSchema } from '@tabula/domain';
 import { z } from 'zod';
 
 /** Repositório do app, onde ficam as versões publicadas (GitHub Releases). */
-export const APP_REPO = { owner: 'paulo-vc', name: 'tabula-rpg' };
+export const APP_REPO = { owner: 'paulo-vc', name: 'tabularium' };
 
 export const releasesUrl = `https://github.com/${APP_REPO.owner}/${APP_REPO.name}/releases`;
 export const newIssueUrl = `https://github.com/${APP_REPO.owner}/${APP_REPO.name}/issues/new/choose`;
