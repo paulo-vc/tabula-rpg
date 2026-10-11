@@ -649,3 +649,45 @@ describe('ordem de turno', () => {
     expect(gmInitiative()?.activeId).toBeNull();
   });
 });
+
+describe('reentrada e tempo de conexão', () => {
+  const playerSnapshot = () => {
+    const snapshot = player.session.getSnapshot();
+    if (snapshot.kind !== 'jogador') throw new Error('o jogador não está em sessão');
+    return snapshot;
+  };
+
+  it('sair e entrar de novo: o Mestre vê offline e depois online; o tempo é medido', async () => {
+    const { campaign } = await setUpTable();
+    await gm.session.startAsGameMaster(campaign.id);
+    await player.session.joinAsPlayer(campaign.id);
+    await eventually(() => expect(playerSnapshot().status).toEqual({ state: 'conectado' }));
+    expect(playerSnapshot()).toMatchObject({ searchingSince: null });
+    expect(playerSnapshot().connectedInMs).toBeGreaterThanOrEqual(0);
+
+    await player.session.stop();
+    await eventually(() => expect(gmPlayers()[0]?.online).toBe(false));
+
+    await player.session.joinAsPlayer(campaign.id);
+    await eventually(() => {
+      expect(playerSnapshot().status).toEqual({ state: 'conectado' });
+      expect(gmPlayers()[0]?.online).toBe(true);
+    });
+  });
+
+  it('o Mestre encerra: a jogadora volta a procurar, com o tempo correndo', async () => {
+    const { campaign } = await setUpTable();
+    await gm.session.startAsGameMaster(campaign.id);
+    await player.session.joinAsPlayer(campaign.id);
+    await eventually(() => expect(playerSnapshot().status).toEqual({ state: 'conectado' }));
+
+    await gm.session.stop();
+    await eventually(() => {
+      expect(playerSnapshot().status).toEqual({ state: 'procurando-mestre' });
+      expect(playerSnapshot().searchingSince).not.toBeNull();
+    });
+
+    await gm.session.startAsGameMaster(campaign.id);
+    await eventually(() => expect(playerSnapshot().status).toEqual({ state: 'conectado' }));
+  });
+});

@@ -17,13 +17,14 @@ import {
   encodeReject,
   encodeTemplate,
   encodeTurn,
+  encodeBye,
   PROTOCOL_VERSION,
   syncEncoder,
   type Hello,
   type Reject,
 } from './protocol';
 import { deepEqual, readSheet, VALUES, type SheetSnapshot } from './sheet-doc';
-import type { SyncTransport } from './transport';
+import type { ConnectionInfo, SyncTransport } from './transport';
 
 export interface HostCampaign {
   id: string;
@@ -123,6 +124,9 @@ export class SessionHost {
   }
 
   async stop(): Promise<void> {
+    // Avisa a saída: a conexão pode continuar aberta (o app mantém a sala por um tempo).
+    const bye = encodeBye();
+    for (const peerId of this.sheetOfPeer.keys()) this.transport.send(peerId, bye);
     this.stopped = true;
     await this.transport.leave();
     for (const entry of this.entries.values()) entry.peerId = null;
@@ -148,6 +152,13 @@ export class SessionHost {
         sheet: entry.snapshot,
       };
     });
+  }
+
+  /** Caminho e latência da conexão com o dono de uma ficha (`null` se offline ou sem medida). */
+  async connectionInfo(sheetId: string): Promise<ConnectionInfo | null> {
+    const peerId = this.entries.get(sheetId)?.peerId;
+    if (!peerId || this.stopped || !this.transport.connectionInfo) return null;
+    return this.transport.connectionInfo(peerId);
   }
 
   /** Avisa quando jogadores entram, saem ou alteram fichas. */
@@ -279,6 +290,9 @@ export class SessionHost {
       if (request.campaignId !== this.campaign.id || request.templateId !== template.id) return;
       this.templateSent.add(peerId);
       this.send(peerId, encodeTemplate(template));
+    } else if (message.type === 'bye') {
+      this.templateSent.delete(peerId);
+      this.detach(peerId);
     } else if (message.type === 'log') {
       this.receiveRolls(peerId, message.entries);
     } else if (message.type === 'sync') {

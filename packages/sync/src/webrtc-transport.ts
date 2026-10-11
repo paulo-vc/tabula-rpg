@@ -1,6 +1,11 @@
 import { joinRoom } from 'trystero/nostr';
 import { MAX_MESSAGE_BYTES } from './protocol';
-import { MAX_EARLY_MESSAGES, type SyncTransport, type TransportHandlers } from './transport';
+import {
+  MAX_EARLY_MESSAGES,
+  type ConnectionInfo,
+  type SyncTransport,
+  type TransportHandlers,
+} from './transport';
 
 /**
  * Identifica o app nos relays de sinalização (separa as nossas salas das de outros apps).
@@ -76,5 +81,45 @@ export function createWebRtcTransport({ roomId, secret }: WebRtcRoom): SyncTrans
       for (const [peerId, bytes] of early.splice(0)) next.onMessage(peerId, bytes);
     },
     leave: () => room.leave(),
+    connectionInfo: async (peerId) => {
+      const connection = room.getPeers()[peerId];
+      return connection ? readConnectionInfo(connection) : null;
+    },
   };
+}
+
+/**
+ * Lê nas estatísticas do WebRTC o par de candidatos em uso: se a conexão é direta ou passa
+ * por um servidor de retransmissão, e a latência de ida e volta.
+ */
+async function readConnectionInfo(connection: RTCPeerConnection): Promise<ConnectionInfo | null> {
+  let stats: RTCStatsReport;
+  try {
+    stats = await connection.getStats();
+  } catch {
+    return null;
+  }
+  const byId = new Map<string, Record<string, unknown>>();
+  let selectedPairId: string | undefined;
+  stats.forEach((report: Record<string, unknown> & { id: string; type: string }) => {
+    byId.set(report.id, report);
+    if (report.type === 'transport' && typeof report.selectedCandidatePairId === 'string') {
+      selectedPairId = report.selectedCandidatePairId;
+    }
+  });
+  const pair =
+    (selectedPairId ? byId.get(selectedPairId) : undefined) ??
+    [...byId.values()].find(
+      (report) =>
+        report.type === 'candidate-pair' &&
+        report.state === 'succeeded' &&
+        report.nominated === true,
+    );
+  if (!pair) return null;
+  const local = byId.get(String(pair.localCandidateId));
+  const remote = byId.get(String(pair.remoteCandidateId));
+  const types = [local?.candidateType, remote?.candidateType];
+  const path: ConnectionInfo['path'] = types.includes('relay') ? 'retransmitida' : 'direta';
+  const rtt = pair.currentRoundTripTime;
+  return { path, rttMs: typeof rtt === 'number' ? Math.round(rtt * 1000) : null };
 }

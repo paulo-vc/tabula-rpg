@@ -12,6 +12,7 @@ import {
   decodeMessage,
   encodeHello,
   encodeLog,
+  encodeBye,
   PROTOCOL_VERSION,
   syncEncoder,
   type Hello,
@@ -19,7 +20,7 @@ import {
 } from './protocol';
 import { newChallenge, verifyChallenge } from './identity';
 import { reconcile, VALUES } from './sheet-doc';
-import type { SyncTransport } from './transport';
+import type { ConnectionInfo, SyncTransport } from './transport';
 
 export type ClientStatus =
   /** Na sala, esperando o Mestre aparecer. */
@@ -161,9 +162,17 @@ export class SessionClient {
   }
 
   async stop(): Promise<void> {
+    // Avisa a saída: a conexão pode continuar aberta (o app mantém a sala por um tempo).
+    if (this.gmPeer !== null) this.transport.send(this.gmPeer, encodeBye());
     this.stopped = true;
     this.gmPeer = null;
     await this.transport.leave();
+  }
+
+  /** Caminho e latência da conexão com o Mestre (`null` sem Mestre ou sem medida). */
+  async connectionInfo(): Promise<ConnectionInfo | null> {
+    if (this.gmPeer === null || this.stopped || !this.transport.connectionInfo) return null;
+    return this.transport.connectionInfo(this.gmPeer);
   }
 
   status(): ClientStatus {
@@ -262,6 +271,14 @@ export class SessionClient {
 
     if (message.type === 'reject') {
       this.setStatus({ state: 'recusado', reason: message.reject });
+      return;
+    }
+
+    if (message.type === 'bye') {
+      // O Mestre encerrou a sessão (a conexão pode continuar aberta).
+      this.gmPeer = null;
+      this.challenged.delete(peerId);
+      if (this.current.state !== 'recusado') this.setStatus({ state: 'procurando-mestre' });
       return;
     }
 

@@ -8,7 +8,7 @@ import {
   type FieldValue,
   type ResourceValue,
 } from '@tabula/domain';
-import type { HostPlayer } from '@tabula/sync';
+import type { ConnectionInfo, HostPlayer } from '@tabula/sync';
 import { useMemo } from 'react';
 import { Link } from 'wouter';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatNumber } from '@/components/sheet/format';
+import { describeConnection } from './connection';
 
 const okValue = (result: Result<number, EvaluationError> | undefined) =>
   result?.ok ? result.value : undefined;
@@ -99,8 +100,11 @@ export function PlayerCard({
   player,
   compiled,
   campaignId,
+  connection,
 }: {
   player: HostPlayer;
+  /** Caminho e latência da conexão com o jogador (quando online e medida). */
+  connection?: ConnectionInfo | undefined;
   compiled: CompiledTemplate | undefined;
   /** Com a campanha, o card leva à ficha completa (o Mestre pode alterá-la). */
   campaignId?: string;
@@ -133,6 +137,11 @@ export function PlayerCard({
           <Badge variant={player.online ? 'secondary' : 'outline'}>
             {player.online ? 'Online' : 'Offline'}
           </Badge>
+          {player.online && connection && (
+            <span className="text-xs" title="Caminho e atraso da conexão com este jogador">
+              {describeConnection(connection)}
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       {compiled && player.sheet && (
