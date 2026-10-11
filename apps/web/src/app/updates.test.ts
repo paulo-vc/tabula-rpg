@@ -3,7 +3,7 @@ import { checkForUpdate } from './updates';
 
 const release = (tag: string, draft = false) => ({
   tag_name: tag,
-  html_url: `https://github.com/paulo-vc/tabula-rpg/releases/tag/${tag}`,
+  html_url: `https://github.com/paulo-vc/tabularium/releases/tag/${tag}`,
   draft,
 });
 
@@ -17,7 +17,7 @@ describe('checkForUpdate', () => {
     ]);
     expect(update).toEqual({
       version: '0.2.1',
-      url: 'https://github.com/paulo-vc/tabula-rpg/releases/tag/v0.2.1',
+      url: 'https://github.com/paulo-vc/tabularium/releases/tag/v0.2.1',
     });
   });
 
