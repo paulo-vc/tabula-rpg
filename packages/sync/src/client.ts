@@ -86,6 +86,8 @@ export class SessionClient {
   private gmKey: string | undefined;
   /** Desafio desta conexão; a prova do Mestre só vale para ele (impede reaproveitar provas). */
   private readonly challenge = newChallenge();
+  /** Participantes a quem o desafio já foi reenviado nesta conexão (ver `receive`). */
+  private readonly challenged = new Set<string>();
   private current: ClientStatus = { state: 'procurando-mestre' };
   private readonly listeners = new Set<() => void>();
   private stopped = false;
@@ -137,6 +139,7 @@ export class SessionClient {
     this.transport.setHandlers({
       onPeerJoin: (peerId) => this.transport.send(peerId, encodeHello(this.hello())),
       onPeerLeave: (peerId) => {
+        this.challenged.delete(peerId);
         if (peerId !== this.gmPeer) return;
         this.gmPeer = null;
         if (this.current.state !== 'recusado') this.setStatus({ state: 'procurando-mestre' });
@@ -229,7 +232,17 @@ export class SessionClient {
       if (hello.role !== 'mestre' || hello.userId !== this.campaign.gmId) return;
       if (hello.campaignId !== this.campaign.id || this.current.state === 'recusado') return;
       const identity = this.authenticate(hello);
-      if (identity === null) return;
+      if (identity === null) {
+        // Apresentou-se como Mestre sem prova. O primeiro HELLO deste jogador (com o
+        // desafio) pode ter se perdido: o Mestre entrou na sala antes de começar a escutar,
+        // como ao recarregar a página. Reenvia o desafio, uma vez por conexão; o Mestre
+        // verdadeiro responde com a prova, e um impostor continua sem conseguir.
+        if (hello.proof === undefined && !this.challenged.has(peerId)) {
+          this.challenged.add(peerId);
+          this.transport.send(peerId, encodeHello(this.hello()));
+        }
+        return;
+      }
       const isNew = this.gmPeer !== peerId;
       // Uma prova válida vale mais que uma simples declaração anterior.
       if (isNew || identity === 'verificada') {

@@ -4,6 +4,7 @@ import { App } from './App';
 import { createWebRtcTransport } from '@tabula/sync/webrtc';
 import { createServices } from './app/services';
 import { keepSessionAcrossReloads } from './lib/session-resume';
+import { createRelayTransport } from './testing/relay-transport';
 import './index.css';
 
 // Tema claro/escuro acompanha o sistema operacional.
@@ -12,7 +13,12 @@ const applyTheme = () => document.documentElement.classList.toggle('dark', darkQ
 applyTheme();
 darkQuery.addEventListener('change', applyTheme);
 
-const services = createServices(undefined, { createTransport: createWebRtcTransport });
+// Só os testes de ponta a ponta definem `VITE_E2E_RELAY` (relay local em vez de WebRTC). No
+// build normal a condição é constante e o transporte de teste nem entra no pacote.
+const e2eRelay = import.meta.env.VITE_E2E_RELAY as string | undefined;
+const services = createServices(undefined, {
+  createTransport: e2eRelay ? createRelayTransport(e2eRelay) : createWebRtcTransport,
+});
 keepSessionAcrossReloads(services.session);
 // Guarda o estado da sessão ao vivo se a aba for fechada ou escondida.
 window.addEventListener('pagehide', () => void services.session.flush());

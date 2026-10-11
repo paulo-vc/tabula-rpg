@@ -1,6 +1,6 @@
 import { joinRoom } from 'trystero/nostr';
 import { MAX_MESSAGE_BYTES } from './protocol';
-import type { SyncTransport, TransportHandlers } from './transport';
+import { MAX_EARLY_MESSAGES, type SyncTransport, type TransportHandlers } from './transport';
 
 /**
  * Identifica o app nos relays de sinalização (separa as nossas salas das de outros apps).
@@ -26,6 +26,8 @@ export function createWebRtcTransport({ roomId, secret }: WebRtcRoom): SyncTrans
   let handlers: TransportHandlers | null = null;
   const failures: string[] = [];
   const peers = new Set<string>();
+  /** Mensagens que chegaram antes de `setHandlers`: entregues logo depois. */
+  const early: [string, Uint8Array][] = [];
 
   const room = joinRoom(
     { appId: APP_ID, password: secret, maxReceiveBytes: MAX_MESSAGE_BYTES },
@@ -58,7 +60,9 @@ export function createWebRtcTransport({ roomId, secret }: WebRtcRoom): SyncTrans
           : ArrayBuffer.isView(data)
             ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
             : null;
-    if (bytes) handlers?.onMessage(peerId, bytes);
+    if (!bytes) return;
+    if (handlers) handlers.onMessage(peerId, bytes);
+    else if (early.length < MAX_EARLY_MESSAGES) early.push([peerId, bytes]);
   };
 
   return {
@@ -69,6 +73,7 @@ export function createWebRtcTransport({ roomId, secret }: WebRtcRoom): SyncTrans
       handlers = next;
       for (const peerId of peers) next.onPeerJoin(peerId);
       for (const peerId of failures.splice(0)) next.onConnectionFailure?.(peerId);
+      for (const [peerId, bytes] of early.splice(0)) next.onMessage(peerId, bytes);
     },
     leave: () => room.leave(),
   };
