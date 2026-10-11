@@ -3,6 +3,7 @@ import {
   DexieDeviceRepository,
   DexieDraftRepository,
   DexieRollLogRepository,
+  DexieGmKeyRepository,
   DexieSecretValuesRepository,
   DexieSessionStateRepository,
   DexieSheetRepository,
@@ -10,6 +11,7 @@ import {
   TabulaDatabase,
 } from '@tabula/storage';
 import type { DieRoller } from '@tabula/domain';
+import { generateGmKeyPair, type GmKeyPair } from '@tabula/sync';
 import { BUILTIN_TEMPLATES } from '@tabula/templates';
 import { CampaignService } from './campaigns';
 import { TemplateEditorService } from './editor';
@@ -54,6 +56,8 @@ export interface ServiceOptions {
   clock?: Clock;
   ids?: IdGenerator;
   newSecret?: () => string;
+  /** Gera o par de chaves do Mestre de uma campanha. */
+  newGmKey?: () => GmKeyPair;
   /** Transporte da sessão ao vivo: WebRTC no app; rede em memória nos testes. */
   createTransport?: TransportFactory;
   /** Repositório de sistemas da comunidade: CDN no app; memória nos testes. */
@@ -70,6 +74,7 @@ export function createServices(
     clock = { now: () => Date.now() },
     ids = { newId: () => crypto.randomUUID() },
     newSecret = randomSecret,
+    newGmKey = generateGmKeyPair,
     createTransport = () => {
       throw new Error('Transporte da sessão não configurado');
     },
@@ -88,6 +93,7 @@ export function createServices(
   const sessionStates = new DexieSessionStateRepository(db);
   const secrets = new DexieSecretValuesRepository(db);
   const rollLog = new DexieRollLogRepository(db);
+  const gmKeys = new DexieGmKeyRepository(db);
   const files = new FileService(sheetRepository, templateRepository, catalog, clock, ids);
   return {
     catalog,
@@ -117,6 +123,8 @@ export function createServices(
       rollLog,
       dieRoller,
       ids.newId,
+      gmKeys,
+      newGmKey,
     ),
     campaigns: new CampaignService(
       campaignRepository,
@@ -130,6 +138,8 @@ export function createServices(
       clock,
       ids,
       newSecret,
+      gmKeys,
+      newGmKey,
     ),
   };
 }

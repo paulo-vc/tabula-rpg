@@ -1,6 +1,7 @@
 import type {
   Campaign,
   CharacterSheet,
+  GmKeyRecord,
   RollEntry,
   SecretValuesRecord,
   SessionStateRecord,
@@ -40,6 +41,7 @@ export class TabulaDatabase extends Dexie {
   drafts!: EntityTable<TemplateDraft, 'id'>;
   secretValues!: Table<SecretValuesRecord, [string, string]>;
   rollLog!: Table<RollLogRecord, [string, string]>;
+  gmKeys!: EntityTable<GmKeyRecord, 'campaignId'>;
 
   constructor(name: string = DEFAULT_DATABASE_NAME) {
     super(name);
@@ -67,6 +69,10 @@ export class TabulaDatabase extends Dexie {
     // v6 (Fase 7b): registro de rolagens da sessão.
     this.version(6).stores({
       rollLog: '[campaignId+id], campaignId, [campaignId+at]',
+    });
+    // v7: chave privada do Mestre de cada campanha (identidade verificável), só neste aparelho.
+    this.version(7).stores({
+      gmKeys: 'campaignId',
     });
   }
 }

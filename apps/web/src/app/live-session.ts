@@ -6,6 +6,7 @@ import {
   roleOf,
   rollDice,
   valueProblem,
+  withGmKey,
   type DieRoller,
   type RollEntry,
   type RollLogRepository,
@@ -16,6 +17,7 @@ import {
   type SecretValuesRepository,
   type CampaignRepository,
   type DeviceRepository,
+  type GmKeyRepository,
   type Issue,
   type Result,
   type SessionStateRepository,
@@ -26,6 +28,8 @@ import {
   SessionClient,
   SessionHost,
   type ClientStatus,
+  type GmIdentity,
+  type GmKeyPair,
   type HostPlayer,
   type RemoteChanges,
   type SavedSheetState,
@@ -33,6 +37,7 @@ import {
 } from '@tabula/sync';
 import { liveQuery, type Subscription } from 'dexie';
 import type { TemplateCatalog } from './catalog';
+import { ensureGmIdentity } from './gm-identity';
 import type { FileService, ImportResult } from './files';
 import type { Clock } from './sheets';
 
@@ -46,6 +51,10 @@ export type LiveSession =
       sheetId: string;
       status: ClientStatus;
       connectionFailures: number;
+      /** Como o Mestre foi reconhecido (`null` enquanto não há Mestre conectado). */
+      gmIdentity: GmIdentity | null;
+      /** Tentativas de se passar pelo Mestre (prova inválida) nesta sessão. */
+      impersonations: number;
       /** Última alteração feita pelo Mestre na ficha (IDs dos campos), para avisar o jogador. */
       gmChange?: { fieldIds: string[]; count: number };
     };
@@ -96,6 +105,8 @@ export class LiveSessionManager {
     private readonly rollLog: RollLogRepository,
     private readonly dieRoller: DieRoller,
     private readonly newId: () => string,
+    private readonly gmKeys: GmKeyRepository,
+    private readonly newGmKey: () => GmKeyPair,
   ) {}
 
   getSnapshot = (): LiveSession => this.snapshot;
@@ -107,11 +118,20 @@ export class LiveSessionManager {
 
   /** O Mestre abre a sessão: os jogadores com o convite podem se conectar. */
   async startAsGameMaster(campaignId: string): Promise<Result<void, Issue>> {
-    const campaign = await this.campaigns.get(campaignId);
-    if (!campaign) return failure('campanha-ausente', 'Campanha não encontrada.');
-    if (roleOf(campaign, await this.device.getDeviceId()) !== 'mestre') {
+    const stored = await this.campaigns.get(campaignId);
+    if (!stored) return failure('campanha-ausente', 'Campanha não encontrada.');
+    if (roleOf(stored, await this.device.getDeviceId()) !== 'mestre') {
       return failure('nao-e-mestre', 'Só o Mestre pode iniciar a sessão.');
     }
+    const proven = await ensureGmIdentity(
+      this.campaigns,
+      this.gmKeys,
+      this.newGmKey,
+      stored,
+      this.clock.now(),
+    );
+    if (!proven.ok) return proven;
+    const { campaign, identity } = proven.value;
     await this.stop();
 
     const saved = new Map<string, SavedSheetState>();
@@ -135,6 +155,7 @@ export class LiveSessionManager {
         gmId: campaign.gmId,
         gmName: campaign.gmName,
         templateId: campaign.templateRef.id,
+        identity,
         ...(template ? { template } : {}),
       },
       saved,
@@ -213,7 +234,7 @@ export class LiveSessionManager {
 
     const client = new SessionClient(
       this.transportFor(campaign),
-      { id: campaign.id, gmId: campaign.gmId },
+      { id: campaign.id, gmId: campaign.gmId, ...(campaign.gmKey && { gmKey: campaign.gmKey }) },
       { userId, displayName: member?.displayName ?? 'Jogador' },
       withoutSecrets(sheet, compiled),
       saved?.state,
@@ -224,6 +245,12 @@ export class LiveSessionManager {
           );
         },
         onRolls: (entries) => this.recordRolls(campaignId, entries),
+        // Campanha da v0.1: a primeira chave provada pelo Mestre passa a ser a da campanha.
+        onGmKeyLearned: (gmKey) => {
+          this.pinGmKey(campaignId, gmKey).catch((error: unknown) =>
+            console.error('Falha ao gravar a chave do Mestre', error),
+          );
+        },
       },
     );
 
@@ -234,6 +261,8 @@ export class LiveSessionManager {
         sheetId,
         status: client.status(),
         connectionFailures: client.connectionFailures(),
+        gmIdentity: client.identity(),
+        impersonations: client.impersonations(),
         ...(gmChange && { gmChange }),
       });
     const unsubscribe = client.subscribe(publish);
@@ -396,6 +425,12 @@ export class LiveSessionManager {
   async flush(): Promise<void> {
     clearTimeout(this.saveTimer);
     await this.active?.save();
+  }
+
+  /** Grava na campanha a chave do Mestre provada na primeira conexão (a primeira prevalece). */
+  private async pinGmKey(campaignId: string, gmKey: string): Promise<void> {
+    const campaign = await this.campaigns.get(campaignId);
+    if (campaign) await this.campaigns.save(withGmKey(campaign, gmKey, this.clock.now()));
   }
 
   private transportFor(campaign: Campaign): SyncTransport {

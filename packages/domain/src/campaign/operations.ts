@@ -15,6 +15,8 @@ export interface NewCampaignInput {
   gm: { userId: string; displayName: string };
   /** Gerado pelo chamador com aleatoriedade criptográfica (ver `CampaignSecretSchema`). */
   secret: string;
+  /** Chave pública do Mestre (ver `GmKeySchema`). */
+  gmKey?: string;
   now: number;
 }
 
@@ -25,6 +27,7 @@ export function createCampaign(input: NewCampaignInput): Campaign {
     name: input.name.trim(),
     gmId: input.gm.userId,
     gmName: input.gm.displayName.trim(),
+    ...(input.gmKey !== undefined && { gmKey: input.gmKey }),
     templateRef: { id: template.id, version: template.version, source: template.source },
     templateName: template.name,
     secret: input.secret,
@@ -41,10 +44,16 @@ export function inviteFor(campaign: Campaign): CampaignInvite {
     name: campaign.name,
     gmId: campaign.gmId,
     gmName: campaign.gmName,
+    ...(campaign.gmKey !== undefined && { gmKey: campaign.gmKey }),
     templateRef: campaign.templateRef,
     templateName: campaign.templateName,
     secret: campaign.secret,
   };
+}
+
+/** Fixa a chave pública do Mestre na campanha (a primeira conhecida prevalece). */
+export function withGmKey(campaign: Campaign, gmKey: string, now: number): Campaign {
+  return campaign.gmKey === undefined ? { ...campaign, gmKey, updatedAt: now } : campaign;
 }
 
 /** Cópia da campanha no dispositivo do jogador, criada a partir do convite. */
@@ -65,6 +74,7 @@ export function joinCampaign(
     name: invite.name,
     gmId: invite.gmId,
     gmName: invite.gmName,
+    ...(invite.gmKey !== undefined && { gmKey: invite.gmKey }),
     templateRef: invite.templateRef,
     templateName: invite.templateName,
     secret: invite.secret,
