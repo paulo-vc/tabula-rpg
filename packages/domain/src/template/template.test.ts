@@ -132,6 +132,29 @@ describe('compileTemplate', () => {
     ],
     ['campo-inexistente', (t) => (t.layouts.gmSummary = ['f_fantasma'])],
     [
+      'marcadores-invalidos',
+      (t) => Object.assign(field(t, 'f_for'), { display: 'marcadores' }), // sem máximo
+    ],
+    [
+      'marcadores-invalidos',
+      (t) => Object.assign(field(t, 'f_for'), { display: 'marcadores', max: 11, default: 0 }),
+    ],
+    [
+      'marcadores-invalidos',
+      (t) =>
+        Object.assign(field(t, 'f_for'), { display: 'marcadores', min: 1, max: 3, default: 1 }),
+    ],
+    [
+      'marcadores-invalidos',
+      (t) =>
+        Object.assign(field(t, 'f_for'), {
+          display: 'marcadores',
+          integer: false,
+          max: 3,
+          default: 0,
+        }),
+    ],
+    [
       'layout-aninhado-demais',
       (t) => {
         let node: SystemTemplate['layouts']['full'][number] = { kind: 'field', fieldId: 'f_ca' };
@@ -170,6 +193,15 @@ describe('compileTemplate', () => {
         },
       ],
     });
+  });
+
+  it('aceita marcadores em números inteiros de 0 a até 10 e em recursos', () => {
+    const template = variant((t) => {
+      Object.assign(field(t, 'f_for'), { display: 'marcadores', max: 3, default: 0 });
+      Object.assign(field(t, 'f_inspiracao'), { display: 'marcadores' });
+    });
+    expect(SystemTemplateSchema.safeParse(template).success).toBe(true);
+    expect(codesOf(template)).toEqual([]);
   });
 
   it('campos secretos podem usar outros secretos e os visíveis', () => {

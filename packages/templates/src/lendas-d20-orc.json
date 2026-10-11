@@ -1,6 +1,6 @@
 {
   "id": "lendas-d20-orc",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "Lendas d20 (ORC)",
   "description": "Ficha para fantasia heroica d20 com graus de proficiência (destreinado a lendário), atributos como modificadores e três ações por turno. ORC Notice: This product is licensed under the ORC License held in the Library of Congress at TX 9-307-067 and available online at various locations including www.azoralaw.com/orclicense, www.gencon.com/orclicense and others. All warranties are disclaimed as set forth therein. Attribution: This product is based on the following Licensed Material: Player Core © 2023 Paizo Inc., Designed by Logan Bonner, Jason Bulmahn, Stephen Radney-MacFarland, and Mark Seifter. Reserved Material: nomes, cenário e marcas da Paizo não são usados. Expressed Material: esta ficha (layout e textos) não é material licenciado.",
   "author": "Tabularium",
@@ -114,7 +114,8 @@
       "type": "resource",
       "default": 1,
       "max": "3",
-      "description": "Gaste para rolar de novo ou para evitar a morte."
+      "description": "Gaste para rolar de novo ou para evitar a morte.",
+      "display": "marcadores"
     },
     {
       "id": "idiomas",
@@ -506,7 +507,8 @@
       "type": "resource",
       "default": 0,
       "max": "4 - @ferido",
-      "description": "Chegar ao máximo é a morte. Ferido diminui o limite."
+      "description": "Chegar ao máximo é a morte. Ferido diminui o limite.",
+      "display": "marcadores"
     },
     {
       "id": "ferido",
@@ -516,7 +518,8 @@
       "default": 0,
       "min": 0,
       "max": 3,
-      "integer": true
+      "integer": true,
+      "display": "marcadores"
     },
     {
       "id": "prof_classe",
@@ -1556,7 +1559,8 @@
       "label": "Pontos de Foco",
       "type": "resource",
       "default": 0,
-      "max": "3"
+      "max": "3",
+      "display": "marcadores"
     },
     {
       "id": "magias",

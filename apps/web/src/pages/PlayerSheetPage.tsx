@@ -7,7 +7,7 @@ import { Link } from 'wouter';
 import { useServices } from '@/app/services-context';
 import { useLiveSession } from '@/components/live/use-live-session';
 import { SheetLayout } from '@/components/sheet/SheetLayout';
-import { SheetVitals } from '@/components/sheet/SheetVitals';
+import { pinnedFieldIds, SheetVitals } from '@/components/sheet/SheetVitals';
 import { useSheetEditing } from '@/components/sheet/use-sheet-editing';
 import { RollContext } from '@/components/sheet/roll-context';
 import { useRoller } from '@/components/live/use-roller';
@@ -150,6 +150,7 @@ function PlayerSheet({
           onChange={onChange}
           newItemId={() => crypto.randomUUID()}
           secretFieldIds={secretIds}
+          pinnedFieldIds={pinnedFieldIds(compiled, undefined, secretIds)}
         />
       </RollContext>
     </div>

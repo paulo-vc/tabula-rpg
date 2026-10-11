@@ -5,6 +5,7 @@ import { checkFormula } from './check-formula';
 import { err, ok, type Issue, type Result } from '../result';
 import { LIMITS } from '../schema/primitives';
 import {
+  MAX_MARKS,
   type FieldDef,
   type LayoutNode,
   type ListItemFieldDef,
@@ -45,6 +46,18 @@ function validateFieldDefaults(
   path: Issue['path'],
   issues: Issue[],
 ) {
+  if (field.type === 'number' && field.display === 'marcadores') {
+    const { min, max, integer } = field;
+    if (!integer || (min ?? 0) !== 0 || max === undefined || max < 1 || max > MAX_MARKS) {
+      issues.push(
+        issue(
+          'marcadores-invalidos',
+          [...path, 'display'],
+          `Marcadores pedem um número inteiro de 0 até um máximo entre 1 e ${MAX_MARKS}`,
+        ),
+      );
+    }
+  }
   if (field.type === 'number') {
     const { min, max, integer } = field;
     if (min !== undefined && max !== undefined && min > max) {

@@ -1,6 +1,6 @@
 {
   "id": "dnd5e-srd",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "name": "D&D 5ª Edição (SRD 5.1)",
   "description": "Ficha para personagens de D&D 5ª edição. This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode. Termos traduzidos para o português e organizados como ficha pelo projeto Tabularium.",
   "author": "Tabularium",
@@ -758,7 +758,8 @@
       "default": 0,
       "min": 0,
       "max": 3,
-      "integer": true
+      "integer": true,
+      "display": "marcadores"
     },
     {
       "id": "falhas_morte",
@@ -768,7 +769,8 @@
       "default": 0,
       "min": 0,
       "max": 3,
-      "integer": true
+      "integer": true,
+      "display": "marcadores"
     },
     {
       "id": "condicoes",
@@ -843,7 +845,8 @@
       "default": 0,
       "min": 0,
       "max": 6,
-      "integer": true
+      "integer": true,
+      "display": "marcadores"
     },
     {
       "id": "ataques",
@@ -942,63 +945,72 @@
       "key": "espacos_1",
       "label": "Espaços de magia de 1º nível",
       "type": "resource",
-      "default": 0
+      "default": 0,
+      "display": "marcadores"
     },
     {
       "id": "espacos_2",
       "key": "espacos_2",
       "label": "Espaços de magia de 2º nível",
       "type": "resource",
-      "default": 0
+      "default": 0,
+      "display": "marcadores"
     },
     {
       "id": "espacos_3",
       "key": "espacos_3",
       "label": "Espaços de magia de 3º nível",
       "type": "resource",
-      "default": 0
+      "default": 0,
+      "display": "marcadores"
     },
     {
       "id": "espacos_4",
       "key": "espacos_4",
       "label": "Espaços de magia de 4º nível",
       "type": "resource",
-      "default": 0
+      "default": 0,
+      "display": "marcadores"
     },
     {
       "id": "espacos_5",
       "key": "espacos_5",
       "label": "Espaços de magia de 5º nível",
       "type": "resource",
-      "default": 0
+      "default": 0,
+      "display": "marcadores"
     },
     {
       "id": "espacos_6",
       "key": "espacos_6",
       "label": "Espaços de magia de 6º nível",
       "type": "resource",
-      "default": 0
+      "default": 0,
+      "display": "marcadores"
     },
     {
       "id": "espacos_7",
       "key": "espacos_7",
       "label": "Espaços de magia de 7º nível",
       "type": "resource",
-      "default": 0
+      "default": 0,
+      "display": "marcadores"
     },
     {
       "id": "espacos_8",
       "key": "espacos_8",
       "label": "Espaços de magia de 8º nível",
       "type": "resource",
-      "default": 0
+      "default": 0,
+      "display": "marcadores"
     },
     {
       "id": "espacos_9",
       "key": "espacos_9",
       "label": "Espaços de magia de 9º nível",
       "type": "resource",
-      "default": 0
+      "default": 0,
+      "display": "marcadores"
     },
     {
       "id": "magias",

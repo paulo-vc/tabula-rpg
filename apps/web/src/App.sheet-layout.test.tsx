@@ -135,7 +135,9 @@ describe('blocos e linhas', () => {
     const { user, sheet } = await openSheet();
     await user.click(screen.getByRole('tab', { name: 'Personagem' }));
     const abilities = screen.getByRole('group', { name: 'Habilidades e talentos' });
-    await user.click(within(abilities).getByRole('button', { name: 'Adicionar' }));
+    await user.click(
+      within(abilities).getByRole('button', { name: 'Adicionar em Habilidades e talentos' }),
+    );
     await user.type(within(abilities).getByLabelText('Habilidade (item 1)'), 'Fúria');
 
     await user.click(within(abilities).getByRole('button', { name: 'Abrir descrição de Fúria' }));
@@ -152,5 +154,113 @@ describe('blocos e linhas', () => {
     });
     await user.click(within(abilities).getByRole('button', { name: 'Fechar descrição de Fúria' }));
     expect(within(abilities).queryByLabelText('Descrição de Fúria')).not.toBeInTheDocument();
+  });
+});
+
+describe('ficha sem repetição (IHC)', () => {
+  const vitals = () => screen.getByRole('region', { name: 'Resumo do personagem' });
+  const outsideVitals = (element: HTMLElement) => !vitals().contains(element);
+
+  it('o que está no painel fixo não se repete nas abas', async () => {
+    const { user } = await openSheet();
+    await user.click(screen.getByRole('tab', { name: 'Combate' }));
+    const panel = screen.getByRole('tabpanel');
+    // CA, iniciativa, deslocamento, PV e condições ficam só no painel.
+    expect(within(panel).queryByText('Classe de Armadura')).not.toBeInTheDocument();
+    expect(within(panel).queryByText('Deslocamento (m)')).not.toBeInTheDocument();
+    expect(within(panel).queryByRole('meter', { name: /Pontos de Vida/ })).not.toBeInTheDocument();
+    expect(within(panel).queryByRole('group', { name: 'Condições' })).not.toBeInTheDocument();
+    // O que não está no painel continua na aba.
+    expect(within(panel).getByText('CA base (armadura)')).toBeInTheDocument();
+  });
+
+  it('números do painel são editáveis ali mesmo', async () => {
+    const { user, sheet } = await openSheet();
+    const speed = within(vitals()).getByRole('textbox', { name: 'Deslocamento (m)' });
+    await user.clear(speed);
+    await user.type(speed, '12');
+    await waitFor(async () => expect(await stored(sheet.id, 'deslocamento')).toBe(12));
+  });
+
+  it('o número do PV abre o ajuste exato (máximo e temporários)', async () => {
+    const { user, sheet } = await openSheet();
+    await user.click(within(vitals()).getByRole('button', { name: 'Ajustar Pontos de Vida' }));
+    const editor = await screen.findByRole('dialog', { name: 'Ajustar Pontos de Vida' });
+    const temp = within(editor).getByLabelText('Temporários');
+    await user.clear(temp);
+    await user.type(temp, '5');
+    const max = within(editor).getByLabelText('Máximo');
+    await user.clear(max);
+    await user.type(max, '14');
+    await user.tab();
+    await waitFor(async () =>
+      expect(await stored(sheet.id, 'hp')).toMatchObject({ current: 10, max: 14, temp: 5 }),
+    );
+  });
+
+  it('Inspiração liga e desliga com um toque no painel', async () => {
+    const { user, sheet } = await openSheet();
+    const inspiration = within(vitals()).getByRole('button', { name: 'Inspiração' });
+    expect(inspiration).toHaveAttribute('aria-pressed', 'false');
+    await user.click(inspiration);
+    expect(inspiration).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(async () => expect(await stored(sheet.id, 'inspiracao')).toBe(true));
+    expect(screen.getAllByText('Inspiração').filter(outsideVitals)).toHaveLength(0);
+  });
+});
+
+describe('marcadores', () => {
+  it('testes contra a morte são 3 bolinhas: marcar a 2ª marca duas; clicar de novo desmarca', async () => {
+    const { user, sheet } = await openSheet();
+    await user.click(screen.getByRole('tab', { name: 'Combate' }));
+    const saves = screen.getByRole('group', { name: 'Testes contra a morte: sucessos: 0 de 3' });
+    const second = within(saves).getByRole('button', {
+      name: 'Testes contra a morte: sucessos: 2',
+    });
+
+    await user.click(second);
+    expect(second).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(async () => expect(await stored(sheet.id, 'sucessos_morte')).toBe(2));
+
+    await user.click(second);
+    await waitFor(async () => expect(await stored(sheet.id, 'sucessos_morte')).toBe(1));
+  });
+
+  it('exaustão (0 a 6) fica no painel como marcadores', async () => {
+    const { user, sheet } = await openSheet();
+    const vitals = screen.getByRole('region', { name: 'Resumo do personagem' });
+    await user.click(within(vitals).getByRole('button', { name: 'Exaustão: 3' }));
+    await waitFor(async () => expect(await stored(sheet.id, 'exaustao')).toBe(3));
+  });
+
+  it('espaço de magia: digita o máximo e os marcadores aparecem', async () => {
+    const { user, sheet } = await openSheet();
+    await user.click(screen.getByRole('tab', { name: 'Magias' }));
+    const max = screen.getByRole('textbox', { name: 'Espaços de magia de 1º nível: máximo' });
+    await user.clear(max);
+    await user.type(max, '4');
+    await user.tab();
+    const slots = await screen.findByRole('group', {
+      name: /Espaços de magia de 1º nível: \d de 4/,
+    });
+    await user.click(
+      within(slots).getByRole('button', { name: 'Espaços de magia de 1º nível: 1' }),
+    );
+    await waitFor(async () =>
+      expect(await stored(sheet.id, 'espacos_1')).toMatchObject({ current: 1, max: 4 }),
+    );
+  });
+});
+
+describe('listas vazias', () => {
+  it('seção de uma lista só: sem "Nenhum item", com o Adicionar no cabeçalho', async () => {
+    const { user } = await openSheet();
+    await user.click(screen.getByRole('tab', { name: 'Combate' }));
+    const attacks = screen.getByRole('group', { name: 'Ataques' });
+    expect(within(attacks).queryByText('Nenhum item.')).not.toBeInTheDocument();
+    // O rótulo da lista não repete o título da seção.
+    expect(within(attacks).getAllByText('Ataques')).toHaveLength(1);
+    await user.click(within(attacks).getByRole('button', { name: 'Adicionar em Ataques' }));
+    expect(within(attacks).getByLabelText('Nome (item 1)')).toBeInTheDocument();
   });
 });

@@ -1,17 +1,20 @@
-import type {
-  CompiledTemplate,
-  DerivedValues,
-  FieldDef,
-  FieldValue,
-  LayoutNode,
-  SheetValues,
+import {
+  defaultValue,
+  type CompiledTemplate,
+  type DerivedValues,
+  type FieldDef,
+  type FieldOf,
+  type FieldValue,
+  type LayoutNode,
+  type ListItem,
+  type SheetValues,
 } from '@tabula/domain';
 import { EyeOffIcon } from 'lucide-react';
 import { useId, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldLine, SecondaryValue, StatTile, type CompactFieldProps } from './compact';
-import { FieldControl } from './fields';
+import { AddItemButton, FieldControl } from './fields';
 
 type Columns = 1 | 2 | 3 | 4;
 type SectionNode = Extract<LayoutNode, { kind: 'section' }>;
@@ -95,6 +98,8 @@ export interface SheetLayoutProps {
   hiddenFieldIds?: ReadonlySet<string> | undefined;
   /** Campos destacados como "só o Mestre vê" (na visão do Mestre). */
   secretFieldIds?: ReadonlySet<string> | undefined;
+  /** Campos que ficam no painel fixo (`pinnedFieldIds`) e por isso não se repetem aqui. */
+  pinnedFieldIds?: ReadonlySet<string> | undefined;
 }
 
 export function SheetLayout({
@@ -105,13 +110,29 @@ export function SheetLayout({
   newItemId,
   hiddenFieldIds,
   secretFieldIds,
+  pinnedFieldIds,
 }: SheetLayoutProps) {
   const base = useId();
   const [selected, setSelected] = useState(0);
 
   const visible = (fieldId: string | undefined): FieldDef | undefined => {
-    if (fieldId === undefined || hiddenFieldIds?.has(fieldId)) return undefined;
+    if (fieldId === undefined || hiddenFieldIds?.has(fieldId) || pinnedFieldIds?.has(fieldId))
+      return undefined;
     return compiled.fieldsById.get(fieldId);
+  };
+  /** Seções sem nada para mostrar (ex.: tudo foi para o painel fixo) não ocupam espaço. */
+  const hasContent = (nodes: readonly LayoutNode[]): boolean =>
+    nodes.some((node) =>
+      node.kind === 'section' ? hasContent(node.children) : visible(node.fieldId) !== undefined,
+    );
+  /** A seção mostra só uma lista: título e "Adicionar" vão juntos no cabeçalho. */
+  const soleList = (section: SectionNode): FieldOf<'list'> | undefined => {
+    const shown = section.children.filter(
+      (node) => node.kind === 'section' || visible(node.fieldId) !== undefined,
+    );
+    const only = shown.length === 1 && shown[0]?.kind === 'field' ? shown[0] : undefined;
+    const field = only?.kind === 'field' ? visible(only.fieldId) : undefined;
+    return field?.type === 'list' && !secretFieldIds?.has(field.id) ? field : undefined;
   };
   const propsOf = (field: FieldDef): CompactFieldProps => ({
     field,
@@ -131,11 +152,11 @@ export function SheetLayout({
     <div className={cn('grid gap-2', TILE_GRID[section.columns])}>
       {section.children.map((node, index) => {
         if (node.kind === 'section')
-          return (
+          return hasContent(node.children) ? (
             <div key={index} className="col-span-full">
               {renderSection(node, 1)}
             </div>
-          );
+          ) : null;
         const field = visible(node.fieldId);
         if (!field) return null;
         const secondary = visible(node.secondary);
@@ -154,7 +175,10 @@ export function SheetLayout({
   const renderLines = (section: SectionNode) => {
     const rows: CompactFieldProps[][] = [];
     const nested: SectionNode[] = [];
+    // As linhas são formadas pela posição no template, contando também os campos que não
+    // aparecem (secretos, ou no painel fixo): senão as linhas seguintes se desalinhariam.
     let row: CompactFieldProps[] = [];
+    let positions = 0;
     for (const node of section.children) {
       if (node.kind === 'section') {
         nested.push(node);
@@ -162,9 +186,10 @@ export function SheetLayout({
       }
       const field = visible(node.fieldId);
       if (field) row.push(propsOf(field));
-      if (row.length === section.columns) {
-        rows.push(row);
+      if (++positions === section.columns) {
+        if (row.length > 0) rows.push(row);
         row = [];
+        positions = 0;
       }
     }
     if (row.length > 0) rows.push(row);
@@ -188,11 +213,11 @@ export function SheetLayout({
     <div className={cn('grid gap-x-4 gap-y-3', GRID[columns])}>
       {nodes.map((node, index) => {
         if (node.kind === 'section') {
-          return (
+          return hasContent(node.children) ? (
             <div key={index} className="col-span-full">
               {renderSection(node, depth + 1)}
             </div>
-          );
+          ) : null;
         }
         const field = visible(node.fieldId);
         if (!field) return null;
@@ -228,6 +253,42 @@ export function SheetLayout({
   );
 
   function renderSection(section: SectionNode, depth: number) {
+    if (!hasContent(section.children)) return null;
+    const list = soleList(section);
+    if (list) {
+      const items = (values[list.id] ?? defaultValue(list)) as ListItem[];
+      const full = list.maxItems !== undefined && items.length >= list.maxItems;
+      const add = (
+        <AddItemButton
+          label={list.label}
+          disabled={full}
+          onAdd={() => onChange(list.id, [...items, { id: newItemId(), values: {} }])}
+        />
+      );
+      const body = items.length > 0 && <FieldControl {...propsOf(list)} bare />;
+      if (depth === 0) {
+        return (
+          <Card role="group" aria-label={list.label} size={items.length > 0 ? 'default' : 'sm'}>
+            <CardHeader className="flex items-center justify-between gap-2">
+              <CardTitle>
+                <h2>{section.title}</h2>
+              </CardTitle>
+              {add}
+            </CardHeader>
+            {body && <CardContent>{body}</CardContent>}
+          </Card>
+        );
+      }
+      return (
+        <section role="group" aria-label={list.label} className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold">{section.title}</h3>
+            {add}
+          </div>
+          {body}
+        </section>
+      );
+    }
     const content =
       section.display === 'compacto'
         ? renderTiles(section)
@@ -272,13 +333,15 @@ export function SheetLayout({
   const active = Math.min(selected, tabs.length - 1);
 
   const renderTop = (nodes: readonly LayoutNode[]) =>
-    nodes.map((node, index) =>
-      node.kind === 'section' ? (
-        <div key={`${node.title}-${index}`}>{renderSection(node, 0)}</div>
-      ) : (
-        <div key={node.fieldId}>{renderGrid([node], 1, 0)}</div>
-      ),
-    );
+    nodes
+      .filter((node) => hasContent([node]))
+      .map((node, index) =>
+        node.kind === 'section' ? (
+          <div key={`${node.title}-${index}`}>{renderSection(node, 0)}</div>
+        ) : (
+          <div key={node.fieldId}>{renderGrid([node], 1, 0)}</div>
+        ),
+      );
 
   if (tabs.length === 1) {
     return <div className="grid gap-4">{renderTop(tabs[0]?.nodes ?? [])}</div>;

@@ -91,31 +91,37 @@ describe('ficha', () => {
   it('não perde cliques rápidos nos botões de recurso', async () => {
     const { user, sheet } = await openNewSheet();
     await user.click(screen.getByRole('tab', { name: 'Combate' }));
-    const plus = screen.getByRole('button', { name: 'Aumentar Pontos de Vida' });
+    const plus = screen.getByRole('button', { name: 'Aumentar Dados de Vida restantes' });
     await user.click(plus);
     await user.click(plus);
     await user.click(plus);
-    await user.click(screen.getByRole('button', { name: 'Diminuir Pontos de Vida' }));
+    await user.click(screen.getByRole('button', { name: 'Diminuir Dados de Vida restantes' }));
 
-    expect(screen.getByLabelText('Pontos de Vida: atual')).toHaveValue('12');
+    expect(screen.getByLabelText('Dados de Vida restantes: atual')).toHaveValue('3');
     await waitFor(async () =>
-      expect(await storedValue(sheet.id, 'hp')).toEqual({ current: 12, max: 10 }),
+      expect(await storedValue(sheet.id, 'dados_vida_restantes')).toMatchObject({ current: 3 }),
     );
   });
 
-  it('marca e desmarca condições', async () => {
+  it('marca e desmarca condições pelo painel fixo', async () => {
     const { user, sheet } = await openNewSheet();
-    await user.click(screen.getByRole('tab', { name: 'Combate' }));
-    const conditions = screen.getByRole('group', { name: 'Condições' });
-    const poisoned = within(conditions).getByRole('button', { name: 'Envenenado' });
+    const vitals = screen.getByRole('region', { name: 'Resumo do personagem' });
+    // Só as condições ativas ficam à vista; as outras, a um clique.
+    expect(within(vitals).queryByRole('button', { name: 'Envenenado' })).not.toBeInTheDocument();
 
+    await user.click(within(vitals).getByRole('button', { name: 'Condições' }));
+    const poisoned = within(await screen.findByRole('dialog', { name: 'Condições' })).getByRole(
+      'button',
+      { name: 'Envenenado' },
+    );
     await user.click(poisoned);
     expect(poisoned).toHaveAttribute('aria-pressed', 'true');
     await waitFor(async () =>
       expect(await storedValue(sheet.id, 'condicoes')).toEqual(['envenenado']),
     );
 
-    await user.click(poisoned);
+    await user.keyboard('{Escape}');
+    await user.click(within(vitals).getByRole('button', { name: 'Remover Envenenado' }));
     await waitFor(async () => expect(await storedValue(sheet.id, 'condicoes')).toEqual([]));
   });
 
@@ -124,7 +130,7 @@ describe('ficha', () => {
     await user.click(screen.getByRole('tab', { name: 'Inventário' }));
     const equipment = screen.getByRole('group', { name: 'Equipamento' });
 
-    await user.click(within(equipment).getByRole('button', { name: 'Adicionar' }));
+    await user.click(within(equipment).getByRole('button', { name: 'Adicionar em Equipamento' }));
     await user.type(within(equipment).getByLabelText('Item (item 1)'), 'Corda');
     await waitFor(async () => {
       const items = (await storedValue(sheet.id, 'equipamento')) as { values: object }[];

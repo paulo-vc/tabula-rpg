@@ -1,6 +1,7 @@
 {
   "id": "dualidade",
-  "version": "1.1.0",
+  "version": "1.2.0",
+  "minAppVersion": "0.2.0",
   "name": "Dualidade",
   "description": "Ficha compatível com o sistema Daggerheart™: traços, Evasão, limiares de dano, Esperança, Estresse, armas e cartas de domínio. Ficha não oficial da comunidade. This product includes materials from the Daggerheart System Reference Document 1.0, © Critical Role, LLC, under the terms of the Darrington Press Community Gaming License. More information at www.daggerheart.com. Darrington Press™ and the Darrington Press authorized work logo are trademarks of Critical Role, LLC and used with permission.",
   "author": "Tabularium",
@@ -223,7 +224,8 @@
       "type": "resource",
       "default": 0,
       "max": "@armadura",
-      "description": "Marque um para reduzir a gravidade de um dano."
+      "description": "Marque um para reduzir a gravidade de um dano.",
+      "display": "marcadores"
     },
     {
       "id": "limiar_maior",
@@ -266,7 +268,8 @@
       "type": "resource",
       "default": 6,
       "max": "@pv_max",
-      "description": "Na Dualidade os PV são marcados: o atual é quanto ainda resta."
+      "description": "Na Dualidade os PV são marcados: o atual é quanto ainda resta.",
+      "display": "marcadores"
     },
     {
       "id": "pv_max",
@@ -284,7 +287,8 @@
       "label": "Estresse",
       "type": "resource",
       "default": 0,
-      "max": "@estresse_max"
+      "max": "@estresse_max",
+      "display": "marcadores"
     },
     {
       "id": "estresse_max",
@@ -302,7 +306,8 @@
       "label": "Esperança",
       "type": "resource",
       "default": 2,
-      "max": "6"
+      "max": "6",
+      "display": "marcadores"
     },
     {
       "id": "condicoes",
@@ -627,7 +632,8 @@
       "default": 1,
       "min": 0,
       "max": 9,
-      "integer": true
+      "integer": true,
+      "display": "marcadores"
     },
     {
       "id": "bolsas",
@@ -637,7 +643,8 @@
       "default": 0,
       "min": 0,
       "max": 9,
-      "integer": true
+      "integer": true,
+      "display": "marcadores"
     },
     {
       "id": "bau",
