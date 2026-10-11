@@ -56,3 +56,23 @@ Publicado o rascunho, o app desktop das próximas versões avisa sozinho quando 
 - **Atualização automática:** feita (plugin updater do Tauri). A chave privada de assinatura fica nos segredos `TAURI_SIGNING_PRIVATE_KEY` e `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, com backup fora do computador: perdê-la impede atualizar quem já instalou. Releases deixam de ser pré-lançamento, porque o app procura a atualização em `releases/latest`.
 - **Ordem Paranormal:** só com autorização da Jambô, ou como ficha "inspirada", com outro nome e sem textos dos livros.
 - **Nome do repositório:** `tabula-rpg` passou a `tabularium` (2026-10-10). O GitHub redireciona o `git`, as páginas e os downloads das releases, então o desktop instalado continua achando as atualizações. O endereço da versão web mudou para `paulo-vc.github.io/tabularium` e o antigo **não** redireciona: convites gerados antes da mudança e apps web instalados pelo endereço antigo deixam de abrir. Nunca criar um repositório novo chamado `tabula-rpg`: isso desliga o redirecionamento do GitHub e quebra a atualização do desktop.
+
+## v0.2.0
+
+1. Mesclar o PR da versão (números de versão em `apps/web/package.json`, `tauri.conf.json` e `Cargo.toml`, e o [CHANGELOG](../CHANGELOG.md)).
+2. Criar e enviar a tag:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+3. O `release.yml` gera um **rascunho** com os instaladores assinados e o `latest.json`. Antes de publicar:
+   - [ ] Instalar no Windows **por cima da v0.1.0** e conferir que fichas e campanhas continuam lá.
+   - [ ] Na v0.1.0 instalada, conferir que o aviso de versão nova aparece e leva à página da release (a v0.1 não tem a atualização automática).
+   - [ ] Sessão ao vivo no app instalado com um jogador na versão web (`paulo-vc.github.io/tabularium`): ficha, ordem de turno, rolagem.
+   - [ ] Colar o trecho da v0.2.0 do CHANGELOG como notas da release.
+4. Publicar o rascunho como versão normal (não pré-lançamento), para o `releases/latest` passar a apontar para ela.
+5. Depois de publicada:
+   - Mesclar o PR do `tabula-templates` com o nome novo e a verificação do formato novo.
+   - Publicar a Dualidade 1.2.0 no `tabula-templates` (ela pede o app 0.2.0; quem está na v0.1 vê "requer app novo").
+   - Na v0.3, conferir a primeira **atualização automática** de verdade (da v0.2.0 instalada para a seguinte).
