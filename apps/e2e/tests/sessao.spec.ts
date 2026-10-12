@@ -149,4 +149,26 @@ test.describe('mesa ao vivo, de ponta a ponta', () => {
     await vitals.getByRole('button', { name: 'Dano' }).click();
     await expect(card.getByRole('meter', { name: 'Pontos de Vida: 7 de 10' })).toBeVisible();
   });
+
+  test('a jogadora rola a iniciativa pela ficha e o valor entra na ordem do Mestre', async ({
+    browser,
+  }) => {
+    const gm = await newDevice(browser);
+    const player = await newDevice(browser);
+    await createCampaign(gm);
+    await joinWithInvite(player, await inviteLink(gm), 'Ana', 'Lia');
+    await startTable(gm, player, 'Ana');
+
+    await gm.getByRole('button', { name: 'Iniciar combate' }).click();
+    // D&D com Destreza 10: a rolagem é só o d20.
+    await player.getByRole('button', { name: 'Rolar iniciativa (1d20)' }).click();
+
+    const playerLog = player.getByRole('list', { name: 'Registro de rolagens' });
+    await expect(playerLog.getByRole('listitem').first()).toContainText('Iniciativa');
+    const total = (
+      await playerLog.getByRole('listitem').first().locator('span').first().textContent()
+    )?.trim();
+    expect(Number(total)).toBeGreaterThanOrEqual(1);
+    await expect(gm.getByRole('textbox', { name: 'Iniciativa de Lia' })).toHaveValue(String(total));
+  });
 });

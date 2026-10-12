@@ -131,6 +131,8 @@ describe('compileTemplate', () => {
       },
     ],
     ['campo-inexistente', (t) => (t.layouts.gmSummary = ['f_fantasma'])],
+    ['iniciativa-invalida', (t) => (t.initiative = 'f_fantasma')],
+    ['iniciativa-invalida', (t) => (t.initiative = 'f_nome')],
     [
       'marcadores-invalidos',
       (t) => Object.assign(field(t, 'f_for'), { display: 'marcadores' }), // sem máximo

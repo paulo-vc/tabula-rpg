@@ -265,6 +265,19 @@ export function compileTemplate(template: SystemTemplate): Result<CompiledTempla
     if (!dice.ok) issues.push(issue('dado-de-teste-invalido', ['checkDice'], dice.error.message));
   }
 
+  if (template.initiative !== undefined) {
+    const field = fieldsById.get(template.initiative);
+    if (!field || (field.type !== 'number' && field.type !== 'computed')) {
+      issues.push(
+        issue(
+          'iniciativa-invalida',
+          ['initiative'],
+          'A iniciativa precisa ser um campo de número ou calculado',
+        ),
+      );
+    }
+  }
+
   // Layouts.
   const fieldIds = new Set(fieldsById.keys());
   validateLayout(template.layouts.full, ['layouts', 'full'], fieldIds, issues);

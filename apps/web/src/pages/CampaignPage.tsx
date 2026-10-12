@@ -1,4 +1,11 @@
-import { inviteFor, linkedSheetId, roleOf, type Campaign } from '@tabula/domain';
+import {
+  computeDerived,
+  initiativeExpression,
+  inviteFor,
+  linkedSheetId,
+  roleOf,
+  type Campaign,
+} from '@tabula/domain';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   ArrowLeftIcon,
@@ -11,7 +18,7 @@ import {
   Trash2Icon,
   TriangleAlertIcon,
 } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { Link, useLocation } from 'wouter';
 import { encodeInvite } from '@/app/invite-link';
@@ -179,6 +186,16 @@ function PlayerView({ campaign, userId }: { campaign: Campaign; userId: string }
   );
   const [choosing, setChoosing] = useState(false);
   const importFile = useImport();
+  // Rolagem de iniciativa da ficha vinculada (ex.: "1d20+2"), se o sistema define uma.
+  const linkedTemplate = useLiveQuery(
+    async () => (linked ? await catalog.get(linked.templateRef.id) : undefined),
+    [catalog, linked?.templateRef.id],
+  );
+  const initiativeRoll = useMemo(() => {
+    if (!linked || !linkedTemplate) return null;
+    const compiled = catalog.compile(linkedTemplate);
+    return initiativeExpression(compiled, linked.values, computeDerived(compiled, linked.values));
+  }, [catalog, linked, linkedTemplate]);
 
   // `null`: sem ficha vinculada (ou a vinculada foi apagada). `undefined`: carregando.
   const showChooser = choosing || linked === null;
@@ -227,7 +244,7 @@ function PlayerView({ campaign, userId }: { campaign: Campaign; userId: string }
       </Card>
 
       <PlayerSession campaign={campaign} hasSheet={Boolean(linked)} />
-      <PlayerInitiative campaignId={campaign.id} />
+      <PlayerInitiative campaignId={campaign.id} initiativeRoll={initiativeRoll} />
       <RollLog campaignId={campaign.id} isGameMaster={false} />
 
       <DangerZone

@@ -2,7 +2,9 @@ import {
   err,
   linkedSheetId,
   ok,
+  INITIATIVE_RANGE,
   parseDice,
+  updateCombatant,
   publicView,
   TrackerSchema,
   type PublicTracker,
@@ -212,7 +214,20 @@ export class LiveSessionManager {
     const records = await this.states.list(campaignId);
     let initiative = readInitiative(records.find((r) => r.key === INITIATIVE_KEY)?.state);
     host.setTurnOrder(initiative && publicView(initiative));
-    const stopRolls = host.onRoll((entry) => this.recordRolls(campaignId, [entry]));
+    const stopRolls = host.onRoll((entry) => {
+      this.recordRolls(campaignId, [entry]);
+      // Iniciativa rolada pelo jogador na ficha: entra na ordem de turno (o Mestre corrige,
+      // se quiser). Vale para quem já está no combate.
+      if (entry.purpose !== 'iniciativa' || !initiative) return;
+      const combatant = initiative.combatants.find(
+        (c) => c.kind === 'jogador' && c.userId === entry.authorId,
+      );
+      if (!combatant) return;
+      const value = Math.max(-INITIATIVE_RANGE, Math.min(INITIATIVE_RANGE, entry.result.total));
+      this.active?.setInitiative?.(
+        updateCombatant(initiative, combatant.id, { initiative: value }),
+      );
+    });
 
     const publish = () =>
       this.setSnapshot({
@@ -451,6 +466,8 @@ export class LiveSessionManager {
     label: string;
     expression: string;
     secret?: boolean;
+    /** `iniciativa`: o Mestre usa o total na ordem de turno (ver `RollEntry.purpose`). */
+    purpose?: 'iniciativa';
   }): Promise<Result<RollEntry, Issue>> {
     const parsed = parseDice(input.expression);
     if (!parsed.ok) return failure(parsed.error.code, parsed.error.message);
@@ -468,6 +485,7 @@ export class LiveSessionManager {
       result: rollDice(parsed.value, this.dieRoller),
       // Só o Mestre rola em segredo.
       secret: input.secret === true && this.snapshot.kind === 'mestre',
+      ...(input.purpose && { purpose: input.purpose }),
     };
     if (active) {
       active.shareRoll(entry);

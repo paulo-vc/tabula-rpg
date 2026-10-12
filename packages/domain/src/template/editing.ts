@@ -298,8 +298,10 @@ export function duplicateField(
 /** Remove o campo, o lugar dele na ficha e no resumo do Mestre. */
 export function removeField(template: SystemTemplate, fieldId: string): SystemTemplate {
   const gmSummary = template.layouts.gmSummary?.filter((id) => id !== fieldId);
+  // O campo de iniciativa apagado: o sistema volta a não ter iniciativa pela ficha.
+  const { initiative, ...rest } = template;
   return {
-    ...template,
+    ...(initiative === fieldId ? rest : template),
     fields: template.fields.filter((f) => f.id !== fieldId),
     layouts: {
       ...template.layouts,
