@@ -233,3 +233,43 @@ describe('combate, do lado da jogadora', () => {
     expect(within(order).getByText('Orc')).toBeInTheDocument();
   });
 });
+
+describe('iniciativa pela ficha', () => {
+  it('a jogadora rola a iniciativa no painel de combate e ela entra na ordem do Mestre', async () => {
+    const { campaign, sheet } = await setUpTable();
+    await gm.session.startAsGameMaster(campaign.id);
+    const user = renderApp(player, `#/campanhas/${campaign.id}`);
+    await user.click(await screen.findByRole('button', { name: 'Entrar na sessão' }));
+    await until(() => {
+      const snapshot = gm.session.getSnapshot();
+      expect(snapshot.kind === 'mestre' && snapshot.players[0]?.online).toBe(true);
+    });
+    gm.session.updateInitiative(campaign.id, () => ({
+      phase: 'preparando',
+      round: 1,
+      activeId: null,
+      combatants: [
+        {
+          id: sheet.id,
+          name: 'Lia',
+          initiative: 0,
+          kind: 'jogador',
+          userId: sheet.ownerId,
+          hidden: false,
+        },
+      ],
+    }));
+
+    // D&D: Destreza 10 (modificador 0), então a rolagem é só o dado dos testes.
+    // A ordem chega pela rede (simulada) antes do botão aparecer.
+    await until(() => expect(screen.getByText('Preparando')).toBeInTheDocument());
+    const roll = await screen.findByRole('button', { name: 'Rolar iniciativa (1d20)' });
+    await user.click(roll);
+    await until(() => {
+      const snapshot = gm.session.getSnapshot();
+      const lia = snapshot.kind === 'mestre' ? snapshot.initiative?.combatants[0] : undefined;
+      expect(lia?.initiative).toBeGreaterThanOrEqual(1);
+      expect(lia?.initiative).toBeLessThanOrEqual(20);
+    });
+  });
+});

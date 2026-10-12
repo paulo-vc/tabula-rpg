@@ -57,6 +57,11 @@ export const RollEntrySchema = z.object({
   result: RollResultSchema,
   /** Rolagem secreta do Mestre: não sai do aparelho dele. */
   secret: z.boolean(),
+  /**
+   * Para que serve a rolagem, além de entrar no registro. `iniciativa`: o Mestre usa o
+   * total como a iniciativa de quem rolou na ordem de turno.
+   */
+  purpose: z.literal('iniciativa').optional(),
 });
 export type RollEntry = z.infer<typeof RollEntrySchema>;
 

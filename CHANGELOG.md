@@ -2,6 +2,10 @@
 
 As mudanças de cada versão, para quem usa o Tabularium. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
+## Próxima versão
+
+- **Rolar a iniciativa pela ficha:** quando o Mestre inicia o combate, cada jogador vê o botão "Rolar iniciativa" (ex.: 1d20+2, já com o modificador da ficha), e o resultado entra direto na ordem de turno. O Mestre continua podendo corrigir. No D&D 5e usa a Iniciativa; no Lendas d20, a Percepção. No criador de sistemas, escolha o campo da iniciativa em Informações.
+
 ## v0.2.1
 
 ### Mesa ao vivo

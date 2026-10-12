@@ -1,6 +1,6 @@
 {
   "id": "lendas-d20-orc",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "name": "Lendas d20 (ORC)",
   "description": "Ficha para fantasia heroica d20 com graus de proficiência (destreinado a lendário), atributos como modificadores e três ações por turno. ORC Notice: This product is licensed under the ORC License held in the Library of Congress at TX 9-307-067 and available online at various locations including www.azoralaw.com/orclicense, www.gencon.com/orclicense and others. All warranties are disclaimed as set forth therein. Attribution: This product is based on the following Licensed Material: Player Core © 2023 Paizo Inc., Designed by Logan Bonner, Jason Bulmahn, Stephen Radney-MacFarland, and Mark Seifter. Reserved Material: nomes, cenário e marcas da Paizo não são usados. Expressed Material: esta ficha (layout e textos) não é material licenciado.",
   "author": "Tabularium",
@@ -8,6 +8,7 @@
   "language": "pt-BR",
   "tags": ["fantasia", "d20", "orc"],
   "source": "builtin",
+  "initiative": "percepcao",
   "fields": [
     {
       "id": "nome",

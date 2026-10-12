@@ -3,19 +3,26 @@ import { useId } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { ApplyChange } from './use-template-editor';
 
 type Apply = ApplyChange;
 
+const NO_INITIATIVE = '__sem-iniciativa__';
+
 const LICENSES = ['CC-BY-4.0', 'CC-BY-SA-4.0', 'CC0-1.0', 'OGL-1.0a', 'ORC', 'MIT'];
 
 /** Atualiza uma propriedade opcional, removendo-a quando fica vazia. */
-function setOptional<K extends 'description' | 'author' | 'license' | 'language' | 'checkDice'>(
-  template: SystemTemplate,
-  key: K,
-  value: string,
-): SystemTemplate {
+function setOptional<
+  K extends 'description' | 'author' | 'license' | 'language' | 'checkDice' | 'initiative',
+>(template: SystemTemplate, key: K, value: string): SystemTemplate {
   const { [key]: _, ...rest } = template;
   return (value ? { ...rest, [key]: value } : rest) as SystemTemplate;
 }
@@ -128,6 +135,36 @@ export function InfoEditor({
         />
         <p className="text-muted-foreground text-xs">
           Rolado com os modificadores (campos calculados com sinal). Ex.: 1d20, 2d12, 3d6, 1d100.
+        </p>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor={`${base}-iniciativa`}>Iniciativa</Label>
+        <Select
+          value={template.initiative ?? NO_INITIATIVE}
+          onValueChange={(value) =>
+            apply(
+              (t) => setOptional(t, 'initiative', value === NO_INITIATIVE ? '' : value),
+              'iniciativa',
+            )
+          }
+        >
+          <SelectTrigger id={`${base}-iniciativa`} className="w-full sm:w-72">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_INITIATIVE}>— (o Mestre digita as iniciativas)</SelectItem>
+            {template.fields
+              .filter((field) => field.type === 'number' || field.type === 'computed')
+              .map((field) => (
+                <SelectItem key={field.id} value={field.id}>
+                  {field.label}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+        <p className="text-muted-foreground text-xs">
+          Campo somado ao dado dos testes quando o jogador rola a iniciativa no combate.
         </p>
       </div>
 

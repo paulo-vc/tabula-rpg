@@ -635,6 +635,27 @@ describe('ordem de turno', () => {
     expect(gmInitiative()?.combatants).toHaveLength(2);
   });
 
+  it('a iniciativa rolada pela jogadora entra na ordem do Mestre; outras rolagens, não', async () => {
+    const { sheet } = await combat();
+    await eventually(() => expect(playerInitiative()).not.toBeNull());
+
+    const common = await player.session.roll({ label: 'Atletismo', expression: '1d1+5' });
+    expect(common.ok).toBe(true);
+    const rolled = await player.session.roll({
+      label: 'Iniciativa',
+      expression: '1d1+16',
+      purpose: 'iniciativa',
+    });
+    expect(rolled).toMatchObject({ ok: true, value: { purpose: 'iniciativa' } });
+
+    await eventually(() => {
+      expect(gmInitiative()?.combatants.find((c) => c.id === sheet.id)?.initiative).toBe(17);
+      expect(playerInitiative()?.combatants.find((c) => c.id === sheet.id)?.initiative).toBe(17);
+    });
+    // O inimigo do Mestre não muda.
+    expect(gmInitiative()?.combatants.find((c) => c.id === 'goblin')?.initiative).toBe(18);
+  });
+
   it('só o Mestre com a sessão aberta conduz o combate; ordem inválida é recusada', async () => {
     const { campaign } = await combat();
     expect(player.session.updateInitiative(campaign.id, () => null)).toMatchObject({

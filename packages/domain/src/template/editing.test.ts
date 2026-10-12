@@ -181,6 +181,12 @@ describe('campos', () => {
     expect(template.layouts.gmSummary).not.toContain('f_for');
   });
 
+  it('apagar o campo de iniciativa tira a iniciativa do sistema (e só ele)', () => {
+    const template = { ...clone(miniTemplate()), initiative: 'f_for' };
+    expect(removeField(template, 'f_for')).not.toHaveProperty('initiative');
+    expect(removeField(template, 'f_des')).toHaveProperty('initiative', 'f_for');
+  });
+
   it('lista quem usa um apelido, para avisar antes de excluir', () => {
     const users = fieldsReferencing(miniTemplate(), 'for_mod').map((f) => f.id);
     expect(users).toContain('f_atletismo');

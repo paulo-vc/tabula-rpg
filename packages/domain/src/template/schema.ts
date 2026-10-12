@@ -222,6 +222,12 @@ export const SystemTemplateSchema = z.object({
    * em sistemas de dados de dualidade, "3d6" em outros…
    */
   checkDice: z.string().max(LIMITS.label).optional(),
+  /**
+   * Campo numérico que é o modificador de iniciativa (ex.: "Iniciativa" no D&D, "Percepção"
+   * no Lendas d20). Com ele, o jogador rola a iniciativa pela ficha (`checkDice` + o valor) e
+   * o resultado entra na ordem de turno. Sem ele, o Mestre digita as iniciativas.
+   */
+  initiative: IdSchema.optional(),
   /** Versão mínima do app capaz de abrir este template. */
   minAppVersion: SemVerSchema.optional(),
   fields: z.array(FieldDefSchema).min(1).max(LIMITS.fields),

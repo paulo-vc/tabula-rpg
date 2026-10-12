@@ -13,6 +13,7 @@ import {
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  DicesIcon,
   EyeIcon,
   EyeOffIcon,
   PlusIcon,
@@ -314,13 +315,22 @@ export function GameMasterInitiative({ campaignId }: { campaignId: string }) {
 }
 
 /** Ordem de turno, do lado do jogador: só leitura, com aviso quando é a vez dele. */
-export function PlayerInitiative({ campaignId }: { campaignId: string }) {
+export function PlayerInitiative({
+  campaignId,
+  initiativeRoll,
+}: {
+  campaignId: string;
+  /** Rolagem de iniciativa da ficha do jogador (ex.: "1d20+2"), se o sistema define uma. */
+  initiativeRoll?: string | null | undefined;
+}) {
+  const { session } = useServices();
   const live = useLiveSession();
   const tracker: PublicTracker | null =
     live.kind === 'jogador' && live.campaignId === campaignId ? live.initiative : null;
   const userId = live.kind === 'jogador' ? live.userId : null;
   const mine = tracker?.combatants.find((c) => c.id === tracker.activeId)?.userId === userId;
   const myTurn = tracker?.phase === 'combate' && mine;
+  const inCombat = tracker?.combatants.some((c) => c.userId === userId) ?? false;
 
   // Aviso ao chegar a vez (uma vez por turno), mesmo com o jogador em outra tela.
   const turnKey = tracker ? `${tracker.round}:${tracker.activeId}` : null;
@@ -344,7 +354,21 @@ export function PlayerInitiative({ campaignId }: { campaignId: string }) {
                 : `Vez de ${order.find((c) => c.id === tracker.activeId)?.name ?? '…'}.`}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
+        {tracker.phase === 'preparando' && initiativeRoll && inCombat && (
+          <Button
+            onClick={() =>
+              void session
+                .roll({ label: 'Iniciativa', expression: initiativeRoll, purpose: 'iniciativa' })
+                .then((result) => {
+                  if (result.ok) toast(`Iniciativa: ${result.value.result.total}`);
+                  else toast.error('Não foi possível rolar', { description: result.error.message });
+                })
+            }
+          >
+            <DicesIcon /> Rolar iniciativa ({initiativeRoll})
+          </Button>
+        )}
         <ol aria-label="Ordem de turno" className="space-y-1">
           {order.map((combatant) => {
             const current = combatant.id === tracker.activeId;
