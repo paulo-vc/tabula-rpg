@@ -91,3 +91,9 @@ Mesmo roteiro da v0.2.0 (tag `v0.2.1`, conferir o rascunho, publicar como versã
 
 - [ ] **Primeira atualização automática:** na v0.2.0 instalada, o app deve oferecer a v0.2.1 e se atualizar sozinho.
 - [ ] **Windows com a v0.1 ainda instalada ao lado:** depois de instalar a v0.2.1, só o Tabularium aparece em "Aplicativos instalados", os atalhos "Tabula RPG" somem e as fichas continuam lá.
+
+## v0.2.2
+
+Mesmo roteiro (tag `v0.2.2`, conferir o rascunho, publicar como versão normal). O nome visível passa a "Tabularium RPG"; o `productName` continua "Tabularium" de propósito (ver "Identificadores do app desktop"), então a instalação não muda.
+
+- [ ] Na v0.2.1 instalada, a atualização automática chega e o título da janela passa a "Tabularium RPG".

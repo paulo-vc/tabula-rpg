@@ -23,7 +23,8 @@ export default defineConfig({
       // No app desktop (Tauri) os arquivos já são locais: service worker é desnecessário.
       disable: Boolean(process.env.TAURI_ENV_PLATFORM),
       manifest: {
-        name: 'Tabularium',
+        name: 'Tabularium RPG',
+        // Na tela inicial do celular cabem ~12 caracteres: o nome curto fica sem o "RPG".
         short_name: 'Tabularium',
         description: 'Fichas de RPG de mesa com sessão ao vivo para o Mestre.',
         lang: 'pt-BR',
