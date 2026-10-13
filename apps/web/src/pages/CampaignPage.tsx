@@ -100,7 +100,12 @@ export function CampaignPage({ id }: { id: string }) {
 }
 
 function GameMasterView({ campaign }: { campaign: Campaign }) {
-  const { campaigns } = useServices();
+  const { campaigns, catalog } = useServices();
+  // Dado dos testes do sistema: o Mestre rola a iniciativa das criaturas com ele ("+3").
+  const checkDice = useLiveQuery(
+    async () => (await catalog.get(campaign.templateRef.id))?.checkDice,
+    [catalog, campaign.templateRef.id],
+  );
   const baseUrl = publicAppUrl();
   const code = encodeInvite(inviteFor(campaign));
   const link = baseUrl ? campaigns.inviteLink(campaign, baseUrl) : null;
@@ -155,7 +160,7 @@ function GameMasterView({ campaign }: { campaign: Campaign }) {
       </Card>
 
       <GameMasterSession campaign={campaign} />
-      <GameMasterInitiative campaignId={campaign.id} />
+      <GameMasterInitiative campaignId={campaign.id} checkDice={checkDice} />
       <RollLog campaignId={campaign.id} isGameMaster />
 
       <DangerZone

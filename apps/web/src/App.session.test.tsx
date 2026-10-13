@@ -273,3 +273,52 @@ describe('iniciativa pela ficha', () => {
     });
   });
 });
+
+describe('iniciativa das criaturas', () => {
+  it('com modificador e quantidade, cada criatura rola a sua, em segredo', async () => {
+    const { campaign } = await setUpTable();
+    const user = renderApp(gm, `#/campanhas/${campaign.id}`);
+    await user.click(await screen.findByRole('button', { name: 'Iniciar sessão' }));
+    await player.session.joinAsPlayer(campaign.id);
+    await user.click(await screen.findByRole('button', { name: 'Iniciar combate' }));
+
+    await user.type(screen.getByRole('textbox', { name: 'Criatura' }), 'Goblin');
+    await user.type(screen.getByRole('textbox', { name: 'Iniciativa' }), '+2');
+    const quantity = screen.getByRole('textbox', { name: 'Qtd.' });
+    await user.clear(quantity);
+    await user.type(quantity, '3');
+    await user.click(screen.getByRole('button', { name: 'Adicionar' }));
+
+    await waitFor(() => {
+      const snapshot = gm.session.getSnapshot();
+      const goblins =
+        snapshot.kind === 'mestre'
+          ? (snapshot.initiative?.combatants.filter((c) => c.kind === 'npc') ?? [])
+          : [];
+      expect(goblins.map((g) => g.name)).toEqual(['Goblin 1', 'Goblin 2', 'Goblin 3']);
+      for (const goblin of goblins) {
+        expect(goblin.initiative).toBeGreaterThanOrEqual(3);
+        expect(goblin.initiative).toBeLessThanOrEqual(22);
+      }
+    });
+
+    // As rolagens ficam só no registro do Mestre (secretas).
+    const gmRolls = await gm.session.rolls(campaign.id);
+    expect(gmRolls.filter((r) => r.label.startsWith('Iniciativa: Goblin'))).toHaveLength(3);
+    expect(gmRolls.every((r) => r.secret)).toBe(true);
+    await network.settle();
+    expect(await player.session.rolls(campaign.id)).toEqual([]);
+  });
+
+  it('o campo recusa o que não é número nem rolagem', async () => {
+    const { campaign } = await setUpTable();
+    const user = renderApp(gm, `#/campanhas/${campaign.id}`);
+    await user.click(await screen.findByRole('button', { name: 'Iniciar sessão' }));
+    await user.click(await screen.findByRole('button', { name: 'Iniciar combate' }));
+    await user.type(screen.getByRole('textbox', { name: 'Criatura' }), 'Orc');
+    const field = screen.getByRole('textbox', { name: 'Iniciativa' });
+    await user.type(field, 'muito rápido');
+    expect(field).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('button', { name: 'Adicionar' })).toBeDisabled();
+  });
+});

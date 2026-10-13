@@ -61,9 +61,9 @@ describe('lista de fichas', () => {
   it('lista as fichas existentes com o nome do sistema', async () => {
     await services.sheets.create({ name: 'Thorin', templateId: 'dnd5e-srd' });
     renderApp();
-    expect(await screen.findByRole('link', { name: /Thorin/ })).toHaveTextContent(
-      'D&D 5ª Edição (SRD 5.1)',
-    );
+    const link = await screen.findByRole('link', { name: /Thorin/ });
+    // O nome do sistema chega depois do catálogo; até lá, a lista mostra o identificador.
+    await waitFor(() => expect(link).toHaveTextContent('D&D 5ª Edição (SRD 5.1)'));
   });
 });
 
