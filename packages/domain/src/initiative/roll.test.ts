@@ -4,7 +4,7 @@ import { createSheet } from '../sheet/operations';
 import { compileTemplate } from '../template/compile';
 import type { SystemTemplate } from '../template/schema';
 import { clone, miniTemplate } from '../testing/fixtures';
-import { initiativeExpression } from './roll';
+import { initiativeExpression, parseInitiativeInput } from './roll';
 
 function compiled(change: (t: SystemTemplate) => void) {
   const template = clone(miniTemplate());
@@ -46,5 +46,22 @@ describe('rolagem de iniciativa', () => {
 
   it('sem campo de iniciativa no sistema, não há rolagem', () => {
     expect(expressionFor(() => {})).toBeNull();
+  });
+});
+
+describe('iniciativa digitada pelo Mestre', () => {
+  it('número é o valor; modificador rola o dado do sistema; rolagem é rolada', () => {
+    expect(parseInitiativeInput('15')).toEqual({ kind: 'valor', value: 15 });
+    expect(parseInitiativeInput('-2')).toEqual({ kind: 'valor', value: -2 });
+    expect(parseInitiativeInput('+3')).toEqual({ kind: 'rolar', expression: '1d20+3' });
+    expect(parseInitiativeInput(' + 0 ')).toEqual({ kind: 'rolar', expression: '1d20' });
+    expect(parseInitiativeInput('+2', '2d12')).toEqual({ kind: 'rolar', expression: '2d12+2' });
+    expect(parseInitiativeInput('1D20 + 4')).toEqual({ kind: 'rolar', expression: '1d20+4' });
+  });
+
+  it('recusa o que não é número nem rolagem', () => {
+    for (const text of ['', 'goblin', '1d', '+', '1d20+', '9999', 'd0']) {
+      expect(parseInitiativeInput(text)).toBeNull();
+    }
   });
 });

@@ -4,6 +4,8 @@ As mudanças de cada versão, para quem usa o Tabularium. Detalhes técnicos fic
 
 ## Próxima versão
 
+- **Criaturas rolam a iniciativa:** ao adicionar uma criatura ao combate, o Mestre pode digitar um número (`15`), um modificador (`+2`, que rola o dado do sistema com ele) ou uma rolagem (`2d6+1`). Com **Qtd.**, várias criaturas iguais entram de uma vez ("Goblin 1", "Goblin 2"…), cada uma com a sua rolagem. As rolagens ficam no registro só para o Mestre.
+
 - **Rolar a iniciativa pela ficha:** quando o Mestre inicia o combate, cada jogador vê o botão "Rolar iniciativa" (ex.: 1d20+2, já com o modificador da ficha), e o resultado entra direto na ordem de turno. O Mestre continua podendo corrigir. No D&D 5e usa a Iniciativa; no Lendas d20, a Percepção. No criador de sistemas, escolha o campo da iniciativa em Informações.
 
 ## v0.2.1

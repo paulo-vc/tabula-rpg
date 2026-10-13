@@ -2,11 +2,13 @@ import {
   addCombatant,
   INITIATIVE_RANGE,
   nextTurn,
+  parseInitiativeInput,
   previousTurn,
   removeCombatant,
   startCombat,
   turnOrder,
   updateCombatant,
+  type Combatant,
   type PublicTracker,
   type Tracker,
 } from '@tabula/domain';
@@ -33,6 +35,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLiveSession } from './use-live-session';
+
+/** Quantas criaturas iguais o Mestre adiciona de uma vez. */
+const MAX_AT_ONCE = 10;
 
 const parseInitiative = (text: string): number | null => {
   const value = Number(text.trim().replace(',', '.'));
@@ -92,13 +97,22 @@ function RoundTitle({ tracker }: { tracker: { phase: string; round: number } | n
 }
 
 /** Ordem de turno, do lado do Mestre: monta o combate, define iniciativas e passa a vez. */
-export function GameMasterInitiative({ campaignId }: { campaignId: string }) {
+export function GameMasterInitiative({
+  campaignId,
+  checkDice = '1d20',
+}: {
+  campaignId: string;
+  /** Dado dos testes do sistema: um modificador ("+3") rola com ele. */
+  checkDice?: string | undefined;
+}) {
   const { session } = useServices();
   const live = useLiveSession();
   const base = useId();
   const [name, setName] = useState('');
   const [initiative, setInitiative] = useState('');
+  const [quantity, setQuantity] = useState('1');
   const [hidden, setHidden] = useState(false);
+  const [adding, setAdding] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   if (live.kind !== 'mestre' || live.campaignId !== campaignId) return null;
   const tracker = live.initiative;
@@ -118,24 +132,56 @@ export function GameMasterInitiative({ campaignId }: { campaignId: string }) {
         })),
       ),
     );
-  const add = (event: FormEvent) => {
+  const parsedInitiative = parseInitiativeInput(initiative, checkDice);
+  const count = Number(quantity);
+  const validCount = Number.isInteger(count) && count >= 1 && count <= MAX_AT_ONCE;
+
+  // Adiciona uma ou mais criaturas. Com modificador ou rolagem, cada uma rola a própria
+  // iniciativa, em segredo (só o Mestre vê no registro).
+  const add = async (event: FormEvent) => {
     event.preventDefault();
-    const value = parseInitiative(initiative);
-    if (!name.trim() || value === null) return;
-    change(
-      (current) =>
-        current &&
-        addCombatant(current, {
+    const baseName = name.trim();
+    if (!baseName || !parsedInitiative || !validCount || adding) return;
+    setAdding(true);
+    try {
+      const created: Combatant[] = [];
+      for (let i = 1; i <= count; i++) {
+        const label = count > 1 ? `${baseName} ${i}` : baseName;
+        let value = parsedInitiative.kind === 'valor' ? parsedInitiative.value : 0;
+        if (parsedInitiative.kind === 'rolar') {
+          const rolled = await session.roll({
+            label: `Iniciativa: ${label}`,
+            expression: parsedInitiative.expression,
+            secret: true,
+          });
+          if (!rolled.ok) {
+            toast.error('Não foi possível rolar', { description: rolled.error.message });
+            return;
+          }
+          value = rolled.value.result.total;
+        }
+        const initiativeValue = Math.max(-INITIATIVE_RANGE, Math.min(INITIATIVE_RANGE, value));
+        created.push({
           id: crypto.randomUUID(),
-          name: name.trim(),
-          initiative: value,
+          name: label,
+          initiative: initiativeValue,
           kind: 'npc',
           hidden,
-        }),
-    );
-    setName('');
-    setInitiative('');
-    nameRef.current?.focus();
+        });
+      }
+      change((current) => current && created.reduce(addCombatant, current));
+      if (parsedInitiative.kind === 'rolar') {
+        toast(created.map((c) => `${c.name}: ${c.initiative}`).join(' · '), {
+          description: `Iniciativa (${parsedInitiative.expression})`,
+        });
+      }
+      setName('');
+      setInitiative('');
+      setQuantity('1');
+      nameRef.current?.focus();
+    } finally {
+      setAdding(false);
+    }
   };
 
   if (!tracker) {
@@ -263,7 +309,10 @@ export function GameMasterInitiative({ campaignId }: { campaignId: string }) {
           </ol>
         )}
 
-        <form onSubmit={add} className="flex flex-wrap items-end gap-2 border-t pt-3">
+        <form
+          onSubmit={(event) => void add(event)}
+          className="flex flex-wrap items-end gap-2 border-t pt-3"
+        >
           <div className="min-w-32 flex-1 space-y-1">
             <Label htmlFor={`${base}-nome`} className="text-xs">
               Criatura
@@ -284,10 +333,26 @@ export function GameMasterInitiative({ campaignId }: { campaignId: string }) {
             </Label>
             <Input
               id={`${base}-ini`}
-              inputMode="numeric"
               value={initiative}
-              className="h-8 w-16 text-center"
+              placeholder="+2"
+              title={`Um número (15), um modificador (+2 rola ${checkDice}+2) ou uma rolagem (2d6+1)`}
+              aria-describedby={`${base}-ini-ajuda`}
+              aria-invalid={initiative.trim() !== '' && !parsedInitiative}
+              className="h-8 w-24 text-center font-mono"
               onChange={(event) => setInitiative(event.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor={`${base}-qtd`} className="text-xs">
+              Qtd.
+            </Label>
+            <Input
+              id={`${base}-qtd`}
+              inputMode="numeric"
+              value={quantity}
+              aria-invalid={!validCount}
+              className="h-8 w-12 text-center"
+              onChange={(event) => setQuantity(event.target.value)}
             />
           </div>
           <div className="flex h-8 items-center gap-1.5">
@@ -304,10 +369,16 @@ export function GameMasterInitiative({ campaignId }: { campaignId: string }) {
             type="submit"
             size="sm"
             variant="outline"
-            disabled={!name.trim() || parseInitiative(initiative) === null}
+            disabled={!name.trim() || !parsedInitiative || !validCount || adding}
           >
             <PlusIcon /> Adicionar
           </Button>
+          <p id={`${base}-ini-ajuda`} className="text-muted-foreground w-full text-xs">
+            Iniciativa: um número (<span className="font-mono">15</span>), um modificador (
+            <span className="font-mono">+2</span> rola{' '}
+            <span className="font-mono">{checkDice}+2</span>) ou uma rolagem (
+            <span className="font-mono">2d6+1</span>). Com quantidade, cada criatura rola a sua.
+          </p>
         </form>
       </CardContent>
     </Card>
