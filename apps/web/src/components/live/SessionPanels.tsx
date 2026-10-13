@@ -238,7 +238,7 @@ export function PlayerSession({ campaign, hasSheet }: { campaign: Campaign; hasS
               <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
               <span>
                 Não foi possível verificar a identidade de {campaign.gmName}: o app do Mestre é de
-                uma versão antiga do Tabularium. Peça para atualizar.
+                uma versão antiga do Tabularium RPG. Peça para atualizar.
               </span>
             </p>
           )}

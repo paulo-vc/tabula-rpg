@@ -82,7 +82,7 @@ export function decodeInvite(input: string): Result<CampaignInvite, Issue> {
     const format = bytes[0] ?? 0;
     if (format !== 0x7b && format > COMPACT_FORMAT && format < 0x20) {
       return invalid(
-        'Este convite foi criado por uma versão mais nova do Tabularium. Atualize o app.',
+        'Este convite foi criado por uma versão mais nova do Tabularium RPG. Atualize o app.',
       );
     }
     // JSON (v0.1/v0.2) começa com "{"; o formato compacto, com o número do formato.
@@ -98,7 +98,7 @@ export function decodeInvite(input: string): Result<CampaignInvite, Issue> {
     const version = (json as { v?: unknown } | null)?.v;
     if (typeof version === 'number' && version > 1) {
       return invalid(
-        'Este convite foi criado por uma versão mais nova do Tabularium. Atualize o app.',
+        'Este convite foi criado por uma versão mais nova do Tabularium RPG. Atualize o app.',
       );
     }
     return invalid('Convite inválido ou incompleto.');

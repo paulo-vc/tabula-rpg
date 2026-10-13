@@ -1,4 +1,4 @@
-# Arquitetura do Tabularium
+# Arquitetura do Tabularium RPG
 
 > Documento vivo. Decisões individuais e seus motivos ficam em [`docs/adr/`](adr/). Este arquivo é a visão geral.
 
