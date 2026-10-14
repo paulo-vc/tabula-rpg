@@ -712,3 +712,69 @@ describe('reentrada e tempo de conexão', () => {
     await eventually(() => expect(playerSnapshot().status).toEqual({ state: 'conectado' }));
   });
 });
+
+describe('diário da campanha', () => {
+  const titles = async (services: Services, campaignId: string) =>
+    (await services.journal.list(campaignId)).map((e) => e.title);
+
+  it('entradas compartilhadas chegam à jogadora; notas do Mestre, não', async () => {
+    const { campaign } = await setUpTable();
+    await gm.journal.create(campaign.id, { title: 'Sessão 1', text: 'A mina.', shared: true });
+    await gm.journal.create(campaign.id, {
+      title: 'O vilão é o prefeito',
+      text: '',
+      shared: false,
+    });
+    await gm.session.startAsGameMaster(campaign.id);
+    await player.session.joinAsPlayer(campaign.id);
+
+    await eventually(async () => expect(await titles(player, campaign.id)).toEqual(['Sessão 1']));
+
+    // Com a sessão aberta, o que o Mestre escreve segue na hora.
+    const second = await gm.journal.create(campaign.id, {
+      title: 'Sessão 2',
+      text: 'O túnel desabou.',
+      shared: true,
+    });
+    await eventually(async () =>
+      expect(await titles(player, campaign.id)).toEqual(['Sessão 2', 'Sessão 1']),
+    );
+
+    // Deixar de compartilhar apaga do aparelho da jogadora.
+    if (!second.ok) throw new Error('falhou');
+    await gm.journal.update(campaign.id, second.value.id, {
+      title: 'Sessão 2',
+      text: 'O túnel desabou.',
+      shared: false,
+    });
+    await eventually(async () => expect(await titles(player, campaign.id)).toEqual(['Sessão 1']));
+  });
+
+  it('a jogadora lê o diário fora da sessão', async () => {
+    const { campaign } = await setUpTable();
+    await gm.journal.create(campaign.id, { title: 'Sessão 1', text: 'A mina.', shared: true });
+    await gm.session.startAsGameMaster(campaign.id);
+    await player.session.joinAsPlayer(campaign.id);
+    await eventually(async () => expect(await titles(player, campaign.id)).toEqual(['Sessão 1']));
+    await player.session.stop();
+    await gm.session.stop();
+    expect(await titles(player, campaign.id)).toEqual(['Sessão 1']);
+  });
+
+  it('valida título e tamanho; apagar a campanha apaga o diário', async () => {
+    const { campaign } = await setUpTable();
+    expect(
+      await gm.journal.create(campaign.id, { title: '  ', text: '', shared: false }),
+    ).toMatchObject({ ok: false });
+    expect(
+      await gm.journal.create(campaign.id, {
+        title: 'Longa',
+        text: 'x'.repeat(20_001),
+        shared: true,
+      }),
+    ).toMatchObject({ ok: false });
+    await gm.journal.create(campaign.id, { title: 'Nota', text: '', shared: false });
+    await gm.campaigns.delete(campaign.id);
+    expect(await gm.journal.list(campaign.id)).toEqual([]);
+  });
+});

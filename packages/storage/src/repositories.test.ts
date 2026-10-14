@@ -20,6 +20,7 @@ import {
   DexieDraftRepository,
   DexieRollLogRepository,
   DexieGmKeyRepository,
+  DexieJournalRepository,
   DexieSecretValuesRepository,
   DexieSheetRepository,
   DexieTemplateRepository,
@@ -268,7 +269,7 @@ describe('migração do banco', () => {
     try {
       expect(await new DexieSheetRepository(current).get('antiga')).toBeDefined();
       expect(await new DexieCampaignRepository(current).list()).toEqual([]);
-      expect(current.verno).toBe(7);
+      expect(current.verno).toBe(8);
     } finally {
       current.close();
       await Dexie.delete(name);
@@ -469,5 +470,44 @@ describe('DexieRollLogRepository', () => {
     const forged = roll('f', 1);
     forged.result.total = 99;
     await expect(log.add('c1', [forged])).rejects.toBeInstanceOf(InvalidDataError);
+  });
+});
+
+describe('DexieJournalRepository', () => {
+  const entry = (id: string, shared = true) => ({
+    id,
+    title: `Entrada ${id}`,
+    text: 'A mesa chegou à mina.',
+    shared,
+    createdAt: 1,
+    updatedAt: 1,
+  });
+
+  it('guarda por campanha, atualiza e apaga', async () => {
+    const journal = new DexieJournalRepository(db);
+    await journal.save('c1', entry('e1'));
+    await journal.save('c1', { ...entry('e1'), title: 'Sessão 1' });
+    await journal.save('c2', entry('e2'));
+    expect(await journal.list('c1')).toEqual([{ ...entry('e1'), title: 'Sessão 1' }]);
+    await journal.delete('c1', 'e1');
+    expect(await journal.list('c1')).toEqual([]);
+    await journal.deleteCampaign('c2');
+    expect(await journal.list('c2')).toEqual([]);
+  });
+
+  it('mantém só as entradas indicadas (o Mestre deixou de compartilhar as outras)', async () => {
+    const journal = new DexieJournalRepository(db);
+    for (const id of ['e1', 'e2', 'e3']) await journal.save('c1', entry(id));
+    await journal.save('c2', entry('e1'));
+    await journal.keepOnly('c1', ['e2']);
+    expect((await journal.list('c1')).map((e) => e.id)).toEqual(['e2']);
+    expect(await journal.list('c2')).toHaveLength(1);
+  });
+
+  it('recusa entrada fora do formato', async () => {
+    const journal = new DexieJournalRepository(db);
+    await expect(
+      journal.save('c1', { ...entry('e1'), text: 'x'.repeat(20_001) }),
+    ).rejects.toBeInstanceOf(InvalidDataError);
   });
 });

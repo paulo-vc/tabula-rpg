@@ -13,6 +13,7 @@ import {
   type CharacterSheet,
   type DeviceRepository,
   type GmKeyRepository,
+  type JournalRepository,
   type Issue,
   type Result,
   type RollLogRepository,
@@ -44,6 +45,7 @@ export class CampaignService {
     private readonly newSecret: () => string,
     private readonly gmKeys: GmKeyRepository,
     private readonly newGmKey: () => GmKeyPair,
+    private readonly journal: JournalRepository,
   ) {}
 
   /** O Mestre cria a campanha e define o sistema oficial dela. */
@@ -137,6 +139,7 @@ export class CampaignService {
     await this.secrets.deleteCampaign(campaignId);
     await this.rollLog.deleteCampaign(campaignId);
     await this.gmKeys.deleteCampaign(campaignId);
+    await this.journal.deleteCampaign(campaignId);
     await this.campaigns.delete(campaignId);
   }
 

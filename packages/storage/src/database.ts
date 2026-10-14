@@ -2,6 +2,7 @@ import type {
   Campaign,
   CharacterSheet,
   GmKeyRecord,
+  JournalEntry,
   RollEntry,
   SecretValuesRecord,
   SessionStateRecord,
@@ -17,6 +18,13 @@ export interface Setting {
 }
 
 export const DEFAULT_DATABASE_NAME = 'tabula';
+
+/** Uma entrada do diário, guardada por campanha. */
+export interface JournalRecord {
+  campaignId: string;
+  id: string;
+  entry: JournalEntry;
+}
 
 /** Uma rolagem no registro de uma campanha. */
 export interface RollLogRecord {
@@ -42,6 +50,7 @@ export class TabulaDatabase extends Dexie {
   secretValues!: Table<SecretValuesRecord, [string, string]>;
   rollLog!: Table<RollLogRecord, [string, string]>;
   gmKeys!: EntityTable<GmKeyRecord, 'campaignId'>;
+  journal!: Table<JournalRecord, [string, string]>;
 
   constructor(name: string = DEFAULT_DATABASE_NAME) {
     super(name);
@@ -73,6 +82,10 @@ export class TabulaDatabase extends Dexie {
     // v7: chave privada do Mestre de cada campanha (identidade verificável), só neste aparelho.
     this.version(7).stores({
       gmKeys: 'campaignId',
+    });
+    // v8: diário da campanha (notas do Mestre e entradas compartilhadas com a mesa).
+    this.version(8).stores({
+      journal: '[campaignId+id], campaignId',
     });
   }
 }

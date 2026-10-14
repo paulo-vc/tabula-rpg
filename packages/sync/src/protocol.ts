@@ -5,6 +5,9 @@ import {
   LabelSchema,
   LOG_CATCH_UP,
   PublicTrackerSchema,
+  JOURNAL_SHARED_LIMIT,
+  JournalEntrySchema,
+  type JournalEntry,
   type PublicTracker,
   RollEntrySchema,
   type RollEntry,
@@ -26,6 +29,8 @@ import { z } from 'zod';
  *   LOG              [5][json]        rolagens do registro da sessão
  *   TURN             [6][json]        ordem de turno do combate (versão pública), ou nenhuma
  *   BYE              [7]              saí da sessão (a conexão pode continuar aberta)
+ *   JOURNAL_PUT      [8][json]        entrada do diário compartilhada pelo Mestre
+ *   JOURNAL_KEEP     [9][json]        entradas que continuam compartilhadas (apaga as outras)
  *
  * Topologia em estrela: jogadores só conversam com o Mestre; cada ficha é um documento
  * separado, sincronizado apenas entre o dono e o Mestre (jogadores não recebem as fichas
@@ -45,6 +50,8 @@ const MessageType = {
   Log: 5,
   Turn: 6,
   Bye: 7,
+  JournalPut: 8,
+  JournalKeep: 9,
 } as const;
 
 const base = {
@@ -100,7 +107,9 @@ export type IncomingMessage =
   | { type: 'template'; template: SystemTemplate }
   | { type: 'log'; entries: RollEntry[] }
   | { type: 'turn'; tracker: PublicTracker | null }
-  | { type: 'bye' };
+  | { type: 'bye' }
+  | { type: 'journal-put'; entry: JournalEntry }
+  | { type: 'journal-keep'; ids: string[] };
 
 const LogSchema = z.object({ entries: z.array(RollEntrySchema).min(1).max(LOG_CATCH_UP) });
 
@@ -119,6 +128,20 @@ export function encodeBye(): Uint8Array {
   const encoder = encoding.createEncoder();
   encoding.writeVarUint(encoder, MessageType.Bye);
   return encoding.toUint8Array(encoder);
+}
+
+// Só entradas compartilhadas viajam: notas do Mestre (shared: false) nunca saem do aparelho.
+const JournalPutSchema = z.object({
+  entry: JournalEntrySchema.refine((entry) => entry.shared, 'Entrada não compartilhada'),
+});
+const JournalKeepSchema = z.object({ ids: z.array(IdSchema).max(JOURNAL_SHARED_LIMIT) });
+
+export function encodeJournalPut(entry: JournalEntry): Uint8Array {
+  return encodeJson(MessageType.JournalPut, { entry });
+}
+
+export function encodeJournalKeep(ids: readonly string[]): Uint8Array {
+  return encodeJson(MessageType.JournalKeep, { ids });
 }
 
 export function encodeTurn(tracker: PublicTracker | null): Uint8Array {
@@ -203,6 +226,14 @@ export function decodeMessage(data: Uint8Array): IncomingMessage | null {
       }
       case MessageType.Bye:
         return { type: 'bye' };
+      case MessageType.JournalPut: {
+        const put = JournalPutSchema.safeParse(parseJson(decoding.readVarString(decoder)));
+        return put.success ? { type: 'journal-put', entry: put.data.entry } : null;
+      }
+      case MessageType.JournalKeep: {
+        const keep = JournalKeepSchema.safeParse(parseJson(decoding.readVarString(decoder)));
+        return keep.success ? { type: 'journal-keep', ids: keep.data.ids } : null;
+      }
       case MessageType.Turn: {
         const turn = TurnSchema.safeParse(parseJson(decoding.readVarString(decoder)));
         return turn.success ? { type: 'turn', tracker: turn.data.tracker } : null;

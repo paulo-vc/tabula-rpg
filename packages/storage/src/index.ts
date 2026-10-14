@@ -1,6 +1,7 @@
 export {
   DEFAULT_DATABASE_NAME,
   TabulaDatabase,
+  type JournalRecord,
   type RollLogRecord,
   type Setting,
 } from './database';
@@ -9,6 +10,7 @@ export {
   DexieDeviceRepository,
   DexieDraftRepository,
   DexieGmKeyRepository,
+  DexieJournalRepository,
   DexieRollLogRepository,
   DexieSecretValuesRepository,
   DexieSessionStateRepository,

@@ -24,6 +24,7 @@ import { Link, useLocation } from 'wouter';
 import { encodeInvite } from '@/app/invite-link';
 import { useServices } from '@/app/services-context';
 import { useDeviceId } from '@/components/use-device';
+import { GameMasterJournal, PlayerJournal } from '@/components/campaign/JournalPanel';
 import { GameMasterInitiative, PlayerInitiative } from '@/components/live/InitiativePanel';
 import { RollLog } from '@/components/live/RollLog';
 import { GameMasterSession, PlayerSession } from '@/components/live/SessionPanels';
@@ -162,6 +163,7 @@ function GameMasterView({ campaign }: { campaign: Campaign }) {
       <GameMasterSession campaign={campaign} />
       <GameMasterInitiative campaignId={campaign.id} checkDice={checkDice} />
       <RollLog campaignId={campaign.id} isGameMaster />
+      <GameMasterJournal campaignId={campaign.id} />
 
       <DangerZone
         campaign={campaign}
@@ -251,6 +253,7 @@ function PlayerView({ campaign, userId }: { campaign: Campaign; userId: string }
       <PlayerSession campaign={campaign} hasSheet={Boolean(linked)} />
       <PlayerInitiative campaignId={campaign.id} initiativeRoll={initiativeRoll} />
       <RollLog campaignId={campaign.id} isGameMaster={false} />
+      <PlayerJournal campaignId={campaign.id} />
 
       <DangerZone
         campaign={campaign}
