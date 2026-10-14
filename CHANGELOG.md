@@ -2,6 +2,10 @@
 
 As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
+## Próxima versão
+
+- **Diário e notas da campanha:** o Mestre escreve entradas com título e texto. Cada uma é uma **nota** (só dele) ou fica **compartilhada com a mesa**, como o diário das sessões. As compartilhadas chegam aos jogadores quando a sessão está aberta e ficam guardadas no aparelho deles, para ler mesmo fora da sessão. Editar, deixar de compartilhar ou apagar também chega à mesa.
+
 ## v0.2.2
 
 O app passa a se chamar **Tabularium RPG** na janela, no site e no app instalado pelo navegador. Nada muda no que você já tem: fichas, campanhas e instalação continuam as mesmas (no Windows, o atalho e a lista de aplicativos ainda mostram "Tabularium").

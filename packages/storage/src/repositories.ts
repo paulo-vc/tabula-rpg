@@ -18,6 +18,9 @@ import {
   type RollLogRepository,
   type GmKeyRecord,
   type GmKeyRepository,
+  JournalEntrySchema,
+  type JournalEntry,
+  type JournalRepository,
   type SecretValuesRecord,
   type SecretValuesRepository,
   type SessionStateRecord,
@@ -282,6 +285,40 @@ export class DexieGmKeyRepository implements GmKeyRepository {
 
   async deleteCampaign(campaignId: string): Promise<void> {
     await this.db.gmKeys.delete(campaignId);
+  }
+}
+
+export class DexieJournalRepository implements JournalRepository {
+  constructor(private readonly db: TabulaDatabase) {}
+
+  async list(campaignId: string): Promise<JournalEntry[]> {
+    const records = await this.db.journal.where('campaignId').equals(campaignId).toArray();
+    return records.map((record) => record.entry);
+  }
+
+  async save(campaignId: string, entry: JournalEntry): Promise<void> {
+    const parsed = JournalEntrySchema.safeParse(entry);
+    if (!parsed.success) {
+      throw new InvalidDataError('Entrada do diário inválida', zodIssues(parsed.error.issues));
+    }
+    await this.db.journal.put({ campaignId, id: parsed.data.id, entry: parsed.data });
+  }
+
+  async delete(campaignId: string, entryId: string): Promise<void> {
+    await this.db.journal.delete([campaignId, entryId]);
+  }
+
+  async keepOnly(campaignId: string, keep: readonly string[]): Promise<void> {
+    const kept = new Set(keep);
+    await this.db.journal
+      .where('campaignId')
+      .equals(campaignId)
+      .filter((record) => !kept.has(record.id))
+      .delete();
+  }
+
+  async deleteCampaign(campaignId: string): Promise<void> {
+    await this.db.journal.where('campaignId').equals(campaignId).delete();
   }
 }
 

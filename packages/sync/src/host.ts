@@ -2,6 +2,7 @@ import {
   LIMITS,
   LOG_CATCH_UP,
   type FieldValue,
+  type JournalEntry,
   type PublicTracker,
   type RollEntry,
   type SystemTemplate,
@@ -18,6 +19,8 @@ import {
   encodeTemplate,
   encodeTurn,
   encodeBye,
+  encodeJournalKeep,
+  encodeJournalPut,
   PROTOCOL_VERSION,
   syncEncoder,
   type Hello,
@@ -84,6 +87,8 @@ export class SessionHost {
   private recentRolls: RollEntry[] = [];
   /** Ordem de turno atual (versão pública), enviada também a quem entra no meio do combate. */
   private turnOrder: PublicTracker | null = null;
+  /** Entradas do diário compartilhadas com a mesa (por ID), já enviadas aos online. */
+  private journal = new Map<string, JournalEntry>();
   private stopped = false;
   private failures = 0;
 
@@ -208,6 +213,25 @@ export class SessionHost {
     this.turnOrder = view;
     const message = encodeTurn(view);
     for (const peerId of this.sheetOfPeer.keys()) this.send(peerId, message);
+  }
+
+  /**
+   * Atualiza as entradas do diário compartilhadas com a mesa. Envia aos jogadores online só
+   * o que mudou (e a lista das que continuam, para apagarem as outras). Recebe só as
+   * compartilhadas: as notas do Mestre nunca chegam a este motor.
+   */
+  setJournal(entries: readonly JournalEntry[]): void {
+    if (this.stopped) return;
+    const next = new Map(entries.filter((e) => e.shared).map((e) => [e.id, e]));
+    const changed = [...next.values()].filter(
+      (entry) => this.journal.get(entry.id)?.updatedAt !== entry.updatedAt,
+    );
+    const removed = [...this.journal.keys()].some((id) => !next.has(id));
+    this.journal = next;
+    for (const peerId of this.sheetOfPeer.keys()) {
+      if (removed) this.send(peerId, encodeJournalKeep([...next.keys()]));
+      for (const entry of changed) this.send(peerId, encodeJournalPut(entry));
+    }
   }
 
   /** Avisa quando um jogador rola (a rolagem já foi validada e repassada à mesa). */
@@ -354,6 +378,11 @@ export class SessionHost {
     // vai uma vez por conexão.
     if (firstHello && this.recentRolls.length > 0) this.send(peerId, encodeLog(this.recentRolls));
     if (firstHello && this.turnOrder) this.send(peerId, encodeTurn(this.turnOrder));
+    if (firstHello) {
+      // O diário inteiro a quem chega: a lista das que valem e cada entrada.
+      this.send(peerId, encodeJournalKeep([...this.journal.keys()]));
+      for (const entry of this.journal.values()) this.send(peerId, encodeJournalPut(entry));
+    }
     this.notify();
   }
 

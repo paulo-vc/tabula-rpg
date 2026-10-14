@@ -2,6 +2,7 @@ import {
   FieldValueSchema,
   type CharacterSheet,
   type FieldValue,
+  type JournalEntry,
   type PublicTracker,
   type RollEntry,
 } from '@tabula/domain';
@@ -61,6 +62,10 @@ export interface ClientCallbacks {
   onRolls?: (entries: RollEntry[]) => void;
   /** A ordem de turno do combate mudou (`null`: o Mestre encerrou o combate). */
   onTurnOrder?: (tracker: PublicTracker | null) => void;
+  /** O Mestre compartilhou (ou alterou) uma entrada do diário. */
+  onJournalEntry?: (entry: JournalEntry) => void;
+  /** As entradas que continuam compartilhadas: as outras devem ser apagadas. */
+  onJournalKeep?: (ids: string[]) => void;
   /** Campanha sem chave do Mestre: a primeira provada foi fixada e deve ser gravada. */
   onGmKeyLearned?: (gmKey: string) => void;
 }
@@ -284,6 +289,16 @@ export class SessionClient {
 
     if (message.type === 'log') {
       this.callbacks.onRolls?.(message.entries);
+      return;
+    }
+
+    if (message.type === 'journal-put') {
+      this.callbacks.onJournalEntry?.(message.entry);
+      return;
+    }
+
+    if (message.type === 'journal-keep') {
+      this.callbacks.onJournalKeep?.(message.ids);
       return;
     }
 

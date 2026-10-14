@@ -4,6 +4,7 @@ import {
   DexieDraftRepository,
   DexieRollLogRepository,
   DexieGmKeyRepository,
+  DexieJournalRepository,
   DexieSecretValuesRepository,
   DexieSessionStateRepository,
   DexieSheetRepository,
@@ -17,6 +18,7 @@ import { CampaignService } from './campaigns';
 import { TemplateEditorService } from './editor';
 import { TemplateCatalog } from './catalog';
 import { FileService } from './files';
+import { JournalService } from './journal';
 import { randomSecret } from './invite-link';
 import { LiveSessionManager, type TransportFactory } from './live-session';
 import { RegistryService, type RegistrySource, type Sha256 } from './registry';
@@ -46,6 +48,8 @@ export interface Services {
   session: LiveSessionManager;
   registry: RegistryService;
   editor: TemplateEditorService;
+  /** Diário da campanha (notas do Mestre e entradas compartilhadas). */
+  journal: JournalService;
   device: DexieDeviceRepository;
   /** Repositórios para consultas reativas (listas). */
   sheetRepository: DexieSheetRepository;
@@ -94,6 +98,7 @@ export function createServices(
   const secrets = new DexieSecretValuesRepository(db);
   const rollLog = new DexieRollLogRepository(db);
   const gmKeys = new DexieGmKeyRepository(db);
+  const journal = new DexieJournalRepository(db);
   const files = new FileService(sheetRepository, templateRepository, catalog, clock, ids);
   return {
     catalog,
@@ -125,7 +130,9 @@ export function createServices(
       ids.newId,
       gmKeys,
       newGmKey,
+      journal,
     ),
+    journal: new JournalService(journal, clock, ids),
     campaigns: new CampaignService(
       campaignRepository,
       sessionStates,
@@ -140,6 +147,7 @@ export function createServices(
       newSecret,
       gmKeys,
       newGmKey,
+      journal,
     ),
   };
 }

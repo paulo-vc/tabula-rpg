@@ -171,4 +171,30 @@ test.describe('mesa ao vivo, de ponta a ponta', () => {
     expect(Number(total)).toBeGreaterThanOrEqual(1);
     await expect(gm.getByRole('textbox', { name: 'Iniciativa de Lia' })).toHaveValue(String(total));
   });
+
+  test('o diário compartilhado chega à jogadora; as notas do Mestre, não', async ({ browser }) => {
+    const gm = await newDevice(browser);
+    const player = await newDevice(browser);
+    await createCampaign(gm);
+    await joinWithInvite(player, await inviteLink(gm), 'Ana', 'Lia');
+    await startTable(gm, player, 'Ana');
+
+    const write = async (title: string, text: string, shared: boolean) => {
+      await gm.getByRole('button', { name: 'Nova entrada' }).click();
+      const dialog = gm.getByRole('dialog', { name: 'Nova entrada' });
+      await dialog.getByLabel('Título').fill(title);
+      await dialog.getByLabel('Texto').fill(text);
+      const share = dialog.getByRole('checkbox', { name: 'Compartilhar com a mesa' });
+      if ((await share.getAttribute('aria-checked')) !== String(shared)) await share.click();
+      await dialog.getByRole('button', { name: 'Salvar' }).click();
+      await expect(dialog).toBeHidden();
+    };
+    await write('Sessão 1', 'A mesa chegou à mina.', true);
+    await write('O vilão é o prefeito', 'Não contar ainda.', false);
+
+    const diary = player.getByRole('list', { name: 'Entradas do diário' });
+    await expect(diary).toContainText('Sessão 1');
+    await expect(diary).toContainText('A mesa chegou à mina.');
+    await expect(diary).not.toContainText('prefeito');
+  });
 });

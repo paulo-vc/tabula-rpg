@@ -24,6 +24,8 @@ import {
   type CampaignRepository,
   type DeviceRepository,
   type GmKeyRepository,
+  sharedEntries,
+  type JournalRepository,
   type Issue,
   type Result,
   type SessionStateRepository,
@@ -155,6 +157,7 @@ export class LiveSessionManager {
     private readonly newId: () => string,
     private readonly gmKeys: GmKeyRepository,
     private readonly newGmKey: () => GmKeyPair,
+    private readonly journal: JournalRepository,
   ) {
     this.rooms = new TransportPool(createTransport);
   }
@@ -253,6 +256,10 @@ export class LiveSessionManager {
       }
     };
     const measuring = setInterval(() => void measure(), MEASURE_EVERY_MS);
+    // Diário: cada mudança no banco (nova entrada, compartilhar, apagar) segue para a mesa.
+    const journalWatch: Subscription = liveQuery(() => this.journal.list(campaignId)).subscribe({
+      next: (entries) => host.setJournal(sharedEntries(entries)),
+    });
     const unsubscribe = host.subscribe(() => {
       publish();
       this.scheduleSave();
@@ -280,6 +287,7 @@ export class LiveSessionManager {
       save,
       stop: async () => {
         clearInterval(measuring);
+        journalWatch.unsubscribe();
         stopRolls();
         unsubscribe();
         await host.stop();
@@ -345,6 +353,17 @@ export class LiveSessionManager {
           );
         },
         onRolls: (entries) => this.recordRolls(campaignId, entries),
+        // Diário compartilhado pelo Mestre: fica neste aparelho para ler fora da sessão.
+        onJournalEntry: (entry) => {
+          this.journal
+            .save(campaignId, entry)
+            .catch((error: unknown) => console.error('Falha ao gravar o diário', error));
+        },
+        onJournalKeep: (ids) => {
+          this.journal
+            .keepOnly(campaignId, ids)
+            .catch((error: unknown) => console.error('Falha ao atualizar o diário', error));
+        },
         onTurnOrder: (tracker) => {
           initiative = tracker;
           publish();

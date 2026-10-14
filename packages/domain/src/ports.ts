@@ -1,5 +1,6 @@
 import type { Campaign } from './campaign/schema';
 import type { RollEntry } from './dice/log';
+import type { JournalEntry } from './journal/schema';
 import type { CharacterSheet, FieldValue } from './sheet/schema';
 import type { SystemTemplate } from './template/schema';
 
@@ -137,6 +138,19 @@ export interface GmKeyRecord {
 export interface GmKeyRepository {
   get(campaignId: string): Promise<GmKeyRecord | undefined>;
   save(record: GmKeyRecord): Promise<void>;
+  deleteCampaign(campaignId: string): Promise<void>;
+}
+
+/**
+ * Diário da campanha. No aparelho do Mestre: todas as entradas (notas e compartilhadas). No
+ * aparelho do jogador: só as que o Mestre compartilhou.
+ */
+export interface JournalRepository {
+  list(campaignId: string): Promise<JournalEntry[]>;
+  save(campaignId: string, entry: JournalEntry): Promise<void>;
+  delete(campaignId: string, entryId: string): Promise<void>;
+  /** Apaga as entradas que não estão em `keep` (o Mestre deixou de compartilhar). */
+  keepOnly(campaignId: string, keep: readonly string[]): Promise<void>;
   deleteCampaign(campaignId: string): Promise<void>;
 }
 
