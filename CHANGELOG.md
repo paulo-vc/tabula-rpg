@@ -2,6 +2,10 @@
 
 As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
+## v0.3.1
+
+- **Corrigido:** no app desktop (Windows e Linux), as imagens da cutscene não apareciam: a galeria do Mestre mostrava miniaturas quebradas e o jogador não via a imagem em tela cheia. Na versão web já funcionava.
+
 ## v0.3.0
 
 A mesa ganha ferramentas de narração: chat, imagens em tela cheia e o diário da campanha. Para usar, todos da mesa precisam estar na v0.3.0: quem estiver numa versão anterior continua jogando (fichas, rolagens e combate), mas não vê o chat, as imagens nem o diário (o app desktop se atualiza sozinho).
