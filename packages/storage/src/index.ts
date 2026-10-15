@@ -1,6 +1,7 @@
 export {
   DEFAULT_DATABASE_NAME,
   TabulaDatabase,
+  type ChatRecord,
   type ImageRecord,
   type JournalRecord,
   type RollLogRecord,
@@ -8,6 +9,7 @@ export {
 } from './database';
 export {
   DexieCampaignRepository,
+  DexieChatRepository,
   DexieDeviceRepository,
   DexieDraftRepository,
   DexieGmKeyRepository,

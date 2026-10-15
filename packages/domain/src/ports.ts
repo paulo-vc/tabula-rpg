@@ -1,5 +1,6 @@
 import type { Campaign } from './campaign/schema';
 import type { RollEntry } from './dice/log';
+import type { ChatMessage } from './chat/schema';
 import type { JournalEntry } from './journal/schema';
 import type { StoredImage } from './cutscene/schema';
 import type { CharacterSheet, FieldValue } from './sheet/schema';
@@ -181,5 +182,17 @@ export interface RollLogRepository {
   list(campaignId: string): Promise<RollEntry[]>;
   /** Acrescenta as rolagens novas (as já registradas, pelo `id`, são ignoradas). */
   add(campaignId: string, entries: readonly RollEntry[]): Promise<void>;
+  deleteCampaign(campaignId: string): Promise<void>;
+}
+
+/**
+ * Chat da sessão, por campanha (as mais antigas saem após `CHAT_LIMIT`). Cada aparelho guarda
+ * só o que viu: os sussurros de outras pessoas nunca chegam a ele.
+ */
+export interface ChatRepository {
+  /** Da mais antiga para a mais recente. */
+  list(campaignId: string): Promise<ChatMessage[]>;
+  /** Acrescenta as mensagens novas (as já guardadas, pelo `id`, são ignoradas). */
+  add(campaignId: string, messages: readonly ChatMessage[]): Promise<void>;
   deleteCampaign(campaignId: string): Promise<void>;
 }

@@ -1,6 +1,7 @@
 import type {
   Campaign,
   CharacterSheet,
+  ChatMessage,
   GmKeyRecord,
   StoredImage,
   JournalEntry,
@@ -37,6 +38,14 @@ export interface JournalRecord {
   entry: JournalEntry;
 }
 
+/** Uma mensagem do chat de uma campanha. */
+export interface ChatRecord {
+  campaignId: string;
+  id: string;
+  at: number;
+  message: ChatMessage;
+}
+
 /** Uma rolagem no registro de uma campanha. */
 export interface RollLogRecord {
   campaignId: string;
@@ -63,6 +72,7 @@ export class TabulaDatabase extends Dexie {
   gmKeys!: EntityTable<GmKeyRecord, 'campaignId'>;
   journal!: Table<JournalRecord, [string, string]>;
   images!: Table<ImageRecord, [string, string]>;
+  chat!: Table<ChatRecord, [string, string]>;
 
   constructor(name: string = DEFAULT_DATABASE_NAME) {
     super(name);
@@ -102,6 +112,10 @@ export class TabulaDatabase extends Dexie {
     // v9: imagens da cutscene (galeria do Mestre e as recebidas pelo jogador).
     this.version(9).stores({
       images: '[campaignId+id], campaignId, [campaignId+hash], [campaignId+origin]',
+    });
+    // v10: chat da sessão.
+    this.version(10).stores({
+      chat: '[campaignId+id], campaignId, [campaignId+at]',
     });
   }
 }

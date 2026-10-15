@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, useRoute } from 'wouter';
 import { cn } from '@/lib/utils';
+import { ChatDock } from './live/ChatDock';
 import { CutsceneOverlay } from './live/CutsceneOverlay';
 import { GmChangeNotice } from './live/GmChangeNotice';
 import { LiveSessionIndicator } from './live/LiveSessionIndicator';
@@ -74,6 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </footer>
       <UpdateNotice />
       <GmChangeNotice />
+      <ChatDock />
       <CutsceneOverlay />
       <RollNotice />
     </div>

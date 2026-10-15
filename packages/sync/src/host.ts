@@ -1,4 +1,8 @@
 import {
+  canSee,
+  CHAT_CATCH_UP,
+  CHAT_LIMIT,
+  type ChatMessage,
   LIMITS,
   LOG_CATCH_UP,
   type FieldValue,
@@ -21,6 +25,7 @@ import {
   encodeTemplate,
   encodeTurn,
   encodeBye,
+  encodeChat,
   encodeJournalKeep,
   encodeJournalPut,
   encodeCutscene,
@@ -90,6 +95,9 @@ export class SessionHost {
   private readonly templateSent = new Set<string>();
   private readonly listeners = new Set<() => void>();
   private readonly rollListeners = new Set<(entry: RollEntry) => void>();
+  private readonly chatListeners = new Set<(message: ChatMessage) => void>();
+  /** Mensagens recentes do chat (com os sussurros), para quem entra no meio da sessão. */
+  private recentChat: ChatMessage[] = [];
   /** Rolagens públicas recentes, enviadas a quem entra no meio da sessão. */
   private recentRolls: RollEntry[] = [];
   /** Ordem de turno atual (versão pública), enviada também a quem entra no meio do combate. */
@@ -257,6 +265,62 @@ export class SessionHost {
     for (const peerId of this.sheetOfPeer.keys()) this.send(peerId, message);
   }
 
+  /** Mensagens do chat de sessões anteriores (para quem entrar receber o contexto). */
+  seedChat(messages: readonly ChatMessage[]): void {
+    this.recentChat = messages.slice(-CHAT_LIMIT);
+  }
+
+  /**
+   * Mensagem do Mestre no chat: vai para a mesa toda ou, num sussurro (`to`), só para
+   * aquele jogador.
+   */
+  chat(message: ChatMessage): void {
+    if (this.stopped || message.authorId !== this.campaign.gmId) return;
+    this.rememberChat(message);
+    this.deliverChat(message, null);
+  }
+
+  /** Avisa quando chega uma mensagem de um jogador (já conferida e repassada). */
+  onChat(listener: (message: ChatMessage) => void): () => void {
+    this.chatListeners.add(listener);
+    return () => this.chatListeners.delete(listener);
+  }
+
+  private rememberChat(message: ChatMessage): void {
+    this.recentChat = [...this.recentChat, message].slice(-CHAT_LIMIT);
+  }
+
+  /**
+   * Envia a mensagem a quem pode vê-la, exceto `except` (quem a mandou): a mesa toda, ou só
+   * o destinatário do sussurro. Sussurros para o Mestre não saem daqui.
+   */
+  private deliverChat(message: ChatMessage, except: string | null): void {
+    const data = encodeChat([message]);
+    for (const [peerId, sheetId] of this.sheetOfPeer) {
+      const userId = this.entries.get(sheetId)?.userId;
+      if (peerId === except || userId === undefined || !canSee(message, userId)) continue;
+      this.send(peerId, data);
+    }
+  }
+
+  private receiveChat(peerId: string, messages: ChatMessage[]): void {
+    const sheetId = this.sheetOfPeer.get(peerId);
+    const entry = sheetId === undefined ? undefined : this.entries.get(sheetId);
+    if (!entry) return;
+    const known = new Set(this.recentChat.map((message) => message.id));
+    for (const message of messages) {
+      // Cada jogador só manda mensagens próprias (com o nome com que entrou), novas, e
+      // sussurra só ao Mestre (entre jogadores, ainda não).
+      if (message.authorId !== entry.userId || message.authorName !== entry.displayName) continue;
+      if (known.has(message.id)) continue;
+      if (message.to !== undefined && message.to !== this.campaign.gmId) continue;
+      known.add(message.id);
+      this.rememberChat(message);
+      this.deliverChat(message, peerId);
+      for (const listener of this.chatListeners) listener(message);
+    }
+  }
+
   /** Avisa quando um jogador rola (a rolagem já foi validada e repassada à mesa). */
   onRoll(listener: (entry: RollEntry) => void): () => void {
     this.rollListeners.add(listener);
@@ -344,6 +408,8 @@ export class SessionHost {
       this.detach(peerId);
     } else if (message.type === 'log') {
       this.receiveRolls(peerId, message.entries);
+    } else if (message.type === 'chat') {
+      this.receiveChat(peerId, message.messages);
     } else if (message.type === 'sync') {
       const sheetId = this.sheetOfPeer.get(peerId);
       const entry = sheetId === undefined ? undefined : this.entries.get(sheetId);
@@ -402,6 +468,13 @@ export class SessionHost {
     // O HELLO pode se repetir (o transporte reanuncia quem já está conectado): o histórico
     // vai uma vez por conexão.
     if (firstHello && this.recentRolls.length > 0) this.send(peerId, encodeLog(this.recentRolls));
+    if (firstHello) {
+      // A conversa recente que este jogador pode ver (a mesa e os sussurros dele).
+      const visible = this.recentChat
+        .filter((message) => canSee(message, hello.userId))
+        .slice(-CHAT_CATCH_UP);
+      if (visible.length > 0) this.send(peerId, encodeChat(visible));
+    }
     if (firstHello && this.turnOrder) this.send(peerId, encodeTurn(this.turnOrder));
     if (firstHello && this.cutscene) this.send(peerId, encodeCutscene(this.cutscene.info));
     if (firstHello) {

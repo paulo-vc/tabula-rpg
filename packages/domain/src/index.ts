@@ -34,6 +34,7 @@ export {
 
 export type {
   CampaignRepository,
+  ChatRepository,
   DeviceRepository,
   DraftRepository,
   GmKeyRecord,
@@ -82,3 +83,4 @@ export * from './initiative/tracker';
 export * from './initiative/roll';
 export * from './journal/schema';
 export * from './cutscene/schema';
+export * from './chat/schema';

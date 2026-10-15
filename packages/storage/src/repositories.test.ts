@@ -1,5 +1,7 @@
 import 'fake-indexeddb/auto';
 import {
+  CHAT_LIMIT,
+  type ChatMessage,
   LOG_LIMIT,
   parseDice,
   rollDice,
@@ -19,6 +21,7 @@ import {
   DexieDeviceRepository,
   DexieDraftRepository,
   DexieRollLogRepository,
+  DexieChatRepository,
   DexieGmKeyRepository,
   DexieImageRepository,
   DexieJournalRepository,
@@ -270,7 +273,7 @@ describe('migração do banco', () => {
     try {
       expect(await new DexieSheetRepository(current).get('antiga')).toBeDefined();
       expect(await new DexieCampaignRepository(current).list()).toEqual([]);
-      expect(current.verno).toBe(9);
+      expect(current.verno).toBe(10);
     } finally {
       current.close();
       await Dexie.delete(name);
@@ -557,5 +560,45 @@ describe('DexieImageRepository', () => {
     await expect(
       images.save('c1', { ...base, meta: { ...base.meta, size: 999 } }),
     ).rejects.toBeInstanceOf(InvalidDataError);
+  });
+});
+
+describe('DexieChatRepository', () => {
+  const message = (id: string, at: number, text = 'Olá'): ChatMessage => ({
+    id,
+    at,
+    authorId: 'ana',
+    authorName: 'Ana',
+    kind: 'fala',
+    text,
+  });
+
+  it('lista em ordem, ignora repetidas e separa por campanha', async () => {
+    const chat = new DexieChatRepository(db);
+    await chat.add('c1', [message('b', 2), message('a', 1)]);
+    await chat.add('c1', [message('a', 1, 'outra'), message('c', 3)]);
+    await chat.add('c2', [message('x', 1)]);
+    const listed = await chat.list('c1');
+    expect(listed.map((m) => m.id)).toEqual(['a', 'b', 'c']);
+    expect(listed[0]?.text).toBe('Olá');
+    await chat.deleteCampaign('c1');
+    expect(await chat.list('c1')).toEqual([]);
+    expect(await chat.list('c2')).toHaveLength(1);
+  });
+
+  it('guarda só as mais recentes', async () => {
+    const chat = new DexieChatRepository(db);
+    await chat.add(
+      'c1',
+      Array.from({ length: CHAT_LIMIT + 5 }, (_, i) => message(`m${i}`, i)),
+    );
+    const listed = await chat.list('c1');
+    expect(listed).toHaveLength(CHAT_LIMIT);
+    expect(listed[0]?.id).toBe('m5');
+  });
+
+  it('recusa mensagem inválida', async () => {
+    const chat = new DexieChatRepository(db);
+    await expect(chat.add('c1', [message('a', 1, '')])).rejects.toBeInstanceOf(InvalidDataError);
   });
 });
