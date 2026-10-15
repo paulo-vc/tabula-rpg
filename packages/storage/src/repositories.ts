@@ -6,6 +6,10 @@ import {
   type Campaign,
   type CampaignRepository,
   type CharacterSheet,
+  CHAT_LIMIT,
+  ChatMessageSchema,
+  type ChatMessage,
+  type ChatRepository,
   type DeviceRepository,
   type DraftRepository,
   FieldValueSchema,
@@ -408,5 +412,45 @@ export class DexieRollLogRepository implements RollLogRepository {
 
   async deleteCampaign(campaignId: string): Promise<void> {
     await this.db.rollLog.where('campaignId').equals(campaignId).delete();
+  }
+}
+
+export class DexieChatRepository implements ChatRepository {
+  constructor(private readonly db: TabulaDatabase) {}
+
+  async list(campaignId: string): Promise<ChatMessage[]> {
+    const records = await this.db.chat
+      .where('[campaignId+at]')
+      .between([campaignId, Dexie.minKey], [campaignId, Dexie.maxKey])
+      .toArray();
+    return records.map((record) => record.message);
+  }
+
+  async add(campaignId: string, messages: readonly ChatMessage[]): Promise<void> {
+    for (const message of messages) {
+      const parsed = ChatMessageSchema.safeParse(message);
+      if (!parsed.success) {
+        throw new InvalidDataError('Mensagem inválida', zodIssues(parsed.error.issues));
+      }
+    }
+    await this.db.transaction('rw', this.db.chat, async () => {
+      for (const message of messages) {
+        const exists = await this.db.chat.get([campaignId, message.id]);
+        if (!exists) {
+          await this.db.chat.put({ campaignId, id: message.id, at: message.at, message });
+        }
+      }
+      // Mantém só as mais recentes.
+      const keys = await this.db.chat
+        .where('[campaignId+at]')
+        .between([campaignId, Dexie.minKey], [campaignId, Dexie.maxKey])
+        .primaryKeys();
+      const excess = keys.length - CHAT_LIMIT;
+      if (excess > 0) await this.db.chat.bulkDelete(keys.slice(0, excess));
+    });
+  }
+
+  async deleteCampaign(campaignId: string): Promise<void> {
+    await this.db.chat.where('campaignId').equals(campaignId).delete();
   }
 }

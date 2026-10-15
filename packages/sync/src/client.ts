@@ -1,4 +1,6 @@
 import {
+  canSee,
+  type ChatMessage,
   FieldValueSchema,
   type CharacterSheet,
   type FieldValue,
@@ -15,6 +17,7 @@ import {
   encodeHello,
   encodeLog,
   encodeBye,
+  encodeChat,
   encodeImageRequest,
   PROTOCOL_VERSION,
   syncEncoder,
@@ -63,6 +66,8 @@ export interface ClientCallbacks {
   onRemoteChange?: (changes: RemoteChanges) => void;
   /** Rolagens da mesa chegaram (de outros jogadores, do Mestre ou do histórico recente). */
   onRolls?: (entries: RollEntry[]) => void;
+  /** Mensagens do chat chegaram (da mesa, sussurros do Mestre ou o histórico recente). */
+  onChat?: (messages: ChatMessage[]) => void;
   /** A ordem de turno do combate mudou (`null`: o Mestre encerrou o combate). */
   onTurnOrder?: (tracker: PublicTracker | null) => void;
   /** O Mestre compartilhou (ou alterou) uma entrada do diário. */
@@ -238,6 +243,16 @@ export class SessionClient {
     return true;
   }
 
+  /**
+   * Envia uma mensagem do chat ao Mestre, que a repassa à mesa (ou só a lê, num sussurro).
+   * @returns `false` se não está conectado.
+   */
+  chat(message: ChatMessage): boolean {
+    if (this.gmPeer === null || this.current.state !== 'conectado' || this.stopped) return false;
+    this.transport.send(this.gmPeer, encodeChat([message]));
+    return true;
+  }
+
   /** Estado do documento, para salvar e continuar numa próxima sessão. */
   exportState(): Uint8Array {
     return Y.encodeStateAsUpdate(this.doc);
@@ -309,6 +324,13 @@ export class SessionClient {
 
     if (message.type === 'log') {
       this.callbacks.onRolls?.(message.entries);
+      return;
+    }
+
+    if (message.type === 'chat') {
+      // Só o que este jogador pode ver (o Mestre já filtra; aqui, por garantia).
+      const visible = message.messages.filter((m) => canSee(m, this.me.userId));
+      if (visible.length > 0) this.callbacks.onChat?.(visible);
       return;
     }
 

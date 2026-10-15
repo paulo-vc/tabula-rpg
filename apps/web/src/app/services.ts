@@ -3,6 +3,7 @@ import {
   DexieDeviceRepository,
   DexieDraftRepository,
   DexieRollLogRepository,
+  DexieChatRepository,
   DexieGmKeyRepository,
   DexieImageRepository,
   DexieJournalRepository,
@@ -108,6 +109,7 @@ export function createServices(
   const gmKeys = new DexieGmKeyRepository(db);
   const journal = new DexieJournalRepository(db);
   const images = new DexieImageRepository(db);
+  const chat = new DexieChatRepository(db);
   const files = new FileService(sheetRepository, templateRepository, catalog, clock, ids);
   return {
     catalog,
@@ -141,6 +143,7 @@ export function createServices(
       newGmKey,
       journal,
       images,
+      chat,
     ),
     journal: new JournalService(journal, clock, ids),
     gallery: new GalleryService(images, processImage, clock, ids),
@@ -160,6 +163,7 @@ export function createServices(
       newGmKey,
       journal,
       images,
+      chat,
     ),
   };
 }

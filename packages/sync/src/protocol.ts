@@ -1,4 +1,7 @@
 import {
+  CHAT_CATCH_UP,
+  ChatMessageSchema,
+  type ChatMessage,
   compileTemplate,
   GmKeySchema,
   IdSchema,
@@ -39,6 +42,7 @@ import { z } from 'zod';
  *   CUTSCENE         [10][json]       imagem que o Mestre mostra à mesa (ou nenhuma)
  *   IMAGE_REQUEST    [11][json]       o jogador pede a imagem que não tem
  *   IMAGE_PART       [12][hash][i][n][bytes]  uma parte da imagem (até 256 KB)
+ *   CHAT             [13][json]       mensagens do chat (o Mestre repassa; sussurros só a quem recebe)
  *
  * Topologia em estrela: jogadores só conversam com o Mestre; cada ficha é um documento
  * separado, sincronizado apenas entre o dono e o Mestre (jogadores não recebem as fichas
@@ -63,6 +67,7 @@ const MessageType = {
   Cutscene: 10,
   ImageRequest: 11,
   ImagePart: 12,
+  Chat: 13,
 } as const;
 
 const base = {
@@ -123,12 +128,19 @@ export type IncomingMessage =
   | { type: 'journal-keep'; ids: string[] }
   | { type: 'cutscene'; cutscene: Cutscene | null }
   | { type: 'image-request'; hash: string }
-  | { type: 'image-part'; hash: string; index: number; total: number; data: Uint8Array };
+  | { type: 'image-part'; hash: string; index: number; total: number; data: Uint8Array }
+  | { type: 'chat'; messages: ChatMessage[] };
 
 const LogSchema = z.object({ entries: z.array(RollEntrySchema).min(1).max(LOG_CATCH_UP) });
 
 export function encodeLog(entries: RollEntry[]): Uint8Array {
   return encodeJson(MessageType.Log, { entries });
+}
+
+const ChatSchema = z.object({ messages: z.array(ChatMessageSchema).min(1).max(CHAT_CATCH_UP) });
+
+export function encodeChat(messages: readonly ChatMessage[]): Uint8Array {
+  return encodeJson(MessageType.Chat, { messages });
 }
 
 /** Ordem de turno: só a versão pública (sem os ocultos) sai do aparelho do Mestre. */
@@ -267,6 +279,10 @@ export function decodeMessage(data: Uint8Array): IncomingMessage | null {
       }
       case MessageType.Bye:
         return { type: 'bye' };
+      case MessageType.Chat: {
+        const chat = ChatSchema.safeParse(parseJson(decoding.readVarString(decoder)));
+        return chat.success ? { type: 'chat', messages: chat.data.messages } : null;
+      }
       case MessageType.Cutscene: {
         const message = CutsceneMessageSchema.safeParse(parseJson(decoding.readVarString(decoder)));
         return message.success ? { type: 'cutscene', cutscene: message.data.cutscene } : null;

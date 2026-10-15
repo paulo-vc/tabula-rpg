@@ -232,4 +232,51 @@ test.describe('mesa ao vivo, de ponta a ponta', () => {
     await gm.getByRole('button', { name: 'Parar de mostrar' }).click();
     await expect(overlay).toBeHidden();
   });
+
+  test('chat: a mesa conversa, e o sussurro chega só a quem foi mandado', async ({ browser }) => {
+    const gm = await newDevice(browser);
+    const ana = await newDevice(browser);
+    const bia = await newDevice(browser);
+    await createCampaign(gm);
+    const link = await inviteLink(gm);
+    await joinWithInvite(ana, link, 'Ana', 'Lia');
+    await joinWithInvite(bia, link, 'Bia', 'Mira');
+    await startTable(gm, ana, 'Ana');
+    await bia.getByRole('button', { name: 'Entrar na sessão' }).click();
+    await expect(
+      gm.getByRole('article', { name: 'Jogador Bia' }).getByText('Online'),
+    ).toBeVisible();
+
+    const open = async (page: typeof gm) => {
+      await page.getByRole('button', { name: /Abrir chat/ }).click();
+      return page.getByRole('region', { name: 'Chat da sessão' });
+    };
+    const gmChat = await open(gm);
+    const anaChat = await open(ana);
+    const biaChat = await open(bia);
+
+    await gmChat.getByLabel('Falar como').fill('Taverneiro');
+    await gmChat.getByLabel('Mensagem').fill('Bem-vindos à Taverna do Javali!');
+    await gmChat.getByLabel('Mensagem').press('Enter');
+    await expect(anaChat).toContainText('Taverneiro (Paulo): Bem-vindos à Taverna do Javali!');
+    await expect(biaChat).toContainText('Bem-vindos à Taverna do Javali!');
+
+    await anaChat.getByRole('button', { name: 'Como Lia' }).click();
+    await anaChat.getByLabel('Mensagem').fill('/me pede uma caneca');
+    await anaChat.getByLabel('Mensagem').press('Enter');
+    await expect(biaChat).toContainText('Lia pede uma caneca (Ana)');
+    await expect(gmChat).toContainText('Lia pede uma caneca (Ana)');
+
+    await anaChat.getByRole('button', { name: 'Como Lia' }).click();
+    await anaChat.getByLabel('Para').selectOption({ label: 'Sussurro: Paulo' });
+    await anaChat.getByLabel('Mensagem').fill('Desconfio do taverneiro.');
+    await anaChat.getByLabel('Mensagem').press('Enter');
+    await expect(gmChat).toContainText('Ana: Desconfio do taverneiro.');
+    // Uma mensagem pública depois prova que o sussurro teria tido tempo de chegar à Bia.
+    await gmChat.getByLabel('Falar como').fill('');
+    await gmChat.getByLabel('Mensagem').fill('/r 1d1+4 Teste');
+    await gmChat.getByLabel('Mensagem').press('Enter');
+    await expect(biaChat).toContainText('Paulo · Teste');
+    await expect(biaChat).not.toContainText('Desconfio');
+  });
 });

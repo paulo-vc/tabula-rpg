@@ -16,11 +16,9 @@ O criador está completo, mas ainda é difícil para quem não está acostumado 
 - Uma "torre de dados" na sessão: uma caixa em que toda a mesa vê a rolagem acontecer.
 - Hoje a rolagem já é sorteada por quem rola e conferida por todos (`docs/architecture.md`, "Rolagens"). A animação 3D seria só a apresentação desse resultado, para ninguém ver um resultado diferente do registrado.
 
-### Chat da sessão
+### Sussurro entre jogadores
 
-- Chat da mesa, com recursos para RPG por texto (ex.: falar como o personagem, descrever ações, rolagens no meio da conversa).
-- Sussurro: Mestre ↔ jogador e jogador ↔ jogador.
-- Atenção: hoje a topologia é em estrela (jogadores só falam com o Mestre). O sussurro entre jogadores passaria pelo aparelho do Mestre, cifrado de ponta a ponta entre os dois jogadores para o Mestre não ler.
+O chat da sessão já tem sussurros entre o Mestre e um jogador. Entre dois jogadores, a mensagem passaria pelo aparelho do Mestre (a topologia é em estrela); precisaria ser cifrada de ponta a ponta entre os dois para o Mestre não ler.
 
 ### Sons
 
@@ -47,5 +45,6 @@ Imprimir ou gerar PDF da ficha.
 
 - **Notas e diário da campanha** (próxima versão): notas só do Mestre e entradas compartilhadas com a mesa.
 - **Cutscene** (próxima versão): imagens do Mestre em tela cheia para a mesa.
+- **Chat da sessão** (próxima versão): falar como o personagem, ações com `/me`, rolagens com `/r` e sussurros entre o Mestre e um jogador.
 
 - **Alterar a ficha com a sessão fechada:** a ficha é local-first. O jogador edita fora da sessão e, ao entrar de novo, só as diferenças vão ao Mestre; alterações dos dois lados se combinam (CRDT), sem perder nenhuma.

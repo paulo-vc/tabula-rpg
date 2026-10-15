@@ -1,4 +1,9 @@
 import {
+  type ChatMessage,
+  type ChatRepository,
+  CHAT_TEXT_LIMIT,
+  ChatMessageSchema,
+  parseChatInput,
   err,
   linkedSheetId,
   ok,
@@ -143,12 +148,15 @@ export class LiveSessionManager {
     author: { id: string; name: string };
     /** Envia a rolagem à mesa (o Mestre não envia as secretas). */
     shareRoll: (entry: RollEntry) => void;
+    /** Envia a mensagem do chat (`false`: sem conexão com o Mestre). */
+    shareChat: (message: ChatMessage) => boolean;
     /** Só na sessão do Mestre: troca a ordem de turno. */
     setInitiative?: (tracker: Tracker | null) => void;
     /** Só na sessão do Mestre: mostra uma imagem à mesa (ou fecha, com `null`). */
     setCutscene?: (cutscene: { info: Cutscene; data: Uint8Array } | null) => void;
   } | null = null;
   private readonly rollListeners = new Set<(entry: RollEntry) => void>();
+  private readonly chatListeners = new Set<(message: ChatMessage) => void>();
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
   /** Mantém a sala aberta um tempo depois de sair, para reentrar na hora. */
   private readonly rooms: TransportPool;
@@ -170,6 +178,7 @@ export class LiveSessionManager {
     private readonly newGmKey: () => GmKeyPair,
     private readonly journal: JournalRepository,
     private readonly images: ImageRepository,
+    private readonly chatLog: ChatRepository,
   ) {
     this.rooms = new TransportPool(createTransport);
   }
@@ -226,6 +235,8 @@ export class LiveSessionManager {
       saved,
     );
     host.seedRolls(await this.rollLog.list(campaignId));
+    host.seedChat(await this.chatLog.list(campaignId));
+    const stopChat = host.onChat((message) => this.recordChat(campaignId, [message]));
     const records = await this.states.list(campaignId);
     let initiative = readInitiative(records.find((r) => r.key === INITIATIVE_KEY)?.state);
     host.setTurnOrder(initiative && publicView(initiative));
@@ -303,6 +314,7 @@ export class LiveSessionManager {
         clearInterval(measuring);
         journalWatch.unsubscribe();
         stopRolls();
+        stopChat();
         unsubscribe();
         await host.stop();
       },
@@ -310,6 +322,10 @@ export class LiveSessionManager {
       campaignId,
       author: { id: campaign.gmId, name: campaign.gmName },
       shareRoll: (entry) => host.roll(entry),
+      shareChat: (message) => {
+        host.chat(message);
+        return true;
+      },
       setInitiative: (tracker) => {
         initiative = tracker;
         host.setTurnOrder(tracker && publicView(tracker));
@@ -373,6 +389,7 @@ export class LiveSessionManager {
           );
         },
         onRolls: (entries) => this.recordRolls(campaignId, entries),
+        onChat: (messages) => this.recordChat(campaignId, messages),
         // Diário compartilhado pelo Mestre: fica neste aparelho para ler fora da sessão.
         // Cutscene: a imagem já está aqui? Senão, pede ao Mestre (chega em `onImage`).
         onCutscene: (info) => {
@@ -497,6 +514,7 @@ export class LiveSessionManager {
       shareRoll: (entry) => {
         client.roll(entry);
       },
+      shareChat: (message) => client.chat(message),
     };
     client.start();
     publish();
@@ -588,6 +606,67 @@ export class LiveSessionManager {
         for (const entry of entries) for (const listener of this.rollListeners) listener(entry);
       },
       (error: unknown) => console.error('Falha ao registrar rolagem', error),
+    );
+  }
+
+  /**
+   * Manda uma mensagem no chat da sessão. Aceita os comandos do chat (`parseChatInput`):
+   * `/r 1d20+3` rola dados (a rolagem entra no registro, como as outras) e `/me` descreve uma
+   * ação. `character` fala como o personagem (ou um NPC); `to` sussurra a uma pessoa.
+   */
+  async say(input: {
+    text: string;
+    character?: string;
+    to?: { id: string; name: string };
+  }): Promise<Result<ChatMessage | RollEntry, Issue>> {
+    const parsed = parseChatInput(input.text);
+    if (!parsed) return failure('mensagem-vazia', 'Escreva a mensagem (ou /r 1d20 para rolar).');
+    const active = this.active;
+    if (!active) return failure('sem-sessao', 'O chat funciona com a sessão aberta.');
+    if (parsed.kind === 'rolagem') {
+      return this.roll({ label: parsed.label, expression: parsed.expression });
+    }
+    const character = input.character?.trim().slice(0, 100);
+    const kind = parsed.kind === 'acao' ? 'acao' : character ? 'personagem' : 'fala';
+    const message: ChatMessage = {
+      id: this.newId(),
+      at: this.clock.now(),
+      authorId: active.author.id,
+      authorName: active.author.name,
+      kind,
+      text: parsed.text.slice(0, CHAT_TEXT_LIMIT),
+      ...(character && { character }),
+      ...(input.to && { to: input.to.id, toName: input.to.name }),
+    };
+    if (!ChatMessageSchema.safeParse(message).success) {
+      return failure('mensagem-invalida', 'Não foi possível enviar esta mensagem.');
+    }
+    if (!active.shareChat(message)) {
+      return failure('sem-conexao', 'Sem conexão com o Mestre: a mensagem não foi enviada.');
+    }
+    await this.chatLog.add(active.campaignId, [message]);
+    return ok(message);
+  }
+
+  /** Chat de uma campanha (o que este aparelho viu), da mais antiga para a mais recente. */
+  chat(campaignId: string): Promise<ChatMessage[]> {
+    return this.chatLog.list(campaignId);
+  }
+
+  /** Avisa quando chega uma mensagem de outra pessoa da mesa. */
+  onChat(listener: (message: ChatMessage) => void): () => void {
+    this.chatListeners.add(listener);
+    return () => this.chatListeners.delete(listener);
+  }
+
+  /** Mensagens de outros participantes: ficam no chat da campanha e avisam a interface. */
+  private recordChat(campaignId: string, messages: readonly ChatMessage[]): void {
+    void this.chatLog.add(campaignId, messages).then(
+      () => {
+        for (const message of messages)
+          for (const listener of this.chatListeners) listener(message);
+      },
+      (error: unknown) => console.error('Falha ao registrar mensagem', error),
     );
   }
 
