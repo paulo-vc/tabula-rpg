@@ -43,8 +43,8 @@ Imprimir ou gerar PDF da ficha.
 
 ## Já existe
 
-- **Notas e diário da campanha** (próxima versão): notas só do Mestre e entradas compartilhadas com a mesa.
-- **Cutscene** (próxima versão): imagens do Mestre em tela cheia para a mesa.
-- **Chat da sessão** (próxima versão): falar como o personagem, ações com `/me`, rolagens com `/r` e sussurros entre o Mestre e um jogador.
+- **Notas e diário da campanha** (v0.3.0): notas só do Mestre e entradas compartilhadas com a mesa.
+- **Cutscene** (v0.3.0): imagens do Mestre em tela cheia para a mesa.
+- **Chat da sessão** (v0.3.0): falar como o personagem, ações com `/me`, rolagens com `/r` e sussurros entre o Mestre e um jogador.
 
 - **Alterar a ficha com a sessão fechada:** a ficha é local-first. O jogador edita fora da sessão e, ao entrar de novo, só as diferenças vão ao Mestre; alterações dos dois lados se combinam (CRDT), sem perder nenhuma.

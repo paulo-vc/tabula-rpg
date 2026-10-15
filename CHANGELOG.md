@@ -2,7 +2,9 @@
 
 As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
-## Próxima versão
+## v0.3.0
+
+A mesa ganha ferramentas de narração: chat, imagens em tela cheia e o diário da campanha. Para usar, todos da mesa precisam estar na v0.3.0: quem estiver numa versão anterior continua jogando (fichas, rolagens e combate), mas não vê o chat, as imagens nem o diário (o app desktop se atualiza sozinho).
 
 - **Chat da sessão:** com a sessão aberta, o botão "Chat" no canto abre a conversa da mesa, em qualquer tela do app. Fale como você ou **como o seu personagem** (o Mestre, como qualquer NPC), descreva ações com `/me` e role dados no meio da conversa com `/r 1d20+3`. **Sussurros:** o Mestre sussurra a um jogador e o jogador ao Mestre; ninguém mais vê. A conversa fica guardada no aparelho, e quem entra no meio da sessão recebe as mensagens recentes.
 - **Cutscene:** o Mestre guarda imagens na campanha (NPCs, criaturas, cenários) e as mostra em tela cheia para a mesa, com nome e legenda. Os jogadores veem a imagem em qualquer tela do app; cada um pode fechar a sua, e o Mestre fecha para todos. A imagem é reduzida no aparelho do Mestre e só vai a quem ainda não a tem: mostrar de novo não baixa outra vez.
