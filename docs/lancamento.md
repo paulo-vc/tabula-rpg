@@ -104,3 +104,9 @@ Mesmo roteiro (tag `v0.3.0`, conferir o rascunho, publicar como versão normal).
 
 - [ ] Na v0.2.2 instalada, a atualização automática chega e as fichas e campanhas continuam lá.
 - [ ] Sessão com o Mestre no app instalado e um jogador na versão web: diário compartilhado, cutscene (a imagem chega e abre em tela cheia) e chat (fala de personagem, `/me`, `/r` e um sussurro).
+
+## v0.3.1
+
+Correção da CSP do app desktop: `img-src` passa a aceitar `blob:`, que a galeria, a prévia e a cutscene usam para mostrar as imagens guardadas no aparelho. O teste `apps/web/src/lib/desktop-csp.test.ts` confere a CSP, porque o navegador e os testes não a aplicam.
+
+- [ ] Na v0.3.0 instalada, a atualização chega, e as miniaturas da galeria e a cutscene do jogador aparecem.
