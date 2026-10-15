@@ -1,6 +1,7 @@
 export {
   DEFAULT_DATABASE_NAME,
   TabulaDatabase,
+  type ImageRecord,
   type JournalRecord,
   type RollLogRecord,
   type Setting,
@@ -10,6 +11,7 @@ export {
   DexieDeviceRepository,
   DexieDraftRepository,
   DexieGmKeyRepository,
+  DexieImageRepository,
   DexieJournalRepository,
   DexieRollLogRepository,
   DexieSecretValuesRepository,

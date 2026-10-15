@@ -2,6 +2,7 @@ import type {
   Campaign,
   CharacterSheet,
   GmKeyRecord,
+  StoredImage,
   JournalEntry,
   RollEntry,
   SecretValuesRecord,
@@ -18,6 +19,16 @@ export interface Setting {
 }
 
 export const DEFAULT_DATABASE_NAME = 'tabula';
+
+/** Uma imagem (galeria do Mestre ou recebida na cutscene), com o conteúdo. */
+export interface ImageRecord {
+  campaignId: string;
+  id: string;
+  hash: string;
+  origin: StoredImage['origin'];
+  meta: StoredImage;
+  data: Uint8Array;
+}
 
 /** Uma entrada do diário, guardada por campanha. */
 export interface JournalRecord {
@@ -51,6 +62,7 @@ export class TabulaDatabase extends Dexie {
   rollLog!: Table<RollLogRecord, [string, string]>;
   gmKeys!: EntityTable<GmKeyRecord, 'campaignId'>;
   journal!: Table<JournalRecord, [string, string]>;
+  images!: Table<ImageRecord, [string, string]>;
 
   constructor(name: string = DEFAULT_DATABASE_NAME) {
     super(name);
@@ -86,6 +98,10 @@ export class TabulaDatabase extends Dexie {
     // v8: diário da campanha (notas do Mestre e entradas compartilhadas com a mesa).
     this.version(8).stores({
       journal: '[campaignId+id], campaignId',
+    });
+    // v9: imagens da cutscene (galeria do Mestre e as recebidas pelo jogador).
+    this.version(9).stores({
+      images: '[campaignId+id], campaignId, [campaignId+hash], [campaignId+origin]',
     });
   }
 }

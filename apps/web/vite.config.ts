@@ -57,5 +57,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
+    // Os testes de tela montam o app inteiro (às vezes com dois aparelhos simulados) e rodam
+    // em paralelo com os outros pacotes no `pnpm check`: 5 s por teste ficava apertado.
+    testTimeout: 15_000,
   },
 });

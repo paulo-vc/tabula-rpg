@@ -18,6 +18,11 @@ import {
   type RollLogRepository,
   type GmKeyRecord,
   type GmKeyRepository,
+  type ImageRepository,
+  type ImageWithData,
+  sniffImageMime,
+  type StoredImage,
+  StoredImageSchema,
   JournalEntrySchema,
   type JournalEntry,
   type JournalRepository,
@@ -319,6 +324,52 @@ export class DexieJournalRepository implements JournalRepository {
 
   async deleteCampaign(campaignId: string): Promise<void> {
     await this.db.journal.where('campaignId').equals(campaignId).delete();
+  }
+}
+
+export class DexieImageRepository implements ImageRepository {
+  constructor(private readonly db: TabulaDatabase) {}
+
+  async list(campaignId: string, origin: StoredImage['origin']): Promise<StoredImage[]> {
+    const records = await this.db.images.where({ campaignId, origin }).toArray();
+    return records.map((record) => record.meta).sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  async get(campaignId: string, imageId: string): Promise<ImageWithData | undefined> {
+    const record = await this.db.images.get([campaignId, imageId]);
+    return record && { meta: record.meta, data: record.data };
+  }
+
+  async findByHash(campaignId: string, hash: string): Promise<ImageWithData | undefined> {
+    const record = await this.db.images.where({ campaignId, hash }).first();
+    return record && { meta: record.meta, data: record.data };
+  }
+
+  async save(campaignId: string, { meta, data }: ImageWithData): Promise<void> {
+    const parsed = StoredImageSchema.safeParse(meta);
+    if (!parsed.success) {
+      throw new InvalidDataError('Imagem inválida', zodIssues(parsed.error.issues));
+    }
+    // O conteúdo precisa ser o que os dados dizem: tamanho e tipo real (pelos primeiros bytes).
+    if (data.byteLength !== parsed.data.size || sniffImageMime(data) !== parsed.data.mime) {
+      throw new InvalidDataError('O conteúdo não confere com a imagem', []);
+    }
+    await this.db.images.put({
+      campaignId,
+      id: parsed.data.id,
+      hash: parsed.data.hash,
+      origin: parsed.data.origin,
+      meta: parsed.data,
+      data,
+    });
+  }
+
+  async delete(campaignId: string, imageId: string): Promise<void> {
+    await this.db.images.delete([campaignId, imageId]);
+  }
+
+  async deleteCampaign(campaignId: string): Promise<void> {
+    await this.db.images.where('campaignId').equals(campaignId).delete();
   }
 }
 

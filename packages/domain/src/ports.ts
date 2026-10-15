@@ -1,6 +1,7 @@
 import type { Campaign } from './campaign/schema';
 import type { RollEntry } from './dice/log';
 import type { JournalEntry } from './journal/schema';
+import type { StoredImage } from './cutscene/schema';
 import type { CharacterSheet, FieldValue } from './sheet/schema';
 import type { SystemTemplate } from './template/schema';
 
@@ -151,6 +152,26 @@ export interface JournalRepository {
   delete(campaignId: string, entryId: string): Promise<void>;
   /** Apaga as entradas que não estão em `keep` (o Mestre deixou de compartilhar). */
   keepOnly(campaignId: string, keep: readonly string[]): Promise<void>;
+  deleteCampaign(campaignId: string): Promise<void>;
+}
+
+/** Uma imagem com o conteúdo. */
+export interface ImageWithData {
+  meta: StoredImage;
+  data: Uint8Array;
+}
+
+/**
+ * Imagens da campanha: a galeria do Mestre (`galeria`) e, no jogador, as recebidas ao ver
+ * uma cutscene (`recebida`, guardadas para não baixar de novo).
+ */
+export interface ImageRepository {
+  /** Só os dados (sem o conteúdo), das mais recentes para as mais antigas. */
+  list(campaignId: string, origin: StoredImage['origin']): Promise<StoredImage[]>;
+  get(campaignId: string, imageId: string): Promise<ImageWithData | undefined>;
+  findByHash(campaignId: string, hash: string): Promise<ImageWithData | undefined>;
+  save(campaignId: string, image: ImageWithData): Promise<void>;
+  delete(campaignId: string, imageId: string): Promise<void>;
   deleteCampaign(campaignId: string): Promise<void>;
 }
 

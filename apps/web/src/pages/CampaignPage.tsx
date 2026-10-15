@@ -24,6 +24,7 @@ import { Link, useLocation } from 'wouter';
 import { encodeInvite } from '@/app/invite-link';
 import { useServices } from '@/app/services-context';
 import { useDeviceId } from '@/components/use-device';
+import { CutscenePanel } from '@/components/campaign/CutscenePanel';
 import { GameMasterJournal, PlayerJournal } from '@/components/campaign/JournalPanel';
 import { GameMasterInitiative, PlayerInitiative } from '@/components/live/InitiativePanel';
 import { RollLog } from '@/components/live/RollLog';
@@ -163,6 +164,7 @@ function GameMasterView({ campaign }: { campaign: Campaign }) {
       <GameMasterSession campaign={campaign} />
       <GameMasterInitiative campaignId={campaign.id} checkDice={checkDice} />
       <RollLog campaignId={campaign.id} isGameMaster />
+      <CutscenePanel campaignId={campaign.id} />
       <GameMasterJournal campaignId={campaign.id} />
 
       <DangerZone

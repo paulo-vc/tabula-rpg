@@ -92,7 +92,7 @@ test.describe('mesa ao vivo, de ponta a ponta', () => {
     await gm.getByRole('textbox', { name: 'Criatura' }).fill('Emboscada');
     await gm.getByRole('textbox', { name: 'Iniciativa', exact: true }).fill('18');
     await gm.getByRole('checkbox', { name: 'Oculto' }).check();
-    await gm.getByRole('button', { name: 'Adicionar' }).click();
+    await gm.getByRole('button', { name: 'Adicionar', exact: true }).click();
     await gm.getByRole('button', { name: 'Começar' }).click();
 
     const playerOrder = player.getByRole('list', { name: 'Ordem de turno' });
@@ -196,5 +196,40 @@ test.describe('mesa ao vivo, de ponta a ponta', () => {
     await expect(diary).toContainText('Sessão 1');
     await expect(diary).toContainText('A mesa chegou à mina.');
     await expect(diary).not.toContainText('prefeito');
+  });
+
+  test('cutscene: o Mestre mostra uma imagem e a jogadora a vê em tela cheia', async ({
+    browser,
+  }) => {
+    const gm = await newDevice(browser);
+    const player = await newDevice(browser);
+    await createCampaign(gm);
+    await joinWithInvite(player, await inviteLink(gm), 'Ana', 'Lia');
+    await startTable(gm, player, 'Ana');
+
+    // Uma imagem de verdade (PNG): uma captura da própria tela. A redução (canvas → WebP)
+    // e o IndexedDB são os do navegador.
+    const png = await gm.screenshot();
+    await gm.getByLabel('Escolher imagem').setInputFiles({
+      name: 'mapa-da-mina.png',
+      mimeType: 'image/png',
+      buffer: png,
+    });
+    const dialog = gm.getByRole('dialog', { name: 'Adicionar imagem' });
+    await dialog.getByLabel('Nome').fill('Mapa da mina');
+    await dialog.getByLabel('Legenda (opcional)').fill('O túnel norte está marcado.');
+    await dialog.getByRole('button', { name: 'Adicionar', exact: true }).click();
+    await gm.getByRole('button', { name: 'Mostrar Mapa da mina à mesa' }).click();
+
+    const overlay = player.getByRole('dialog', { name: 'Mapa da mina' });
+    await expect(overlay.getByRole('img')).toBeVisible();
+    // A imagem chegou inteira e o navegador a decodificou (largura real > 0).
+    await expect
+      .poll(() => overlay.getByRole('img').evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0);
+    await expect(overlay).toContainText('O túnel norte está marcado.');
+
+    await gm.getByRole('button', { name: 'Parar de mostrar' }).click();
+    await expect(overlay).toBeHidden();
   });
 });
