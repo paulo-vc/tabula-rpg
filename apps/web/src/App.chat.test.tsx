@@ -1,4 +1,4 @@
-import { inviteFor } from '@tabula/domain';
+import { inviteFor, type SystemTemplate } from '@tabula/domain';
 import { TabulaDatabase } from '@tabula/storage';
 import { MemoryNetwork } from '@tabula/sync';
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
@@ -35,10 +35,21 @@ afterEach(async () => {
   }
 });
 
+/** Sistema mínimo: a ficha completa de D&D pesa nos testes de tela com dois aparelhos. */
+const TEMPLATE: SystemTemplate = {
+  id: 'conversa',
+  version: '1.0.0',
+  name: 'Sistema de Conversa',
+  source: 'local',
+  fields: [{ id: 'vida', key: 'vida', label: 'Vida', type: 'resource', default: 10 }],
+  layouts: { full: [{ kind: 'field', fieldId: 'vida' }] },
+};
+
 async function setUpLiveTable() {
+  for (const services of [gm, player]) await services.files.installTemplate(TEMPLATE);
   const campaign = await gm.campaigns.create({
     name: 'A Mina Perdida',
-    templateId: 'dnd5e-srd',
+    templateId: 'conversa',
     gmName: 'Paulo',
   });
   await player.campaigns.join(inviteFor(campaign), 'Ana');
@@ -81,6 +92,7 @@ describe('chat da sessão', () => {
     const user = renderApp(player, `#/fichas/${sheet.id}`);
 
     // O Mestre fala antes de ela abrir o chat: o botão mostra a novidade.
+    await screen.findByRole('button', { name: 'Abrir chat' });
     await gm.session.say({ text: 'Vocês chegam à entrada da mina.' });
     await until(() => {
       expect(screen.getByRole('button', { name: 'Abrir chat (1 novas)' })).toBeInTheDocument();
