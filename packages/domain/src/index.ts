@@ -38,6 +38,8 @@ export type {
   DraftRepository,
   GmKeyRecord,
   GmKeyRepository,
+  ImageRepository,
+  ImageWithData,
   JournalRepository,
   RollLogRepository,
   SecretValuesRecord,
@@ -79,3 +81,4 @@ export * from './dice/log';
 export * from './initiative/tracker';
 export * from './initiative/roll';
 export * from './journal/schema';
+export * from './cutscene/schema';

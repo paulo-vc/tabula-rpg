@@ -26,6 +26,8 @@ import {
   type GmKeyRepository,
   sharedEntries,
   type JournalRepository,
+  type Cutscene,
+  type ImageRepository,
   type Issue,
   type Result,
   type SessionStateRepository,
@@ -65,6 +67,8 @@ export type LiveSession =
       initiative: Tracker | null;
       /** Caminho e latência da conexão com cada jogador online, por ficha. */
       connections: Record<string, ConnectionInfo>;
+      /** Imagem que o Mestre está mostrando à mesa (cutscene), ou `null`. */
+      cutscene: Cutscene | null;
     }
   | {
       kind: 'jogador';
@@ -86,6 +90,11 @@ export type LiveSession =
       connectedInMs: number | null;
       /** Caminho e latência da conexão com o Mestre. */
       connection: ConnectionInfo | null;
+      /**
+       * Imagem que o Mestre está mostrando (`ready`: já está neste aparelho; `since`: quando
+       * chegou, para distinguir a mesma imagem mostrada de novo), ou `null`.
+       */
+      cutscene: { info: Cutscene; ready: boolean; since: number } | null;
       /** Última alteração feita pelo Mestre na ficha (IDs dos campos), para avisar o jogador. */
       gmChange?: { fieldIds: string[]; count: number };
     };
@@ -136,6 +145,8 @@ export class LiveSessionManager {
     shareRoll: (entry: RollEntry) => void;
     /** Só na sessão do Mestre: troca a ordem de turno. */
     setInitiative?: (tracker: Tracker | null) => void;
+    /** Só na sessão do Mestre: mostra uma imagem à mesa (ou fecha, com `null`). */
+    setCutscene?: (cutscene: { info: Cutscene; data: Uint8Array } | null) => void;
   } | null = null;
   private readonly rollListeners = new Set<(entry: RollEntry) => void>();
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -158,6 +169,7 @@ export class LiveSessionManager {
     private readonly gmKeys: GmKeyRepository,
     private readonly newGmKey: () => GmKeyPair,
     private readonly journal: JournalRepository,
+    private readonly images: ImageRepository,
   ) {
     this.rooms = new TransportPool(createTransport);
   }
@@ -240,7 +252,9 @@ export class LiveSessionManager {
         connectionFailures: host.connectionFailures(),
         initiative,
         connections,
+        cutscene,
       });
+    let cutscene: Cutscene | null = null;
     // Mede a conexão com cada jogador online (caminho e latência), para diagnóstico.
     let connections: Record<string, ConnectionInfo> = {};
     const measure = async () => {
@@ -302,6 +316,11 @@ export class LiveSessionManager {
         publish();
         this.scheduleSave();
       },
+      setCutscene: (next) => {
+        cutscene = next?.info ?? null;
+        host.setCutscene(cutscene, next?.data);
+        publish();
+      },
     };
     host.start();
     publish();
@@ -329,6 +348,7 @@ export class LiveSessionManager {
     let searchingSince: number | null = this.clock.now();
     let connectedInMs: number | null = null;
     let connection: ConnectionInfo | null = null;
+    let cutscene: { info: Cutscene; ready: boolean; since: number } | null = null;
 
     // O Mestre alterou a ficha: grava na ficha local o que for válido para o sistema.
     const applyGmChanges = async (changes: RemoteChanges) => {
@@ -354,6 +374,40 @@ export class LiveSessionManager {
         },
         onRolls: (entries) => this.recordRolls(campaignId, entries),
         // Diário compartilhado pelo Mestre: fica neste aparelho para ler fora da sessão.
+        // Cutscene: a imagem já está aqui? Senão, pede ao Mestre (chega em `onImage`).
+        onCutscene: (info) => {
+          const since = this.clock.now();
+          cutscene = info && { info, ready: false, since };
+          publish();
+          if (!info) return;
+          void this.images.findByHash(campaignId, info.hash).then((stored) => {
+            if (cutscene?.info.hash !== info.hash) return;
+            if (stored && cutscene) {
+              cutscene = { ...cutscene, ready: true };
+              publish();
+            } else {
+              client.requestImage(info.hash);
+            }
+          });
+        },
+        onImage: (hash, data) => {
+          const info = cutscene?.info;
+          if (!info || info.hash !== hash) return;
+          const meta = {
+            ...info,
+            id: hash,
+            origin: 'recebida' as const,
+            createdAt: this.clock.now(),
+          };
+          this.images
+            .save(campaignId, { meta, data })
+            .then(() => {
+              if (cutscene?.info.hash !== hash) return;
+              cutscene = { ...cutscene, ready: true };
+              publish();
+            })
+            .catch((error: unknown) => console.error('Falha ao guardar a imagem', error));
+        },
         onJournalEntry: (entry) => {
           this.journal
             .save(campaignId, entry)
@@ -391,6 +445,7 @@ export class LiveSessionManager {
         searchingSince,
         connectedInMs,
         connection,
+        cutscene,
         ...(gmChange && { gmChange }),
       });
     // Tempo até conectar (e reconectar), para o jogador ver o progresso e relatar demoras.
@@ -402,6 +457,8 @@ export class LiveSessionManager {
       } else if (!connected && searchingSince === null) {
         searchingSince = this.clock.now();
         connection = null;
+        // Sem o Mestre, a imagem que ele mostrava fecha.
+        cutscene = null;
       }
       publish();
     });
@@ -578,6 +635,27 @@ export class LiveSessionManager {
     }
     this.active?.setInitiative?.(next);
     return ok(undefined);
+  }
+
+  /** O Mestre mostra uma imagem da galeria à mesa, em tela cheia. */
+  async showCutscene(campaignId: string, imageId: string): Promise<Result<void, Issue>> {
+    const snapshot = this.snapshot;
+    if (snapshot.kind !== 'mestre' || snapshot.campaignId !== campaignId) {
+      return failure('sem-sessao', 'Abra a sessão para mostrar imagens à mesa.');
+    }
+    const image = await this.images.get(campaignId, imageId);
+    if (!image) return failure('imagem-ausente', 'Esta imagem não existe mais.');
+    const { id: _id, origin: _origin, createdAt: _createdAt, ...info } = image.meta;
+    this.active?.setCutscene?.({ info, data: image.data });
+    return ok(undefined);
+  }
+
+  /** O Mestre fecha a imagem para toda a mesa. */
+  hideCutscene(campaignId: string): void {
+    const snapshot = this.snapshot;
+    if (snapshot.kind === 'mestre' && snapshot.campaignId === campaignId) {
+      this.active?.setCutscene?.(null);
+    }
   }
 
   /** Encerra a sessão atual, salvando o estado para continuar depois. */

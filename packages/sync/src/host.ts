@@ -3,6 +3,7 @@ import {
   LOG_CATCH_UP,
   type FieldValue,
   type JournalEntry,
+  type Cutscene,
   type PublicTracker,
   type RollEntry,
   type SystemTemplate,
@@ -11,6 +12,7 @@ import * as encoding from 'lib0/encoding';
 import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
 import { signChallenge, type GmKeyPair } from './identity';
+import { chunkImage } from './image-transfer';
 import {
   decodeMessage,
   encodeHello,
@@ -21,6 +23,8 @@ import {
   encodeBye,
   encodeJournalKeep,
   encodeJournalPut,
+  encodeCutscene,
+  encodeImagePart,
   PROTOCOL_VERSION,
   syncEncoder,
   type Hello,
@@ -42,6 +46,9 @@ export interface HostCampaign {
    */
   identity?: GmKeyPair;
 }
+
+/** Quantas vezes um participante pode pedir a mesma imagem numa conexão. */
+const MAX_IMAGE_REQUESTS = 3;
 
 /** Origem das alterações feitas pelo próprio Mestre. */
 const GM_EDIT = Symbol('alteração do Mestre');
@@ -89,6 +96,10 @@ export class SessionHost {
   private turnOrder: PublicTracker | null = null;
   /** Entradas do diário compartilhadas com a mesa (por ID), já enviadas aos online. */
   private journal = new Map<string, JournalEntry>();
+  /** Imagem mostrada à mesa agora (e o conteúdo, enviado a quem pedir). */
+  private cutscene: { info: Cutscene; data: Uint8Array } | null = null;
+  /** Quantas vezes cada participante pediu a imagem atual (contra pedidos sem fim). */
+  private readonly imageRequests = new Map<string, number>();
   private stopped = false;
   private failures = 0;
 
@@ -234,6 +245,18 @@ export class SessionHost {
     }
   }
 
+  /**
+   * Mostra uma imagem à mesa em tela cheia (`null` fecha). O conteúdo só vai a quem pedir
+   * (quem ainda não tem a imagem) e só o da imagem mostrada: ninguém baixa o resto da galeria.
+   */
+  setCutscene(info: Cutscene | null, data?: Uint8Array): void {
+    if (this.stopped) return;
+    this.cutscene = info && data ? { info, data } : null;
+    this.imageRequests.clear();
+    const message = encodeCutscene(this.cutscene?.info ?? null);
+    for (const peerId of this.sheetOfPeer.keys()) this.send(peerId, message);
+  }
+
   /** Avisa quando um jogador rola (a rolagem já foi validada e repassada à mesa). */
   onRoll(listener: (entry: RollEntry) => void): () => void {
     this.rollListeners.add(listener);
@@ -314,6 +337,8 @@ export class SessionHost {
       if (request.campaignId !== this.campaign.id || request.templateId !== template.id) return;
       this.templateSent.add(peerId);
       this.send(peerId, encodeTemplate(template));
+    } else if (message.type === 'image-request') {
+      this.sendImage(peerId, message.hash);
     } else if (message.type === 'bye') {
       this.templateSent.delete(peerId);
       this.detach(peerId);
@@ -378,12 +403,26 @@ export class SessionHost {
     // vai uma vez por conexão.
     if (firstHello && this.recentRolls.length > 0) this.send(peerId, encodeLog(this.recentRolls));
     if (firstHello && this.turnOrder) this.send(peerId, encodeTurn(this.turnOrder));
+    if (firstHello && this.cutscene) this.send(peerId, encodeCutscene(this.cutscene.info));
     if (firstHello) {
       // O diário inteiro a quem chega: a lista das que valem e cada entrada.
       this.send(peerId, encodeJournalKeep([...this.journal.keys()]));
       for (const entry of this.journal.values()) this.send(peerId, encodeJournalPut(entry));
     }
     this.notify();
+  }
+
+  /** Envia a imagem da cutscene, em partes, a um jogador da sessão que a pediu. */
+  private sendImage(peerId: string, hash: string): void {
+    const current = this.cutscene;
+    if (!current || current.info.hash !== hash || !this.sheetOfPeer.has(peerId)) return;
+    const asked = (this.imageRequests.get(peerId) ?? 0) + 1;
+    if (asked > MAX_IMAGE_REQUESTS) return;
+    this.imageRequests.set(peerId, asked);
+    const parts = chunkImage(current.data);
+    parts.forEach((part, index) =>
+      this.send(peerId, encodeImagePart(hash, index, parts.length, part)),
+    );
   }
 
   private createEntry(sheetId: string, userId: string, displayName: string): Entry {

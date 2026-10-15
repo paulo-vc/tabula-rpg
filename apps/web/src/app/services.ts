@@ -4,6 +4,7 @@ import {
   DexieDraftRepository,
   DexieRollLogRepository,
   DexieGmKeyRepository,
+  DexieImageRepository,
   DexieJournalRepository,
   DexieSecretValuesRepository,
   DexieSessionStateRepository,
@@ -19,6 +20,8 @@ import { TemplateEditorService } from './editor';
 import { TemplateCatalog } from './catalog';
 import { FileService } from './files';
 import { JournalService } from './journal';
+import { GalleryService } from './gallery';
+import { processImage as browserProcessImage, type ImageProcessor } from '@/lib/image-processing';
 import { randomSecret } from './invite-link';
 import { LiveSessionManager, type TransportFactory } from './live-session';
 import { RegistryService, type RegistrySource, type Sha256 } from './registry';
@@ -50,6 +53,8 @@ export interface Services {
   editor: TemplateEditorService;
   /** Diário da campanha (notas do Mestre e entradas compartilhadas). */
   journal: JournalService;
+  /** Galeria de imagens da campanha (cutscene). */
+  gallery: GalleryService;
   device: DexieDeviceRepository;
   /** Repositórios para consultas reativas (listas). */
   sheetRepository: DexieSheetRepository;
@@ -62,6 +67,8 @@ export interface ServiceOptions {
   newSecret?: () => string;
   /** Gera o par de chaves do Mestre de uma campanha. */
   newGmKey?: () => GmKeyPair;
+  /** Reduz as imagens da galeria (no navegador, com canvas; nos testes, uma falsa). */
+  processImage?: ImageProcessor;
   /** Transporte da sessão ao vivo: WebRTC no app; rede em memória nos testes. */
   createTransport?: TransportFactory;
   /** Repositório de sistemas da comunidade: CDN no app; memória nos testes. */
@@ -79,6 +86,7 @@ export function createServices(
     ids = { newId: () => crypto.randomUUID() },
     newSecret = randomSecret,
     newGmKey = generateGmKeyPair,
+    processImage = browserProcessImage,
     createTransport = () => {
       throw new Error('Transporte da sessão não configurado');
     },
@@ -99,6 +107,7 @@ export function createServices(
   const rollLog = new DexieRollLogRepository(db);
   const gmKeys = new DexieGmKeyRepository(db);
   const journal = new DexieJournalRepository(db);
+  const images = new DexieImageRepository(db);
   const files = new FileService(sheetRepository, templateRepository, catalog, clock, ids);
   return {
     catalog,
@@ -131,8 +140,10 @@ export function createServices(
       gmKeys,
       newGmKey,
       journal,
+      images,
     ),
     journal: new JournalService(journal, clock, ids),
+    gallery: new GalleryService(images, processImage, clock, ids),
     campaigns: new CampaignService(
       campaignRepository,
       sessionStates,
@@ -148,6 +159,7 @@ export function createServices(
       gmKeys,
       newGmKey,
       journal,
+      images,
     ),
   };
 }

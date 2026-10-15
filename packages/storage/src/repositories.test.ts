@@ -20,6 +20,7 @@ import {
   DexieDraftRepository,
   DexieRollLogRepository,
   DexieGmKeyRepository,
+  DexieImageRepository,
   DexieJournalRepository,
   DexieSecretValuesRepository,
   DexieSheetRepository,
@@ -269,7 +270,7 @@ describe('migração do banco', () => {
     try {
       expect(await new DexieSheetRepository(current).get('antiga')).toBeDefined();
       expect(await new DexieCampaignRepository(current).list()).toEqual([]);
-      expect(current.verno).toBe(8);
+      expect(current.verno).toBe(9);
     } finally {
       current.close();
       await Dexie.delete(name);
@@ -508,6 +509,53 @@ describe('DexieJournalRepository', () => {
     const journal = new DexieJournalRepository(db);
     await expect(
       journal.save('c1', { ...entry('e1'), text: 'x'.repeat(20_001) }),
+    ).rejects.toBeInstanceOf(InvalidDataError);
+  });
+});
+
+describe('DexieImageRepository', () => {
+  const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 1, 2, 3, 4]);
+  const image = (id: string, origin: 'galeria' | 'recebida' = 'galeria', createdAt = 1) => ({
+    meta: {
+      id,
+      origin,
+      hash: id.charCodeAt(0).toString(16).padEnd(64, '0'),
+      mime: 'image/png' as const,
+      size: png.byteLength,
+      width: 10,
+      height: 10,
+      title: `Imagem ${id}`,
+      caption: '',
+      createdAt,
+    },
+    data: png,
+  });
+
+  it('guarda, lista por origem (as mais recentes primeiro), acha pelo hash e apaga', async () => {
+    const images = new DexieImageRepository(db);
+    await images.save('c1', image('a1', 'galeria', 1));
+    await images.save('c1', image('b2', 'galeria', 2));
+    await images.save('c1', image('c3', 'recebida', 3));
+    expect((await images.list('c1', 'galeria')).map((i) => i.id)).toEqual(['b2', 'a1']);
+    expect((await images.list('c1', 'recebida')).map((i) => i.id)).toEqual(['c3']);
+    const found = await images.findByHash('c1', image('c3').meta.hash);
+    expect(found?.meta.id).toBe('c3');
+    expect([...(found?.data ?? [])]).toEqual([...png]);
+    await images.delete('c1', 'a1');
+    expect(await images.get('c1', 'a1')).toBeUndefined();
+    await images.deleteCampaign('c1');
+    expect(await images.list('c1', 'galeria')).toEqual([]);
+  });
+
+  it('recusa conteúdo que não confere (tamanho ou tipo real)', async () => {
+    const images = new DexieImageRepository(db);
+    const svg = Uint8Array.from('<svg xmlns=1>', (c) => c.charCodeAt(0));
+    const base = image('a1');
+    await expect(
+      images.save('c1', { data: svg, meta: { ...base.meta, size: svg.byteLength } }),
+    ).rejects.toBeInstanceOf(InvalidDataError);
+    await expect(
+      images.save('c1', { ...base, meta: { ...base.meta, size: 999 } }),
     ).rejects.toBeInstanceOf(InvalidDataError);
   });
 });

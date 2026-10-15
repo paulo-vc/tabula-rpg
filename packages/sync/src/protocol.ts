@@ -5,6 +5,11 @@ import {
   LabelSchema,
   LOG_CATCH_UP,
   PublicTrackerSchema,
+  CutsceneSchema,
+  IMAGE_CHUNK_BYTES,
+  ImageHashSchema,
+  MAX_IMAGE_CHUNKS,
+  type Cutscene,
   JOURNAL_SHARED_LIMIT,
   JournalEntrySchema,
   type JournalEntry,
@@ -31,6 +36,9 @@ import { z } from 'zod';
  *   BYE              [7]              saí da sessão (a conexão pode continuar aberta)
  *   JOURNAL_PUT      [8][json]        entrada do diário compartilhada pelo Mestre
  *   JOURNAL_KEEP     [9][json]        entradas que continuam compartilhadas (apaga as outras)
+ *   CUTSCENE         [10][json]       imagem que o Mestre mostra à mesa (ou nenhuma)
+ *   IMAGE_REQUEST    [11][json]       o jogador pede a imagem que não tem
+ *   IMAGE_PART       [12][hash][i][n][bytes]  uma parte da imagem (até 256 KB)
  *
  * Topologia em estrela: jogadores só conversam com o Mestre; cada ficha é um documento
  * separado, sincronizado apenas entre o dono e o Mestre (jogadores não recebem as fichas
@@ -52,6 +60,9 @@ const MessageType = {
   Bye: 7,
   JournalPut: 8,
   JournalKeep: 9,
+  Cutscene: 10,
+  ImageRequest: 11,
+  ImagePart: 12,
 } as const;
 
 const base = {
@@ -109,7 +120,10 @@ export type IncomingMessage =
   | { type: 'turn'; tracker: PublicTracker | null }
   | { type: 'bye' }
   | { type: 'journal-put'; entry: JournalEntry }
-  | { type: 'journal-keep'; ids: string[] };
+  | { type: 'journal-keep'; ids: string[] }
+  | { type: 'cutscene'; cutscene: Cutscene | null }
+  | { type: 'image-request'; hash: string }
+  | { type: 'image-part'; hash: string; index: number; total: number; data: Uint8Array };
 
 const LogSchema = z.object({ entries: z.array(RollEntrySchema).min(1).max(LOG_CATCH_UP) });
 
@@ -142,6 +156,33 @@ export function encodeJournalPut(entry: JournalEntry): Uint8Array {
 
 export function encodeJournalKeep(ids: readonly string[]): Uint8Array {
   return encodeJson(MessageType.JournalKeep, { ids });
+}
+
+const CutsceneMessageSchema = z.object({ cutscene: CutsceneSchema.nullable() });
+const ImageRequestSchema = z.object({ hash: ImageHashSchema });
+
+export function encodeCutscene(cutscene: Cutscene | null): Uint8Array {
+  return encodeJson(MessageType.Cutscene, { cutscene });
+}
+
+export function encodeImageRequest(hash: string): Uint8Array {
+  return encodeJson(MessageType.ImageRequest, { hash });
+}
+
+/** Uma parte da imagem, em binário (sem JSON nem base64). */
+export function encodeImagePart(
+  hash: string,
+  index: number,
+  total: number,
+  data: Uint8Array,
+): Uint8Array {
+  const encoder = encoding.createEncoder();
+  encoding.writeVarUint(encoder, MessageType.ImagePart);
+  encoding.writeVarString(encoder, hash);
+  encoding.writeVarUint(encoder, index);
+  encoding.writeVarUint(encoder, total);
+  encoding.writeVarUint8Array(encoder, data);
+  return encoding.toUint8Array(encoder);
 }
 
 export function encodeTurn(tracker: PublicTracker | null): Uint8Array {
@@ -226,6 +267,23 @@ export function decodeMessage(data: Uint8Array): IncomingMessage | null {
       }
       case MessageType.Bye:
         return { type: 'bye' };
+      case MessageType.Cutscene: {
+        const message = CutsceneMessageSchema.safeParse(parseJson(decoding.readVarString(decoder)));
+        return message.success ? { type: 'cutscene', cutscene: message.data.cutscene } : null;
+      }
+      case MessageType.ImageRequest: {
+        const request = ImageRequestSchema.safeParse(parseJson(decoding.readVarString(decoder)));
+        return request.success ? { type: 'image-request', hash: request.data.hash } : null;
+      }
+      case MessageType.ImagePart: {
+        const hash = ImageHashSchema.safeParse(decoding.readVarString(decoder));
+        const index = decoding.readVarUint(decoder);
+        const total = decoding.readVarUint(decoder);
+        const data = decoding.readVarUint8Array(decoder);
+        if (!hash.success || total < 1 || total > MAX_IMAGE_CHUNKS || index >= total) return null;
+        if (data.byteLength < 1 || data.byteLength > IMAGE_CHUNK_BYTES) return null;
+        return { type: 'image-part', hash: hash.data, index, total, data };
+      }
       case MessageType.JournalPut: {
         const put = JournalPutSchema.safeParse(parseJson(decoding.readVarString(decoder)));
         return put.success ? { type: 'journal-put', entry: put.data.entry } : null;

@@ -2,10 +2,6 @@
 
 O que está em andamento e as ideias para depois. As fases já entregues ficam em [`architecture.md`](architecture.md#roadmap); as mudanças de cada versão, no [CHANGELOG](../CHANGELOG.md).
 
-## Em andamento
-
-- **Cutscene:** o Mestre guarda imagens na campanha (NPC, criatura, cenário) e as mostra em tela cheia para a mesa. As imagens vão aos jogadores em partes pela conexão direta e são conferidas pelo hash.
-
 ## Depois (sem data)
 
 Ideias levantadas em 2026-10, ainda sem desenho. A ordem não é de prioridade.
@@ -50,5 +46,6 @@ Imprimir ou gerar PDF da ficha.
 ## Já existe
 
 - **Notas e diário da campanha** (próxima versão): notas só do Mestre e entradas compartilhadas com a mesa.
+- **Cutscene** (próxima versão): imagens do Mestre em tela cheia para a mesa.
 
 - **Alterar a ficha com a sessão fechada:** a ficha é local-first. O jogador edita fora da sessão e, ao entrar de novo, só as diferenças vão ao Mestre; alterações dos dois lados se combinam (CRDT), sem perder nenhuma.

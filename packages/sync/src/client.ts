@@ -3,6 +3,7 @@ import {
   type CharacterSheet,
   type FieldValue,
   type JournalEntry,
+  type Cutscene,
   type PublicTracker,
   type RollEntry,
 } from '@tabula/domain';
@@ -14,12 +15,14 @@ import {
   encodeHello,
   encodeLog,
   encodeBye,
+  encodeImageRequest,
   PROTOCOL_VERSION,
   syncEncoder,
   type Hello,
   type Reject,
 } from './protocol';
 import { newChallenge, verifyChallenge } from './identity';
+import { ImageAssembler } from './image-transfer';
 import { reconcile, VALUES } from './sheet-doc';
 import type { ConnectionInfo, SyncTransport } from './transport';
 
@@ -66,6 +69,10 @@ export interface ClientCallbacks {
   onJournalEntry?: (entry: JournalEntry) => void;
   /** As entradas que continuam compartilhadas: as outras devem ser apagadas. */
   onJournalKeep?: (ids: string[]) => void;
+  /** O Mestre mostrou uma imagem à mesa (`null`: fechou). */
+  onCutscene?: (cutscene: Cutscene | null) => void;
+  /** Chegou, completa e conferida, a imagem pedida com `requestImage`. */
+  onImage?: (hash: string, data: Uint8Array) => void;
   /** Campanha sem chave do Mestre: a primeira provada foi fixada e deve ser gravada. */
   onGmKeyLearned?: (gmKey: string) => void;
 }
@@ -94,6 +101,9 @@ export class SessionClient {
   private readonly challenge = newChallenge();
   /** Participantes a quem o desafio já foi reenviado nesta conexão (ver `receive`). */
   private readonly challenged = new Set<string>();
+  /** Cutscene atual (para saber qual imagem aceitar) e a imagem sendo recebida. */
+  private cutscene: Cutscene | null = null;
+  private assembler: ImageAssembler | null = null;
   private current: ClientStatus = { state: 'procurando-mestre' };
   private readonly listeners = new Set<() => void>();
   private stopped = false;
@@ -172,6 +182,16 @@ export class SessionClient {
     this.stopped = true;
     this.gmPeer = null;
     await this.transport.leave();
+  }
+
+  /**
+   * Pede ao Mestre a imagem da cutscene atual (quem ainda não a tem). Só vale para a imagem
+   * mostrada agora; ela chega em `onImage`, conferida.
+   */
+  requestImage(hash: string): void {
+    if (this.gmPeer === null || this.stopped || this.cutscene?.hash !== hash) return;
+    this.assembler = new ImageAssembler(this.cutscene);
+    this.transport.send(this.gmPeer, encodeImageRequest(hash));
   }
 
   /** Caminho e latência da conexão com o Mestre (`null` sem Mestre ou sem medida). */
@@ -289,6 +309,22 @@ export class SessionClient {
 
     if (message.type === 'log') {
       this.callbacks.onRolls?.(message.entries);
+      return;
+    }
+
+    if (message.type === 'cutscene') {
+      this.cutscene = message.cutscene;
+      if (this.assembler?.hash !== message.cutscene?.hash) this.assembler = null;
+      this.callbacks.onCutscene?.(message.cutscene);
+      return;
+    }
+
+    if (message.type === 'image-part') {
+      const image = this.assembler?.add(message.hash, message.index, message.total, message.data);
+      if (image) {
+        this.assembler = null;
+        this.callbacks.onImage?.(message.hash, image);
+      }
       return;
     }
 

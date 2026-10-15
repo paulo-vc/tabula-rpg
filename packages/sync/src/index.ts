@@ -8,6 +8,7 @@ export {
 } from './client';
 export { SessionHost, type HostCampaign, type HostPlayer, type SavedSheetState } from './host';
 export { generateGmKeyPair, type GmKeyPair } from './identity';
+export { chunkImage, hashImage } from './image-transfer';
 export { MemoryNetwork, MemoryTransport } from './memory-transport';
 export { MAX_MESSAGE_BYTES, PROTOCOL_VERSION } from './protocol';
 export { type SheetSnapshot } from './sheet-doc';

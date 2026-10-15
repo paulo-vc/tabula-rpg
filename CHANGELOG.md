@@ -4,6 +4,7 @@ As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos
 
 ## Próxima versão
 
+- **Cutscene:** o Mestre guarda imagens na campanha (NPCs, criaturas, cenários) e as mostra em tela cheia para a mesa, com nome e legenda. Os jogadores veem a imagem em qualquer tela do app; cada um pode fechar a sua, e o Mestre fecha para todos. A imagem é reduzida no aparelho do Mestre e só vai a quem ainda não a tem: mostrar de novo não baixa outra vez.
 - **Diário e notas da campanha:** o Mestre escreve entradas com título e texto. Cada uma é uma **nota** (só dele) ou fica **compartilhada com a mesa**, como o diário das sessões. As compartilhadas chegam aos jogadores quando a sessão está aberta e ficam guardadas no aparelho deles, para ler mesmo fora da sessão. Editar, deixar de compartilhar ou apagar também chega à mesa.
 
 ## v0.2.2

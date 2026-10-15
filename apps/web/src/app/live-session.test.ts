@@ -8,9 +8,10 @@ import {
   type Campaign,
 } from '@tabula/domain';
 import { TabulaDatabase } from '@tabula/storage';
-import { generateGmKeyPair, MemoryNetwork, SessionHost } from '@tabula/sync';
+import { generateGmKeyPair, hashImage, MemoryNetwork, SessionHost } from '@tabula/sync';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createServices, type Services } from './services';
+import { fakePng, fakeProcessImage } from '@/testing/fake-images';
 
 let network: MemoryNetwork;
 let gmDb: TabulaDatabase;
@@ -24,8 +25,8 @@ beforeEach(() => {
   playerDb = new TabulaDatabase(`sessao-jogador-${crypto.randomUUID()}`);
   // Cada sessão entra na mesma sala simulada.
   const createTransport = () => network.join();
-  gm = createServices(gmDb, { createTransport });
-  player = createServices(playerDb, { createTransport });
+  gm = createServices(gmDb, { createTransport, processImage: fakeProcessImage });
+  player = createServices(playerDb, { createTransport, processImage: fakeProcessImage });
 });
 
 afterEach(async () => {
@@ -776,5 +777,87 @@ describe('diário da campanha', () => {
     await gm.journal.create(campaign.id, { title: 'Nota', text: '', shared: false });
     await gm.campaigns.delete(campaign.id);
     expect(await gm.journal.list(campaign.id)).toEqual([]);
+  });
+});
+
+describe('cutscene', () => {
+  const playerCutscene = () => {
+    const snapshot = player.session.getSnapshot();
+    return snapshot.kind === 'jogador' ? snapshot.cutscene : undefined;
+  };
+
+  it('o Mestre mostra uma imagem da galeria; a jogadora a recebe, guarda e vê', async () => {
+    const { campaign } = await setUpTable();
+    const data = fakePng();
+    const added = await gm.gallery.add(campaign.id, new Blob([data]), {
+      title: 'O dragão',
+      caption: 'Ele acorda.',
+    });
+    if (!added.ok) throw new Error(added.error.message);
+    await gm.session.startAsGameMaster(campaign.id);
+    await player.session.joinAsPlayer(campaign.id);
+    await eventually(() => expect(gmPlayers()[0]?.online).toBe(true));
+
+    expect(await gm.session.showCutscene(campaign.id, added.value.id)).toEqual({
+      ok: true,
+      value: undefined,
+    });
+    await eventually(() =>
+      expect(playerCutscene()).toMatchObject({ info: { title: 'O dragão' }, ready: true }),
+    );
+    const stored = await player.gallery.byHash(campaign.id, added.value.hash);
+    // Mesmo conteúdo (o banco devolve outro objeto: compara pelo hash e pelo tamanho).
+    expect(stored && hashImage(stored.data)).toBe(added.value.hash);
+    expect(stored?.data.byteLength).toBe(data.byteLength);
+    expect(stored?.meta.origin).toBe('recebida');
+    // Recebida não entra na galeria do jogador (que é só do Mestre).
+    expect(await player.gallery.list(campaign.id)).toEqual([]);
+
+    gm.session.hideCutscene(campaign.id);
+    await eventually(() => expect(playerCutscene()).toBeNull());
+  });
+
+  it('mostrar de novo a mesma imagem não a baixa outra vez', async () => {
+    const { campaign } = await setUpTable();
+    const added = await gm.gallery.add(campaign.id, new Blob([fakePng(1000)]), {
+      title: 'Mapa',
+      caption: '',
+    });
+    if (!added.ok) throw new Error(added.error.message);
+    await gm.session.startAsGameMaster(campaign.id);
+    await player.session.joinAsPlayer(campaign.id);
+    await gm.session.showCutscene(campaign.id, added.value.id);
+    await eventually(() => expect(playerCutscene()?.ready).toBe(true));
+    gm.session.hideCutscene(campaign.id);
+    await eventually(() => expect(playerCutscene()).toBeNull());
+
+    const sent: number[] = [];
+    const original = network.deliver.bind(network);
+    network.deliver = (from, to, bytes) => {
+      if (bytes[0] === 12) sent.push(bytes.byteLength); // IMAGE_PART
+      original(from, to, bytes);
+    };
+    await gm.session.showCutscene(campaign.id, added.value.id);
+    await eventually(() => expect(playerCutscene()?.ready).toBe(true));
+    expect(sent).toEqual([]);
+  });
+
+  it('a galeria recusa o que não é imagem; mostrar exige a sessão aberta', async () => {
+    const { campaign } = await setUpTable();
+    const svg = new Blob(['<svg xmlns="http://www.w3.org/2000/svg"/>']);
+    expect(await gm.gallery.add(campaign.id, svg, { title: 'X', caption: '' })).toMatchObject({
+      ok: false,
+    });
+    const added = await gm.gallery.add(campaign.id, new Blob([fakePng(1000)]), {
+      title: 'Mapa',
+      caption: '',
+    });
+    if (!added.ok) throw new Error(added.error.message);
+    expect(await gm.session.showCutscene(campaign.id, added.value.id)).toMatchObject({
+      ok: false,
+      error: { code: 'sem-sessao' },
+    });
+    await gm.campaigns.delete(campaign.id);
+    expect(await gm.gallery.list(campaign.id)).toEqual([]);
   });
 });

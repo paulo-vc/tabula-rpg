@@ -88,9 +88,7 @@ describe('criador de sistemas', () => {
     await user.clear(strength);
     await user.type(strength, '18');
     await waitFor(() => expect(within(preview()).getByText('4')).toBeInTheDocument());
-    // Digita duas fórmulas letra a letra: ~4 s sozinho, e passava dos 5 s padrão com a suíte
-    // inteira rodando em paralelo.
-  }, 15_000);
+  });
 
   it('não salva com problemas; desfazer volta ao estado válido', async () => {
     const { user } = await openBlankEditor();
