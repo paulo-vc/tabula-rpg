@@ -97,3 +97,10 @@ Mesmo roteiro da v0.2.0 (tag `v0.2.1`, conferir o rascunho, publicar como versã
 Mesmo roteiro (tag `v0.2.2`, conferir o rascunho, publicar como versão normal). O nome visível passa a "Tabularium RPG"; o `productName` continua "Tabularium" de propósito (ver "Identificadores do app desktop"), então a instalação não muda.
 
 - [ ] Na v0.2.1 instalada, a atualização automática chega e o título da janela passa a "Tabularium RPG".
+
+## v0.3.0
+
+Mesmo roteiro (tag `v0.3.0`, conferir o rascunho, publicar como versão normal). O banco local passa para a v10 (tabelas novas do diário, das imagens e do chat; os dados existentes não mudam).
+
+- [ ] Na v0.2.2 instalada, a atualização automática chega e as fichas e campanhas continuam lá.
+- [ ] Sessão com o Mestre no app instalado e um jogador na versão web: diário compartilhado, cutscene (a imagem chega e abre em tela cheia) e chat (fala de personagem, `/me`, `/r` e um sussurro).
