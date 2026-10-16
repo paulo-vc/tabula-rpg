@@ -118,3 +118,11 @@ Mesmo roteiro (tag `v0.3.2`, conferir o rascunho, publicar como versão normal).
 - [ ] Na v0.3.1 instalada, a atualização chega, e as fichas e campanhas continuam lá.
 - [ ] No app instalado, escolher um retrato e uma capa (a CSP do desktop precisa aceitar as imagens `data:`).
 - [ ] Sessão entre o app instalado e a versão web: o Mestre vê o retrato da jogadora no card, e a jogadora recebe a capa.
+
+## v0.3.3
+
+Mesmo roteiro (tag `v0.3.3`, conferir o rascunho, publicar como versão normal). Sem mudança no banco local: as preferências de som ficam na tabela `settings`.
+
+- [ ] Na v0.3.2 instalada, a atualização chega.
+- [ ] No app instalado, o ícone de som do cabeçalho toca o "Testar" (o WebView do desktop precisa liberar o áudio depois do clique).
+- [ ] Sessão com a ficha aberta: a vez no combate mostra "É a sua vez!" e toca; mensagens, sussurros e rolagens da mesa também tocam.
