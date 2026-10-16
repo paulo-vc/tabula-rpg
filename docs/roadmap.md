@@ -24,9 +24,9 @@ O chat da sessão já tem sussurros entre o Mestre e um jogador. Entre dois joga
 
 Pequenos sons de notificação e de interface (ex.: chegou a sua vez, rolagem da mesa, o Mestre alterou a sua ficha). A avaliar quais ajudam sem cansar, sempre com opção de desligar.
 
-### Imagens
+### Imagens de campanhas e sistemas
 
-Imagens de personagens, campanhas e sistemas. As imagens ficam no aparelho (local-first); na sessão, precisam ser reduzidas e enviadas em partes, porque cada mensagem P2P tem até 512 KB.
+O retrato do personagem já existe (próxima versão). Faltam a capa da campanha e o ícone do sistema. A capa iria aos jogadores na sessão, em partes, como as imagens da cutscene; o ícone do sistema iria junto do arquivo do sistema (e do catálogo da comunidade).
 
 ### Convite mais curto
 
@@ -45,6 +45,7 @@ Imprimir ou gerar PDF da ficha.
 
 - **Notas e diário da campanha** (v0.3.0): notas só do Mestre e entradas compartilhadas com a mesa.
 - **Cutscene** (v0.3.0): imagens do Mestre em tela cheia para a mesa.
+- **Retrato do personagem** (próxima versão): imagem na ficha, que vai junto ao Mestre e na exportação.
 - **Chat da sessão** (v0.3.0): falar como o personagem, ações com `/me`, rolagens com `/r` e sussurros entre o Mestre e um jogador.
 
 - **Alterar a ficha com a sessão fechada:** a ficha é local-first. O jogador edita fora da sessão e, ao entrar de novo, só as diferenças vão ao Mestre; alterações dos dois lados se combinam (CRDT), sem perder nenhuma.

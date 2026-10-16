@@ -6,6 +6,7 @@ import { useCallback, useMemo } from 'react';
 import { Link } from 'wouter';
 import { useServices } from '@/app/services-context';
 import { useLiveSession } from '@/components/live/use-live-session';
+import { CharacterPortrait } from '@/components/sheet/Portrait';
 import { SheetLayout } from '@/components/sheet/SheetLayout';
 import { pinnedFieldIds, SheetVitals } from '@/components/sheet/SheetVitals';
 import { useSheetEditing } from '@/components/sheet/use-sheet-editing';
@@ -124,6 +125,11 @@ function PlayerSheet({
             <ArrowLeftIcon />
           </Link>
         </Button>
+        <CharacterPortrait
+          portrait={player.sheet.portrait}
+          name={player.sheet.name}
+          className="size-12"
+        />
         <h1 className="min-w-0 truncate text-xl font-bold">{player.sheet.name}</h1>
         <Badge variant="secondary">{player.displayName}</Badge>
         <Badge variant={player.online ? 'default' : 'outline'}>

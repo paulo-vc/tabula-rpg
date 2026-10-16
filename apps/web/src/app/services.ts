@@ -102,7 +102,7 @@ export function createServices(
   const device = new DexieDeviceRepository(db, ids.newId);
   const campaignRepository = new DexieCampaignRepository(db);
   const catalog = new TemplateCatalog(templateRepository, BUILTIN_TEMPLATES);
-  const sheets = new SheetService(sheetRepository, catalog, device, clock, ids);
+  const sheets = new SheetService(sheetRepository, catalog, device, clock, ids, processImage);
   const sessionStates = new DexieSessionStateRepository(db);
   const secrets = new DexieSecretValuesRepository(db);
   const rollLog = new DexieRollLogRepository(db);

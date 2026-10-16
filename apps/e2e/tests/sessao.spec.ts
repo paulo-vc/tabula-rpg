@@ -279,4 +279,32 @@ test.describe('mesa ao vivo, de ponta a ponta', () => {
     await expect(biaChat).toContainText('Paulo · Teste');
     await expect(biaChat).not.toContainText('Desconfio');
   });
+
+  test('retrato: a jogadora escolhe um retrato e o Mestre o vê no card', async ({ browser }) => {
+    const gm = await newDevice(browser);
+    const player = await newDevice(browser);
+    await createCampaign(gm);
+    await joinWithInvite(player, await inviteLink(gm), 'Ana', 'Lia');
+    await startTable(gm, player, 'Ana');
+
+    await player.getByRole('link', { name: 'Abrir ficha' }).click();
+    // Uma imagem de verdade (PNG): a redução (canvas → WebP, até 384 px) é a do navegador.
+    await player.getByLabel('Arquivo do retrato').setInputFiles({
+      name: 'lia.png',
+      mimeType: 'image/png',
+      buffer: await player.screenshot(),
+    });
+    const own = player.getByRole('img', { name: 'Retrato de Lia' });
+    await expect(own).toHaveAttribute('src', /^data:image\/webp;base64,/);
+
+    const card = gm.getByRole('article', { name: 'Jogador Ana' });
+    const portrait = card.getByRole('img', { name: 'Retrato de Lia' });
+    await expect(portrait).toBeVisible();
+    const size = await portrait.evaluate((img: HTMLImageElement) => [
+      img.naturalWidth,
+      img.naturalHeight,
+    ]);
+    expect(Math.max(...size)).toBeLessThanOrEqual(384);
+    expect(Math.min(...size)).toBeGreaterThan(0);
+  });
 });

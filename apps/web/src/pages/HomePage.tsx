@@ -3,6 +3,7 @@ import { FileUpIcon, ScrollTextIcon } from 'lucide-react';
 import { Link } from 'wouter';
 import { useServices } from '@/app/services-context';
 import { NewSheetDialog } from '@/components/NewSheetDialog';
+import { CharacterPortrait } from '@/components/sheet/Portrait';
 import { useImport } from '@/components/use-import';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,7 +44,14 @@ export function HomePage() {
             <Link href={`/fichas/${sheet.id}`} className="block rounded-xl focus-visible:outline-2">
               <Card className="hover:border-primary/50 h-full transition-colors">
                 <CardHeader>
-                  <CardTitle>{sheet.name}</CardTitle>
+                  <CardTitle className="flex items-center gap-3">
+                    <CharacterPortrait
+                      portrait={sheet.portrait}
+                      name={sheet.name}
+                      className="size-10"
+                    />
+                    <span className="min-w-0 truncate">{sheet.name}</span>
+                  </CardTitle>
                   <CardDescription>
                     {templateName(sheet.templateRef.id)}
                     <br />

@@ -2,13 +2,36 @@ import {
   checkCompatibility,
   createSheet,
   migrateSheet,
+  err,
+  ok,
+  PORTRAIT_MAX_CHARS,
+  PORTRAIT_MAX_SIDE,
+  PortraitSchema,
+  type Issue,
+  type Result,
   type CharacterSheet,
   type CompiledTemplate,
   type DeviceRepository,
   type FieldValue,
   type SheetRepository,
 } from '@tabula/domain';
+import type { ImageProcessor } from '@/lib/image-processing';
 import type { TemplateCatalog } from './catalog';
+
+/** Retrato: cabe na data URL (o base64 cresce 4/3) com folga para o cabeçalho. */
+const PORTRAIT_LIMITS = {
+  maxSide: PORTRAIT_MAX_SIDE,
+  maxBytes: Math.floor((PORTRAIT_MAX_CHARS - 100) * 0.75),
+};
+
+function toBase64(bytes: Uint8Array): string {
+  let binary = '';
+  // Em pedaços: `String.fromCharCode(...bytes)` estoura a pilha com arquivos maiores.
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(binary);
+}
 
 export interface Clock {
   now(): number;
@@ -34,6 +57,7 @@ export class SheetService {
     private readonly device: DeviceRepository,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    private readonly processImage: ImageProcessor,
   ) {}
 
   async create(input: { name: string; templateId: string }): Promise<CharacterSheet> {
@@ -78,6 +102,34 @@ export class SheetService {
     await this.sheets.update(id, { values: { [fieldId]: value }, updatedAt: this.clock.now() });
   }
 
+  /**
+   * Usa a imagem escolhida como retrato do personagem: reduzida no aparelho (lado maior até
+   * 384 px, WebP) e guardada na própria ficha, para ir junto ao Mestre e na exportação.
+   */
+  async setPortrait(id: string, file: Blob): Promise<Result<void, Issue>> {
+    let processed;
+    try {
+      processed = await this.processImage(file, PORTRAIT_LIMITS);
+    } catch (error) {
+      return invalidPortrait(
+        error instanceof Error ? error.message : 'Não foi possível usar a imagem.',
+      );
+    }
+    const portrait = PortraitSchema.safeParse({
+      src: `data:${processed.mime};base64,${toBase64(processed.data)}`,
+      width: processed.width,
+      height: processed.height,
+    });
+    if (!portrait.success)
+      return invalidPortrait('Não foi possível usar esta imagem. Tente outra.');
+    await this.sheets.update(id, { portrait: portrait.data, updatedAt: this.clock.now() });
+    return ok(undefined);
+  }
+
+  async removePortrait(id: string): Promise<void> {
+    await this.sheets.update(id, { portrait: null, updatedAt: this.clock.now() });
+  }
+
   async rename(id: string, name: string): Promise<void> {
     await this.sheets.update(id, { name: name.trim(), updatedAt: this.clock.now() });
   }
@@ -107,3 +159,6 @@ export function copyName(name: string): string {
   const suffix = ' (cópia)';
   return name.slice(0, 100 - suffix.length) + suffix;
 }
+
+const invalidPortrait = (message: string): { ok: false; error: Issue } =>
+  err({ code: 'retrato-invalido', path: ['portrait'], message });

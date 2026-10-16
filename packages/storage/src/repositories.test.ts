@@ -133,6 +133,25 @@ describe('DexieSheetRepository', () => {
     expect((await sheets.listByTemplate('meu-sistema')).map((s) => s.id)).toEqual(['s1']);
   });
 
+  it('troca e remove o retrato, e recusa retrato que não é imagem', async () => {
+    const portrait = {
+      src: 'data:image/webp;base64,UklGRgEAAABXRUJQVlA4IA==',
+      width: 300,
+      height: 384,
+    };
+    await sheets.save(sheet('s1', 1));
+    await sheets.update('s1', { portrait, updatedAt: 2 });
+    expect((await sheets.get('s1'))?.portrait).toEqual(portrait);
+    const svg = { ...portrait, src: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=' };
+    await expect(sheets.update('s1', { portrait: svg, updatedAt: 3 })).rejects.toThrow(
+      InvalidDataError,
+    );
+    await sheets.update('s1', { portrait: null, updatedAt: 4 });
+    const removed = await sheets.get('s1');
+    expect(removed && 'portrait' in removed).toBe(false);
+    expect(removed?.values).toMatchObject({ forca: 1 });
+  });
+
   it('recusa ficha inválida', async () => {
     const invalid = { ...sheet('s1', 1), name: '' };
     await expect(sheets.save(invalid)).rejects.toThrow(InvalidDataError);
