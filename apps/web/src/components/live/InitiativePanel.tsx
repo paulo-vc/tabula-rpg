@@ -24,7 +24,7 @@ import {
   Trash2Icon,
   UserIcon,
 } from 'lucide-react';
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useServices } from '@/app/services-context';
@@ -402,12 +402,7 @@ export function PlayerInitiative({
   const mine = tracker?.combatants.find((c) => c.id === tracker.activeId)?.userId === userId;
   const myTurn = tracker?.phase === 'combate' && mine;
   const inCombat = tracker?.combatants.some((c) => c.userId === userId) ?? false;
-
-  // Aviso ao chegar a vez (uma vez por turno), mesmo com o jogador em outra tela.
-  const turnKey = tracker ? `${tracker.round}:${tracker.activeId}` : null;
-  useEffect(() => {
-    if (myTurn) toast('É a sua vez!', { id: 'sua-vez' });
-  }, [myTurn, turnKey]);
+  // O aviso (e o som) de "é a sua vez" vale em qualquer tela: ver `SessionNotices`.
 
   if (!tracker) return null;
   const order = turnOrder(tracker.combatants);

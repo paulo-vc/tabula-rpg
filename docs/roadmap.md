@@ -20,10 +20,6 @@ O criador está completo, mas ainda é difícil para quem não está acostumado 
 
 O chat da sessão já tem sussurros entre o Mestre e um jogador. Entre dois jogadores, a mensagem passaria pelo aparelho do Mestre (a topologia é em estrela); precisaria ser cifrada de ponta a ponta entre os dois para o Mestre não ler.
 
-### Sons
-
-Pequenos sons de notificação e de interface (ex.: chegou a sua vez, rolagem da mesa, o Mestre alterou a sua ficha). A avaliar quais ajudam sem cansar, sempre com opção de desligar.
-
 ### Ícone do sistema
 
 O retrato do personagem e a capa da campanha já existem (v0.3.2). Falta o ícone do sistema, que iria junto do arquivo do sistema (e do catálogo da comunidade).
@@ -46,6 +42,7 @@ Imprimir ou gerar PDF da ficha.
 - **Notas e diário da campanha** (v0.3.0): notas só do Mestre e entradas compartilhadas com a mesa.
 - **Cutscene** (v0.3.0): imagens do Mestre em tela cheia para a mesa.
 - **Retrato do personagem** (v0.3.2): imagem na ficha, que vai junto ao Mestre e na exportação.
+- **Sons** (próxima versão): sua vez, rolagens, mensagens e sussurros, com volume e opção de desligar.
 - **Capa da campanha** (v0.3.2): escolhida pelo Mestre, chega aos jogadores na sessão.
 - **Chat da sessão** (v0.3.0): falar como o personagem, ações com `/me`, rolagens com `/r` e sussurros entre o Mestre e um jogador.
 
