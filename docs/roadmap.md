@@ -26,7 +26,7 @@ Pequenos sons de notificação e de interface (ex.: chegou a sua vez, rolagem da
 
 ### Ícone do sistema
 
-O retrato do personagem e a capa da campanha já existem (próxima versão). Falta o ícone do sistema, que iria junto do arquivo do sistema (e do catálogo da comunidade).
+O retrato do personagem e a capa da campanha já existem (v0.3.2). Falta o ícone do sistema, que iria junto do arquivo do sistema (e do catálogo da comunidade).
 
 ### Convite mais curto
 
@@ -45,8 +45,8 @@ Imprimir ou gerar PDF da ficha.
 
 - **Notas e diário da campanha** (v0.3.0): notas só do Mestre e entradas compartilhadas com a mesa.
 - **Cutscene** (v0.3.0): imagens do Mestre em tela cheia para a mesa.
-- **Retrato do personagem** (próxima versão): imagem na ficha, que vai junto ao Mestre e na exportação.
-- **Capa da campanha** (próxima versão): escolhida pelo Mestre, chega aos jogadores na sessão.
+- **Retrato do personagem** (v0.3.2): imagem na ficha, que vai junto ao Mestre e na exportação.
+- **Capa da campanha** (v0.3.2): escolhida pelo Mestre, chega aos jogadores na sessão.
 - **Chat da sessão** (v0.3.0): falar como o personagem, ações com `/me`, rolagens com `/r` e sussurros entre o Mestre e um jogador.
 
 - **Alterar a ficha com a sessão fechada:** a ficha é local-first. O jogador edita fora da sessão e, ao entrar de novo, só as diferenças vão ao Mestre; alterações dos dois lados se combinam (CRDT), sem perder nenhuma.
