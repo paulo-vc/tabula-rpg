@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
-import { deepEqual, readSheet, reconcile, VALUES } from './sheet-doc';
+import { deepEqual, META, readSheet, reconcile, VALUES } from './sheet-doc';
 import { newSheet, withValue } from './test-helpers';
 
 describe('reconcile/readSheet', () => {
@@ -18,6 +18,26 @@ describe('reconcile/readSheet', () => {
       values: sheet.values,
       invalidValues: 0,
     });
+  });
+
+  it('o retrato vai junto, sai quando é removido, e um inválido é ignorado', () => {
+    const doc = new Y.Doc();
+    const portrait = {
+      src: 'data:image/webp;base64,UklGRgEAAABXRUJQVlA4IA==',
+      width: 300,
+      height: 384,
+    };
+    const sheet = { ...newSheet('s1', 'u1'), portrait };
+    reconcile(doc, sheet);
+    expect(readSheet(doc)?.portrait).toEqual(portrait);
+
+    reconcile(doc, newSheet('s1', 'u1'));
+    expect(readSheet(doc)?.portrait).toBeUndefined();
+
+    // Vindo de outro participante: um "retrato" SVG some, e a ficha continua valendo.
+    doc.getMap(META).set('portrait', { ...portrait, src: 'data:image/svg+xml;base64,PHN2Zz4=' });
+    expect(readSheet(doc)).toMatchObject({ id: 's1', name: 'Ficha s1' });
+    expect(readSheet(doc)?.portrait).toBeUndefined();
   });
 
   it('escreve só a diferença (nenhuma atualização quando nada mudou)', () => {

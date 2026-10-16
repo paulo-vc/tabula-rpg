@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatNumber } from '@/components/sheet/format';
+import { CharacterPortrait } from '@/components/sheet/Portrait';
 import { describeConnection } from './connection';
 
 const okValue = (result: Result<number, EvaluationError> | undefined) =>
@@ -130,6 +131,13 @@ export function PlayerCard({
             )}
             aria-hidden
           />
+          {player.sheet && (
+            <CharacterPortrait
+              portrait={player.sheet.portrait}
+              name={player.sheet.name}
+              className="size-9"
+            />
+          )}
           {player.sheet?.name ?? 'Ficha ainda não recebida'}
         </CardTitle>
         <CardDescription className="flex items-center gap-2">

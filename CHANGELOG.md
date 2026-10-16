@@ -2,6 +2,10 @@
 
 As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
+## Próxima versão
+
+- **Retrato do personagem:** toque no círculo ao lado do nome da ficha para escolher uma imagem (PNG, JPEG ou WebP). Ela é reduzida no aparelho e fica guardada na própria ficha: aparece na lista de fichas, vai junto ao exportar e chega ao Mestre na sessão, no card do jogador e na ficha que ele abre. Pelo mesmo círculo dá para trocar ou remover.
+
 ## v0.3.1
 
 - **Corrigido:** no app desktop (Windows e Linux), as imagens da cutscene não apareciam: a galeria do Mestre mostrava miniaturas quebradas e o jogador não via a imagem em tela cheia. Na versão web já funcionava.

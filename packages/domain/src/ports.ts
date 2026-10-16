@@ -4,6 +4,7 @@ import type { ChatMessage } from './chat/schema';
 import type { JournalEntry } from './journal/schema';
 import type { StoredImage } from './cutscene/schema';
 import type { CharacterSheet, FieldValue } from './sheet/schema';
+import type { Portrait } from './sheet/portrait';
 import type { SystemTemplate } from './template/schema';
 
 /**
@@ -61,6 +62,8 @@ export interface SheetRepository {
 
 export interface SheetChanges {
   name?: string;
+  /** Novo retrato; `null` remove. */
+  portrait?: Portrait | null;
   /** Valores a substituir, por ID de campo. Os demais campos ficam intactos. */
   values?: CharacterSheet['values'];
   updatedAt: number;

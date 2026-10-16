@@ -89,7 +89,7 @@ async function setUpLiveTable() {
 }
 
 /** Sessões simuladas com dois aparelhos ficam lentas quando a suíte toda roda junto. */
-const waitLong = (assertion: () => Promise<void> | void) => waitFor(assertion, { timeout: 4000 });
+const waitLong = (assertion: () => Promise<void> | void) => waitFor(assertion, { timeout: 8000 });
 
 function renderApp(services: Services, hash: string) {
   window.location.hash = hash;
@@ -133,7 +133,9 @@ describe('rolagens pela ficha', () => {
       expect(within(list).getByText('7')).toBeInTheDocument();
     });
     // Aviso de rolagem de outra pessoa.
-    expect(await screen.findByText('Ana · Furtividade: 7')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Ana · Furtividade: 7', undefined, { timeout: 8000 }),
+    ).toBeInTheDocument();
   });
 
   it('rolagem secreta do Mestre aparece marcada só para ele', async () => {

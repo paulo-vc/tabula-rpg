@@ -11,11 +11,12 @@ export function fakePng(size = 600_000, seed = 7): Uint8Array<ArrayBuffer> {
 }
 
 /** Nos testes não há canvas: a "redução" devolve os bytes como estão. */
-export const fakeProcessImage: ImageProcessor = async (file) => {
+export const fakeProcessImage: ImageProcessor = async (file, limits) => {
   // Cópia para um buffer deste contexto: o do `File` do jsdom não é clonado direito pelo
   // IndexedDB simulado (viraria um objeto comum).
   const data = Uint8Array.from(new Uint8Array(await file.arrayBuffer()));
   const mime = sniffImageMime(data);
   if (!mime) throw new Error('Não foi possível abrir a imagem. Use PNG, JPEG ou WebP.');
-  return { data, mime, width: 1600, height: 900 };
+  const side = Math.min(1600, limits?.maxSide ?? 1600);
+  return { data, mime, width: side, height: Math.round((side * 9) / 16) };
 };

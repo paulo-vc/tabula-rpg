@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { downloadFile } from '@/lib/browser-files';
+import { PortraitPicker } from '@/components/sheet/Portrait';
 
 export function SheetPage({ id }: { id: string }) {
   const services = useServices();
@@ -158,6 +159,7 @@ function SheetEditor({ id, compiled }: { id: string; compiled: OpenedReady['comp
             <ArrowLeftIcon />
           </Link>
         </Button>
+        <PortraitPicker sheetId={id} name={sheet.name} portrait={sheet.portrait} />
         <Input
           aria-label="Nome da ficha"
           value={name.draft}

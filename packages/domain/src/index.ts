@@ -9,6 +9,7 @@ export { compileTemplate, type CompiledFormula, type CompiledTemplate } from './
 export { validateTemplate } from './template/validate';
 
 export * from './sheet/schema';
+export * from './sheet/portrait';
 export { defaultValue, listItemValue, valueProblem } from './sheet/values';
 export { computeDerived, type DerivedValues } from './sheet/compute';
 export { createSheet, validateSheetValues, type NewSheetInput } from './sheet/operations';

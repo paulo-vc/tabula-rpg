@@ -25,6 +25,10 @@ describe('CSP do app desktop', () => {
     expect(directive('img-src')).toContain('blob:');
   });
 
+  it('mostra os retratos dos personagens (data URL dentro da ficha)', () => {
+    expect(directive('img-src')).toContain('data:');
+  });
+
   it('não libera scripts de fora', () => {
     expect(directive('script-src')).toEqual([]);
     expect(directive('default-src')).toEqual(["'self'"]);

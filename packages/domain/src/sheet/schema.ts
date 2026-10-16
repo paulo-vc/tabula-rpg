@@ -7,6 +7,7 @@ import {
   TimestampSchema,
 } from '../schema/primitives';
 import { TemplateRefSchema } from '../template/schema';
+import { PortraitSchema } from './portrait';
 
 /** Valor de um campo simples (também usado dentro de itens de lista). */
 export const PrimitiveValueSchema = z.union([
@@ -46,6 +47,8 @@ export const CharacterSheetSchema = z.object({
   /** Dispositivo/usuário local dono da ficha (não há contas). */
   ownerId: IdSchema,
   templateRef: TemplateRefSchema,
+  /** Retrato do personagem (opcional). Vai junto com a ficha para o Mestre e na exportação. */
+  portrait: PortraitSchema.optional(),
   /** Valores indexados pelo ID estável do campo. Campos calculados nunca aparecem aqui. */
   values: z.record(IdSchema, FieldValueSchema),
   /**

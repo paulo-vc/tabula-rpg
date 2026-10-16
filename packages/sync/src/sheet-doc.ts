@@ -1,9 +1,11 @@
 import {
   FieldValueSchema,
   IdSchema,
+  PortraitSchema,
   TemplateRefSchema,
   type CharacterSheet,
   type FieldValue,
+  type Portrait,
   type TemplateRef,
 } from '@tabula/domain';
 import type * as Y from 'yjs';
@@ -11,7 +13,7 @@ import { z } from 'zod';
 
 /**
  * Representação de uma ficha num documento Yjs:
- * - `meta`: id, nome, dono e template;
+ * - `meta`: id, nome, dono, template e retrato;
  * - `values`: um valor por campo (o último a escrever vence, por campo).
  *
  * Listas e recursos são valores inteiros: o dono e o Mestre podem alterar a ficha
@@ -20,6 +22,7 @@ import { z } from 'zod';
  */
 export const META = 'meta';
 export const VALUES = 'values';
+const PORTRAIT = 'portrait';
 
 /** Retrato da ficha como recebida pela rede (já validado). */
 export interface SheetSnapshot {
@@ -27,6 +30,8 @@ export interface SheetSnapshot {
   name: string;
   ownerId: string;
   templateRef: TemplateRef;
+  /** Retrato do personagem, se houver um válido. */
+  portrait?: Portrait;
   values: Record<string, FieldValue>;
   /** Quantos valores recebidos foram descartados por serem inválidos. */
   invalidValues: number;
@@ -72,6 +77,11 @@ export function reconcile(doc: Y.Doc, sheet: CharacterSheet, origin?: unknown): 
     for (const [key, value] of Object.entries(wantedMeta)) {
       if (!deepEqual(meta.get(key), value)) meta.set(key, value);
     }
+    if (sheet.portrait === undefined) {
+      if (meta.has(PORTRAIT)) meta.delete(PORTRAIT);
+    } else if (!deepEqual(meta.get(PORTRAIT), sheet.portrait)) {
+      meta.set(PORTRAIT, sheet.portrait);
+    }
     for (const [fieldId, value] of Object.entries(sheet.values)) {
       if (!deepEqual(values.get(fieldId), value)) values.set(fieldId, value);
     }
@@ -83,8 +93,11 @@ export function reconcile(doc: Y.Doc, sheet: CharacterSheet, origin?: unknown): 
 
 /** Lê a ficha do documento, validando tudo (o conteúdo veio de outro participante). */
 export function readSheet(doc: Y.Doc): SheetSnapshot | null {
-  const meta = MetaSchema.safeParse(doc.getMap<unknown>(META).toJSON());
+  const metaMap = doc.getMap<unknown>(META);
+  const meta = MetaSchema.safeParse(metaMap.toJSON());
   if (!meta.success) return null;
+  // Retrato inválido (ou grande demais) é só ignorado: a ficha continua valendo.
+  const portrait = PortraitSchema.safeParse(metaMap.get(PORTRAIT));
   const values: Record<string, FieldValue> = {};
   let invalidValues = 0;
   for (const [fieldId, raw] of doc.getMap<unknown>(VALUES).entries()) {
@@ -93,5 +106,10 @@ export function readSheet(doc: Y.Doc): SheetSnapshot | null {
     if (key.success && value.success) values[fieldId] = value.data;
     else invalidValues++;
   }
-  return { ...meta.data, values, invalidValues };
+  return {
+    ...meta.data,
+    ...(portrait.success && { portrait: portrait.data }),
+    values,
+    invalidValues,
+  };
 }
