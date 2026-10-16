@@ -21,6 +21,8 @@ import { TemplateEditorService } from './editor';
 import { TemplateCatalog } from './catalog';
 import { FileService } from './files';
 import { JournalService } from './journal';
+import { SoundService } from './sounds';
+import { createWebAudioPlayer, type SoundPlayer } from '@/lib/sounds';
 import { GalleryService } from './gallery';
 import { processImage as browserProcessImage, type ImageProcessor } from '@/lib/image-processing';
 import { randomSecret } from './invite-link';
@@ -54,6 +56,7 @@ export interface Services {
   editor: TemplateEditorService;
   /** Diário da campanha (notas do Mestre e entradas compartilhadas). */
   journal: JournalService;
+  sounds: SoundService;
   /** Galeria de imagens da campanha (cutscene). */
   gallery: GalleryService;
   device: DexieDeviceRepository;
@@ -70,6 +73,8 @@ export interface ServiceOptions {
   newGmKey?: () => GmKeyPair;
   /** Reduz as imagens da galeria (no navegador, com canvas; nos testes, uma falsa). */
   processImage?: ImageProcessor;
+  /** Toca os avisos sonoros (nos testes, um que só anota). */
+  soundPlayer?: SoundPlayer;
   /** Transporte da sessão ao vivo: WebRTC no app; rede em memória nos testes. */
   createTransport?: TransportFactory;
   /** Repositório de sistemas da comunidade: CDN no app; memória nos testes. */
@@ -88,6 +93,7 @@ export function createServices(
     newSecret = randomSecret,
     newGmKey = generateGmKeyPair,
     processImage = browserProcessImage,
+    soundPlayer,
     createTransport = () => {
       throw new Error('Transporte da sessão não configurado');
     },
@@ -146,6 +152,7 @@ export function createServices(
       chat,
     ),
     journal: new JournalService(journal, clock, ids),
+    sounds: new SoundService(device, soundPlayer ?? createWebAudioPlayer()),
     gallery: new GalleryService(images, processImage, clock, ids),
     campaigns: new CampaignService(
       campaignRepository,

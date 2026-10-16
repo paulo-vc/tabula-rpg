@@ -2,6 +2,11 @@
 
 As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
+## Próxima versão
+
+- **Sons:** avisos curtos na sessão: a sua vez no combate, rolagens de outras pessoas, mensagens e sussurros do chat. No ícone de som do cabeçalho dá para desligar, ajustar o volume e testar; a escolha fica guardada no aparelho.
+- **"É a sua vez!" em qualquer tela:** o aviso da vez no combate aparecia só com a página da campanha aberta. Agora aparece também com a ficha (ou qualquer outra tela) aberta.
+
 ## v0.3.2
 
 Imagens para a mesa: o retrato de cada personagem e a capa da campanha. Quem estiver numa versão anterior continua jogando normalmente, só não vê os retratos e a capa (o app desktop se atualiza sozinho).

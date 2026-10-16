@@ -5,6 +5,7 @@ import type { JournalEntry } from './journal/schema';
 import type { StoredImage } from './cutscene/schema';
 import type { CharacterSheet, FieldValue } from './sheet/schema';
 import type { Portrait } from './sheet/portrait';
+import type { SoundSettings } from './preferences/sounds';
 import type { SystemTemplate } from './template/schema';
 
 /**
@@ -86,6 +87,9 @@ export interface DeviceRepository {
   /** Nome de exibição usado na última vez (para preencher formulários). */
   getDisplayName(): Promise<string | undefined>;
   setDisplayName(name: string): Promise<void>;
+  /** Preferências de som (as padrão, se nunca foram salvas ou estão inválidas). */
+  getSoundSettings(): Promise<SoundSettings>;
+  setSoundSettings(settings: SoundSettings): Promise<void>;
 }
 
 /**

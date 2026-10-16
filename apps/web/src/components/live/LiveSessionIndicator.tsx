@@ -25,7 +25,7 @@ export function LiveSessionIndicator() {
       aria-label={label}
       title={label}
       className={cn(
-        'ml-auto flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
+        'flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
         connected
           ? 'border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
           : 'border-amber-500/40 text-amber-600 dark:text-amber-400',

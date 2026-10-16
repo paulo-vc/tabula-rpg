@@ -87,3 +87,4 @@ export * from './initiative/roll';
 export * from './journal/schema';
 export * from './cutscene/schema';
 export * from './chat/schema';
+export * from './preferences/sounds';

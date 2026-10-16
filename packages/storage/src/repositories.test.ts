@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import {
   CHAT_LIMIT,
+  DEFAULT_SOUND_SETTINGS,
   type ChatMessage,
   LOG_LIMIT,
   parseDice,
@@ -221,6 +222,18 @@ describe('DexieSheetRepository', () => {
 });
 
 describe('DexieDeviceRepository', () => {
+  it('preferências de som: padrão, salvas, e padrão de novo se estiverem estragadas', async () => {
+    const device = new DexieDeviceRepository(db);
+    expect(await device.getSoundSettings()).toEqual(DEFAULT_SOUND_SETTINGS);
+    await device.setSoundSettings({ enabled: false, volume: 0.2 });
+    expect(await device.getSoundSettings()).toEqual({ enabled: false, volume: 0.2 });
+    await expect(device.setSoundSettings({ enabled: true, volume: 3 })).rejects.toThrow(
+      InvalidDataError,
+    );
+    await db.settings.put({ key: 'sons', value: { enabled: 'sim' } });
+    expect(await device.getSoundSettings()).toEqual(DEFAULT_SOUND_SETTINGS);
+  });
+
   it('cria o ID do dispositivo uma vez e o reutiliza', async () => {
     let calls = 0;
     const device = new DexieDeviceRepository(db, () => `id-${++calls}`);

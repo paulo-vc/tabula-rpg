@@ -6,6 +6,8 @@ import { CutsceneOverlay } from './live/CutsceneOverlay';
 import { GmChangeNotice } from './live/GmChangeNotice';
 import { LiveSessionIndicator } from './live/LiveSessionIndicator';
 import { RollNotice } from './live/RollNotice';
+import { SessionNotices } from './live/SessionNotices';
+import { SoundSettingsButton } from './SoundSettingsButton';
 import { UpdateNotice } from './UpdateNotice';
 import { newIssueUrl } from '@/app/updates';
 import { openExternal } from '@/lib/open-external';
@@ -56,7 +58,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               Sistemas
             </NavLink>
           </nav>
-          <LiveSessionIndicator />
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+            <LiveSessionIndicator />
+            <SoundSettingsButton />
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
@@ -78,6 +83,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <ChatDock />
       <CutsceneOverlay />
       <RollNotice />
+      <SessionNotices />
     </div>
   );
 }

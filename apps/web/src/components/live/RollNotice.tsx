@@ -5,14 +5,15 @@ import { useServices } from '@/app/services-context';
 
 /** Mostra as rolagens que outras pessoas da mesa fazem (em qualquer tela do app). */
 export function RollNotice() {
-  const { session } = useServices();
+  const { session, sounds } = useServices();
   useEffect(
     () =>
       session.onRoll((entry) => {
         const what = entry.label ? `${entry.authorName} · ${entry.label}` : entry.authorName;
         toast(`${what}: ${entry.result.total}`, { description: describeRoll(entry.result) });
+        void sounds.play('rolagem');
       }),
-    [session],
+    [session, sounds],
   );
   return null;
 }

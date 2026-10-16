@@ -1,6 +1,9 @@
 import {
   CampaignSchema,
   CharacterSheetSchema,
+  DEFAULT_SOUND_SETTINGS,
+  SoundSettingsSchema,
+  type SoundSettings,
   PortraitSchema,
   compileTemplate,
   SystemTemplateSchema,
@@ -192,6 +195,7 @@ export class DexieSessionStateRepository implements SessionStateRepository {
 
 const DEVICE_ID_KEY = 'deviceId';
 const DISPLAY_NAME_KEY = 'displayName';
+const SOUND_SETTINGS_KEY = 'sons';
 
 export class DexieDeviceRepository implements DeviceRepository {
   constructor(
@@ -217,6 +221,20 @@ export class DexieDeviceRepository implements DeviceRepository {
 
   async setDisplayName(name: string): Promise<void> {
     await this.db.settings.put({ key: DISPLAY_NAME_KEY, value: name.trim().slice(0, 100) });
+  }
+
+  async getSoundSettings(): Promise<SoundSettings> {
+    const setting = await this.db.settings.get(SOUND_SETTINGS_KEY);
+    const parsed = SoundSettingsSchema.safeParse(setting?.value);
+    return parsed.success ? parsed.data : DEFAULT_SOUND_SETTINGS;
+  }
+
+  async setSoundSettings(settings: SoundSettings): Promise<void> {
+    const parsed = SoundSettingsSchema.safeParse(settings);
+    if (!parsed.success) {
+      throw new InvalidDataError('Preferências de som inválidas', zodIssues(parsed.error.issues));
+    }
+    await this.db.settings.put({ key: SOUND_SETTINGS_KEY, value: parsed.data });
   }
 }
 
