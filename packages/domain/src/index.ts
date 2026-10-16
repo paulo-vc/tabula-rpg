@@ -10,6 +10,7 @@ export { validateTemplate } from './template/validate';
 
 export * from './sheet/schema';
 export * from './sheet/portrait';
+export { embeddedImageSchema } from './image/embedded';
 export { defaultValue, listItemValue, valueProblem } from './sheet/values';
 export { computeDerived, type DerivedValues } from './sheet/compute';
 export { createSheet, validateSheetValues, type NewSheetInput } from './sheet/operations';
@@ -28,6 +29,7 @@ export {
   linkedSheetId,
   linkSheet,
   roleOf,
+  withCover,
   withGmKey,
   type CampaignRole,
   type NewCampaignInput,

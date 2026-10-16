@@ -69,3 +69,39 @@ export const processImage: ImageProcessor = async (file, limits = CUTSCENE_LIMIT
     bitmap.close();
   }
 };
+
+function toBase64(bytes: Uint8Array): string {
+  let binary = '';
+  // Em pedaços: `String.fromCharCode(...bytes)` estoura a pilha com arquivos maiores.
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(binary);
+}
+
+/** Imagem embutida num registro (data URL), como o retrato da ficha e a capa da campanha. */
+export interface EmbeddedImage {
+  src: string;
+  width: number;
+  height: number;
+}
+
+/**
+ * Reduz a imagem e a devolve como data URL que cabe em `maxChars` (o base64 cresce 4/3).
+ * Lança um erro com mensagem para o usuário se a imagem não servir.
+ */
+export async function embedImage(
+  process: ImageProcessor,
+  file: Blob,
+  limits: { maxSide: number; maxChars: number },
+): Promise<EmbeddedImage> {
+  const processed = await process(file, {
+    maxSide: limits.maxSide,
+    maxBytes: Math.floor((limits.maxChars - 100) * 0.75),
+  });
+  return {
+    src: `data:${processed.mime};base64,${toBase64(processed.data)}`,
+    width: processed.width,
+    height: processed.height,
+  };
+}

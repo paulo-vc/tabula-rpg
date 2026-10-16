@@ -7,6 +7,10 @@ import {
   linkSheet,
   ok,
   roleOf,
+  COVER_MAX_CHARS,
+  COVER_MAX_SIDE,
+  CoverSchema,
+  withCover,
   type Campaign,
   type CampaignInvite,
   type CampaignRepository,
@@ -24,6 +28,7 @@ import {
   type SheetRepository,
 } from '@tabula/domain';
 import type { GmKeyPair } from '@tabula/sync';
+import { embedImage, type ImageProcessor } from '@/lib/image-processing';
 import type { TemplateCatalog } from './catalog';
 import { inviteUrl } from './invite-link';
 import type { Clock, IdGenerator, SheetService } from './sheets';
@@ -50,6 +55,7 @@ export class CampaignService {
     private readonly journal: JournalRepository,
     private readonly images: ImageRepository,
     private readonly chat: ChatRepository,
+    private readonly processImage: ImageProcessor,
   ) {}
 
   /** O Mestre cria a campanha e define o sistema oficial dela. */
@@ -135,6 +141,41 @@ export class CampaignService {
       (campaign) =>
         roleOf(campaign, userId) === 'jogador' && linkedSheetId(campaign, userId) === sheetId,
     );
+  }
+
+  /**
+   * O Mestre escolhe a capa da campanha: reduzida no aparelho (lado maior até 1200 px, WebP)
+   * e guardada na campanha. Com a sessão aberta, chega aos jogadores na hora.
+   */
+  async setCover(campaignId: string, file: Blob): Promise<Result<void, Issue>> {
+    const campaign = await this.campaigns.get(campaignId);
+    if (!campaign) return failure('campanha-ausente', 'Campanha não encontrada.');
+    if (roleOf(campaign, await this.device.getDeviceId()) !== 'mestre') {
+      return failure('nao-e-mestre', 'Só o Mestre escolhe a capa.');
+    }
+    let embedded;
+    try {
+      embedded = await embedImage(this.processImage, file, {
+        maxSide: COVER_MAX_SIDE,
+        maxChars: COVER_MAX_CHARS,
+      });
+    } catch (error) {
+      return failure(
+        'capa-invalida',
+        error instanceof Error ? error.message : 'Não foi possível usar a imagem.',
+      );
+    }
+    const cover = CoverSchema.safeParse(embedded);
+    if (!cover.success) {
+      return failure('capa-invalida', 'Não foi possível usar esta imagem. Tente outra.');
+    }
+    await this.campaigns.save(withCover(campaign, cover.data, this.clock.now()));
+    return ok(undefined);
+  }
+
+  async removeCover(campaignId: string): Promise<void> {
+    const campaign = await this.campaigns.get(campaignId);
+    if (campaign) await this.campaigns.save(withCover(campaign, null, this.clock.now()));
   }
 
   /** Apaga a campanha deste dispositivo (o Mestre encerra; o jogador sai). Fichas ficam. */

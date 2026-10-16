@@ -3,6 +3,7 @@ import {
   CHAT_CATCH_UP,
   CHAT_LIMIT,
   type ChatMessage,
+  type Cover,
   LIMITS,
   LOG_CATCH_UP,
   type FieldValue,
@@ -26,6 +27,7 @@ import {
   encodeTurn,
   encodeBye,
   encodeChat,
+  encodeCover,
   encodeJournalKeep,
   encodeJournalPut,
   encodeCutscene,
@@ -104,6 +106,8 @@ export class SessionHost {
   private turnOrder: PublicTracker | null = null;
   /** Entradas do diário compartilhadas com a mesa (por ID), já enviadas aos online. */
   private journal = new Map<string, JournalEntry>();
+  /** Capa da campanha, enviada a quem entra e a todos quando muda. */
+  private cover: Cover | null = null;
   /** Imagem mostrada à mesa agora (e o conteúdo, enviado a quem pedir). */
   private cutscene: { info: Cutscene; data: Uint8Array } | null = null;
   /** Quantas vezes cada participante pediu a imagem atual (contra pedidos sem fim). */
@@ -262,6 +266,14 @@ export class SessionHost {
     this.cutscene = info && data ? { info, data } : null;
     this.imageRequests.clear();
     const message = encodeCutscene(this.cutscene?.info ?? null);
+    for (const peerId of this.sheetOfPeer.keys()) this.send(peerId, message);
+  }
+
+  /** Troca a capa da campanha (`null`: sem capa) e avisa os jogadores online. */
+  setCover(cover: Cover | null): void {
+    if (this.stopped || (cover?.src ?? null) === (this.cover?.src ?? null)) return;
+    this.cover = cover;
+    const message = encodeCover(cover);
     for (const peerId of this.sheetOfPeer.keys()) this.send(peerId, message);
   }
 
@@ -475,6 +487,8 @@ export class SessionHost {
         .slice(-CHAT_CATCH_UP);
       if (visible.length > 0) this.send(peerId, encodeChat(visible));
     }
+    // A capa vai sempre (mesmo nenhuma): o jogador apaga a antiga se o Mestre a removeu.
+    if (firstHello) this.send(peerId, encodeCover(this.cover));
     if (firstHello && this.turnOrder) this.send(peerId, encodeTurn(this.turnOrder));
     if (firstHello && this.cutscene) this.send(peerId, encodeCutscene(this.cutscene.info));
     if (firstHello) {

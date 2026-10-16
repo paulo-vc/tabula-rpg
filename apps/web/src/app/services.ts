@@ -164,6 +164,7 @@ export function createServices(
       journal,
       images,
       chat,
+      processImage,
     ),
   };
 }
