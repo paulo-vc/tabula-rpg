@@ -110,3 +110,11 @@ Mesmo roteiro (tag `v0.3.0`, conferir o rascunho, publicar como versão normal).
 Correção da CSP do app desktop: `img-src` passa a aceitar `blob:`, que a galeria, a prévia e a cutscene usam para mostrar as imagens guardadas no aparelho. O teste `apps/web/src/lib/desktop-csp.test.ts` confere a CSP, porque o navegador e os testes não a aplicam.
 
 - [ ] Na v0.3.0 instalada, a atualização chega, e as miniaturas da galeria e a cutscene do jogador aparecem.
+
+## v0.3.2
+
+Mesmo roteiro (tag `v0.3.2`, conferir o rascunho, publicar como versão normal). Sem mudança no banco local: o retrato fica na ficha e a capa na campanha.
+
+- [ ] Na v0.3.1 instalada, a atualização chega, e as fichas e campanhas continuam lá.
+- [ ] No app instalado, escolher um retrato e uma capa (a CSP do desktop precisa aceitar as imagens `data:`).
+- [ ] Sessão entre o app instalado e a versão web: o Mestre vê o retrato da jogadora no card, e a jogadora recebe a capa.
