@@ -95,8 +95,9 @@ describe('retrato do personagem', () => {
       new File([fakePng(2000)], 'lia.png', { type: 'image/png' }),
     );
     const image = await screen.findByRole('img', { name: 'Retrato de Lia' });
-    expect(image.getAttribute('src')).toMatch(/^data:image\/png;base64,/);
-    await until(() => expect(gmPortrait()?.src).toBe(image.getAttribute('src')));
+    const first = image.getAttribute('src');
+    expect(first).toMatch(/^data:image\/png;base64,/);
+    await until(() => expect(gmPortrait()?.src).toBe(first));
 
     // Trocar pelo menu do retrato.
     await user.click(screen.getByRole('button', { name: 'Retrato do personagem' }));
@@ -107,7 +108,7 @@ describe('retrato do personagem', () => {
     );
     await waitFor(() =>
       expect(screen.getByRole('img', { name: 'Retrato de Lia' }).getAttribute('src')).not.toBe(
-        image.getAttribute('src'),
+        first,
       ),
     );
 

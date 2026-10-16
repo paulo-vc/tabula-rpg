@@ -8,6 +8,7 @@ import {
   linkedSheetId,
   linkSheet,
   roleOf,
+  withCover,
   withGmKey,
 } from './operations';
 import { CampaignInviteSchema, CampaignSchema } from './schema';
@@ -181,5 +182,37 @@ describe('chave do Mestre', () => {
     const pinned = withGmKey(newCampaign(), KEY, 50);
     expect(pinned).toMatchObject({ gmKey: KEY, updatedAt: 50 });
     expect(withGmKey(pinned, OTHER, 60)).toBe(pinned);
+  });
+});
+
+describe('withCover', () => {
+  const cover = {
+    src: 'data:image/webp;base64,UklGRgEAAABXRUJQVlA4IA==',
+    width: 1200,
+    height: 630,
+  };
+
+  it('põe, troca e remove a capa', () => {
+    const base = newCampaign();
+    const withIt = withCover(base, cover, 10);
+    expect(withIt).toMatchObject({ cover, updatedAt: 10 });
+    expect(CampaignSchema.safeParse(withIt).success).toBe(true);
+    const removed = withCover(withIt, null, 20);
+    expect('cover' in removed).toBe(false);
+    expect(removed.updatedAt).toBe(20);
+  });
+
+  it('a mesma capa não altera a campanha', () => {
+    const withIt = withCover(newCampaign(), cover, 10);
+    expect(withCover(withIt, { ...cover }, 30)).toBe(withIt);
+    const base = newCampaign();
+    expect(withCover(base, null, 30)).toBe(base);
+  });
+
+  it('capa SVG ou grande demais não vale', () => {
+    const svg = { ...cover, src: 'data:image/svg+xml;base64,PHN2Zz4=' };
+    expect(CampaignSchema.safeParse({ ...newCampaign(), cover: svg }).success).toBe(false);
+    const wide = { ...cover, width: 4000 };
+    expect(CampaignSchema.safeParse({ ...newCampaign(), cover: wide }).success).toBe(false);
   });
 });

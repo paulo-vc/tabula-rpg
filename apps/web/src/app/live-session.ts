@@ -17,7 +17,9 @@ import {
   roleOf,
   rollDice,
   valueProblem,
+  withCover,
   withGmKey,
+  type Cover,
   type DieRoller,
   type RollEntry,
   type RollLogRepository,
@@ -285,6 +287,11 @@ export class LiveSessionManager {
     const journalWatch: Subscription = liveQuery(() => this.journal.list(campaignId)).subscribe({
       next: (entries) => host.setJournal(sharedEntries(entries)),
     });
+    // Capa: trocar ou remover na página da campanha segue para a mesa (o motor ignora a mesma).
+    host.setCover(campaign.cover ?? null);
+    const coverWatch: Subscription = liveQuery(() => this.campaigns.get(campaignId)).subscribe({
+      next: (current) => host.setCover(current?.cover ?? null),
+    });
     const unsubscribe = host.subscribe(() => {
       publish();
       this.scheduleSave();
@@ -313,6 +320,7 @@ export class LiveSessionManager {
       stop: async () => {
         clearInterval(measuring);
         journalWatch.unsubscribe();
+        coverWatch.unsubscribe();
         stopRolls();
         stopChat();
         unsubscribe();
@@ -390,6 +398,12 @@ export class LiveSessionManager {
         },
         onRolls: (entries) => this.recordRolls(campaignId, entries),
         onChat: (messages) => this.recordChat(campaignId, messages),
+        // Capa da campanha: fica neste aparelho, para aparecer mesmo fora da sessão.
+        onCover: (cover) => {
+          this.saveCover(campaignId, cover).catch((error: unknown) =>
+            console.error('Falha ao gravar a capa', error),
+          );
+        },
         // Diário compartilhado pelo Mestre: fica neste aparelho para ler fora da sessão.
         // Cutscene: a imagem já está aqui? Senão, pede ao Mestre (chega em `onImage`).
         onCutscene: (info) => {
@@ -752,6 +766,14 @@ export class LiveSessionManager {
   async flush(): Promise<void> {
     clearTimeout(this.saveTimer);
     await this.active?.save();
+  }
+
+  /** Grava a capa recebida do Mestre (ou a remove). */
+  private async saveCover(campaignId: string, cover: Cover | null): Promise<void> {
+    const campaign = await this.campaigns.get(campaignId);
+    if (!campaign) return;
+    const next = withCover(campaign, cover, this.clock.now());
+    if (next !== campaign) await this.campaigns.save(next);
   }
 
   /** Grava na campanha a chave do Mestre provada na primeira conexão (a primeira prevalece). */

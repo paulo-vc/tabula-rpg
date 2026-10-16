@@ -307,4 +307,34 @@ test.describe('mesa ao vivo, de ponta a ponta', () => {
     expect(Math.max(...size)).toBeLessThanOrEqual(384);
     expect(Math.min(...size)).toBeGreaterThan(0);
   });
+
+  test('capa: o Mestre escolhe a capa e a jogadora a recebe na sessão', async ({ browser }) => {
+    const gm = await newDevice(browser);
+    const player = await newDevice(browser);
+    await createCampaign(gm);
+    await joinWithInvite(player, await inviteLink(gm), 'Ana', 'Lia');
+    await startTable(gm, player, 'Ana');
+
+    await gm.getByLabel('Arquivo da capa').setInputFiles({
+      name: 'mina.png',
+      mimeType: 'image/png',
+      buffer: await gm.screenshot({ fullPage: true }),
+    });
+    await expect(gm.getByRole('img', { name: /^Capa de / })).toHaveAttribute(
+      'src',
+      /^data:image\/webp;base64,/,
+    );
+
+    const cover = player.getByRole('img', { name: /^Capa de / });
+    await expect(cover).toBeVisible();
+    const size = await cover.evaluate((img: HTMLImageElement) => [
+      img.naturalWidth,
+      img.naturalHeight,
+    ]);
+    expect(Math.max(...size)).toBeLessThanOrEqual(1200);
+    expect(Math.min(...size)).toBeGreaterThan(0);
+
+    await gm.getByRole('button', { name: 'Remover capa' }).click();
+    await expect(cover).toBeHidden();
+  });
 });

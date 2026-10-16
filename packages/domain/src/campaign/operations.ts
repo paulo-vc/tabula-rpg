@@ -1,7 +1,7 @@
 import { err, ok, type Issue, type Result } from '../result';
 import type { CharacterSheet } from '../sheet/schema';
 import type { SystemTemplate } from '../template/schema';
-import { INVITE_VERSION, type Campaign, type CampaignInvite } from './schema';
+import { INVITE_VERSION, type Campaign, type CampaignInvite, type Cover } from './schema';
 
 export type CampaignRole = 'mestre' | 'jogador';
 
@@ -54,6 +54,13 @@ export function inviteFor(campaign: Campaign): CampaignInvite {
 /** Fixa a chave pública do Mestre na campanha (a primeira conhecida prevalece). */
 export function withGmKey(campaign: Campaign, gmKey: string, now: number): Campaign {
   return campaign.gmKey === undefined ? { ...campaign, gmKey, updatedAt: now } : campaign;
+}
+
+/** Troca a capa (`null` remove). Igual: a mesma campanha, sem alterar `updatedAt`. */
+export function withCover(campaign: Campaign, cover: Cover | null, now: number): Campaign {
+  if ((cover?.src ?? null) === (campaign.cover?.src ?? null)) return campaign;
+  const { cover: _previous, ...rest } = campaign;
+  return cover ? { ...rest, cover, updatedAt: now } : { ...rest, updatedAt: now };
 }
 
 /** Cópia da campanha no dispositivo do jogador, criada a partir do convite. */

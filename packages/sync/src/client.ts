@@ -1,6 +1,7 @@
 import {
   canSee,
   type ChatMessage,
+  type Cover,
   FieldValueSchema,
   type CharacterSheet,
   type FieldValue,
@@ -68,6 +69,8 @@ export interface ClientCallbacks {
   onRolls?: (entries: RollEntry[]) => void;
   /** Mensagens do chat chegaram (da mesa, sussurros do Mestre ou o histórico recente). */
   onChat?: (messages: ChatMessage[]) => void;
+  /** A capa da campanha (`null`: o Mestre não tem ou removeu). */
+  onCover?: (cover: Cover | null) => void;
   /** A ordem de turno do combate mudou (`null`: o Mestre encerrou o combate). */
   onTurnOrder?: (tracker: PublicTracker | null) => void;
   /** O Mestre compartilhou (ou alterou) uma entrada do diário. */
@@ -324,6 +327,11 @@ export class SessionClient {
 
     if (message.type === 'log') {
       this.callbacks.onRolls?.(message.entries);
+      return;
+    }
+
+    if (message.type === 'cover') {
+      this.callbacks.onCover?.(message.cover);
       return;
     }
 

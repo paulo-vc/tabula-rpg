@@ -15,23 +15,8 @@ import {
   type FieldValue,
   type SheetRepository,
 } from '@tabula/domain';
-import type { ImageProcessor } from '@/lib/image-processing';
+import { embedImage, type ImageProcessor } from '@/lib/image-processing';
 import type { TemplateCatalog } from './catalog';
-
-/** Retrato: cabe na data URL (o base64 cresce 4/3) com folga para o cabeçalho. */
-const PORTRAIT_LIMITS = {
-  maxSide: PORTRAIT_MAX_SIDE,
-  maxBytes: Math.floor((PORTRAIT_MAX_CHARS - 100) * 0.75),
-};
-
-function toBase64(bytes: Uint8Array): string {
-  let binary = '';
-  // Em pedaços: `String.fromCharCode(...bytes)` estoura a pilha com arquivos maiores.
-  for (let i = 0; i < bytes.length; i += 0x8000) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  }
-  return btoa(binary);
-}
 
 export interface Clock {
   now(): number;
@@ -107,19 +92,18 @@ export class SheetService {
    * 384 px, WebP) e guardada na própria ficha, para ir junto ao Mestre e na exportação.
    */
   async setPortrait(id: string, file: Blob): Promise<Result<void, Issue>> {
-    let processed;
+    let embedded;
     try {
-      processed = await this.processImage(file, PORTRAIT_LIMITS);
+      embedded = await embedImage(this.processImage, file, {
+        maxSide: PORTRAIT_MAX_SIDE,
+        maxChars: PORTRAIT_MAX_CHARS,
+      });
     } catch (error) {
       return invalidPortrait(
         error instanceof Error ? error.message : 'Não foi possível usar a imagem.',
       );
     }
-    const portrait = PortraitSchema.safeParse({
-      src: `data:${processed.mime};base64,${toBase64(processed.data)}`,
-      width: processed.width,
-      height: processed.height,
-    });
+    const portrait = PortraitSchema.safeParse(embedded);
     if (!portrait.success)
       return invalidPortrait('Não foi possível usar esta imagem. Tente outra.');
     await this.sheets.update(id, { portrait: portrait.data, updatedAt: this.clock.now() });

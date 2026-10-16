@@ -3,6 +3,8 @@ import {
   ChatMessageSchema,
   type ChatMessage,
   compileTemplate,
+  CoverSchema,
+  type Cover,
   GmKeySchema,
   IdSchema,
   LabelSchema,
@@ -43,6 +45,7 @@ import { z } from 'zod';
  *   IMAGE_REQUEST    [11][json]       o jogador pede a imagem que não tem
  *   IMAGE_PART       [12][hash][i][n][bytes]  uma parte da imagem (até 256 KB)
  *   CHAT             [13][json]       mensagens do chat (o Mestre repassa; sussurros só a quem recebe)
+ *   COVER            [14][json]       capa da campanha (ou nenhuma), enviada pelo Mestre
  *
  * Topologia em estrela: jogadores só conversam com o Mestre; cada ficha é um documento
  * separado, sincronizado apenas entre o dono e o Mestre (jogadores não recebem as fichas
@@ -68,6 +71,7 @@ const MessageType = {
   ImageRequest: 11,
   ImagePart: 12,
   Chat: 13,
+  Cover: 14,
 } as const;
 
 const base = {
@@ -129,7 +133,8 @@ export type IncomingMessage =
   | { type: 'cutscene'; cutscene: Cutscene | null }
   | { type: 'image-request'; hash: string }
   | { type: 'image-part'; hash: string; index: number; total: number; data: Uint8Array }
-  | { type: 'chat'; messages: ChatMessage[] };
+  | { type: 'chat'; messages: ChatMessage[] }
+  | { type: 'cover'; cover: Cover | null };
 
 const LogSchema = z.object({ entries: z.array(RollEntrySchema).min(1).max(LOG_CATCH_UP) });
 
@@ -138,6 +143,12 @@ export function encodeLog(entries: RollEntry[]): Uint8Array {
 }
 
 const ChatSchema = z.object({ messages: z.array(ChatMessageSchema).min(1).max(CHAT_CATCH_UP) });
+
+const CoverMessageSchema = z.object({ cover: CoverSchema.nullable() });
+
+export function encodeCover(cover: Cover | null): Uint8Array {
+  return encodeJson(MessageType.Cover, { cover });
+}
 
 export function encodeChat(messages: readonly ChatMessage[]): Uint8Array {
   return encodeJson(MessageType.Chat, { messages });
@@ -279,6 +290,10 @@ export function decodeMessage(data: Uint8Array): IncomingMessage | null {
       }
       case MessageType.Bye:
         return { type: 'bye' };
+      case MessageType.Cover: {
+        const message = CoverMessageSchema.safeParse(parseJson(decoding.readVarString(decoder)));
+        return message.success ? { type: 'cover', cover: message.data.cover } : null;
+      }
       case MessageType.Chat: {
         const chat = ChatSchema.safeParse(parseJson(decoding.readVarString(decoder)));
         return chat.success ? { type: 'chat', messages: chat.data.messages } : null;

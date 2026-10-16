@@ -4,6 +4,7 @@ As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos
 
 ## Próxima versão
 
+- **Capa da campanha:** o Mestre escolhe uma imagem em "Adicionar capa", no topo da página da campanha. Ela aparece ali e na lista de campanhas, e chega aos jogadores quando eles entram na sessão (fica guardada no aparelho deles). Trocar ou remover com a sessão aberta chega à mesa na hora.
 - **Retrato do personagem:** toque no círculo ao lado do nome da ficha para escolher uma imagem (PNG, JPEG ou WebP). Ela é reduzida no aparelho e fica guardada na própria ficha: aparece na lista de fichas, vai junto ao exportar e chega ao Mestre na sessão, no card do jogador e na ficha que ele abre. Pelo mesmo círculo dá para trocar ou remover.
 
 ## v0.3.1

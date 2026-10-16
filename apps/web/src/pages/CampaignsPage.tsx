@@ -62,6 +62,15 @@ export function CampaignsPage() {
               className="block rounded-xl focus-visible:outline-2"
             >
               <Card className="hover:border-primary/50 h-full transition-colors">
+                {campaign.cover && (
+                  <img
+                    src={campaign.cover.src}
+                    alt=""
+                    width={campaign.cover.width}
+                    height={campaign.cover.height}
+                    className="h-28 w-full object-cover"
+                  />
+                )}
                 <CardHeader>
                   <CardTitle>{campaign.name}</CardTitle>
                   <CardDescription>

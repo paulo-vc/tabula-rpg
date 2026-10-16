@@ -24,6 +24,7 @@ import { Link, useLocation } from 'wouter';
 import { encodeInvite } from '@/app/invite-link';
 import { useServices } from '@/app/services-context';
 import { useDeviceId } from '@/components/use-device';
+import { CampaignCover, CampaignCoverEditor } from '@/components/campaign/CampaignCover';
 import { CutscenePanel } from '@/components/campaign/CutscenePanel';
 import { GameMasterJournal, PlayerJournal } from '@/components/campaign/JournalPanel';
 import { GameMasterInitiative, PlayerInitiative } from '@/components/live/InitiativePanel';
@@ -92,6 +93,11 @@ export function CampaignPage({ id }: { id: string }) {
         <Badge variant="secondary">{campaign.templateName}</Badge>
         <Badge>{role === 'mestre' ? 'Você é o Mestre' : `Mestre: ${campaign.gmName}`}</Badge>
       </div>
+      {role === 'mestre' ? (
+        <CampaignCoverEditor campaign={campaign} />
+      ) : (
+        <CampaignCover campaign={campaign} />
+      )}
       {role === 'mestre' ? (
         <GameMasterView campaign={campaign} />
       ) : (

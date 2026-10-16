@@ -1,6 +1,22 @@
 import { z } from 'zod';
 import { IdSchema, LabelSchema, LIMITS, TimestampSchema } from '../schema/primitives';
+import { embeddedImageSchema } from '../image/embedded';
 import { TemplateRefSchema } from '../template/schema';
+
+/** Lado maior da capa da campanha depois de reduzida. */
+export const COVER_MAX_SIDE = 1200;
+/**
+ * Tamanho máximo da capa (data URL). O Mestre a envia aos jogadores numa mensagem da sessão,
+ * de até 512 KB.
+ */
+export const COVER_MAX_CHARS = 300_000;
+
+/** Capa da campanha, escolhida pelo Mestre e enviada aos jogadores na sessão. */
+export const CoverSchema = embeddedImageSchema({
+  maxChars: COVER_MAX_CHARS,
+  maxSide: COVER_MAX_SIDE,
+});
+export type Cover = z.infer<typeof CoverSchema>;
 
 /**
  * Segredo da sala: 128 bits aleatórios em base64url (22 caracteres). Cifra a sessão e só
@@ -45,6 +61,8 @@ export const CampaignSchema = z.object({
   templateRef: TemplateRefSchema,
   /** Nome do sistema, para exibir mesmo antes de ele estar instalado no dispositivo. */
   templateName: LabelSchema,
+  /** Capa da campanha (opcional). No jogador, a recebida do Mestre na última sessão. */
+  cover: CoverSchema.optional(),
   secret: CampaignSecretSchema,
   members: z.array(CampaignMemberSchema).max(LIMITS.members),
   createdAt: TimestampSchema,
