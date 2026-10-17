@@ -37,7 +37,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { formatNumber, parseNumber } from './format';
 import { markCount, Marks } from './Marks';
 import { BonusMark, BonusNote } from './Bonuses';
-import { CheckButton, RollButton } from './roll-context';
+import { AttackButtons, CheckButton, RollButton } from './roll-context';
 import { useDraft } from './use-draft';
 
 export type Derived = Result<number, EvaluationError> | undefined;
@@ -505,6 +505,7 @@ function ListControl({
                     />
                   </div>
                 ))}
+                <AttackButtons field={field} item={item} name={itemName(item, index)} />
                 {details.length > 0 && (
                   <Button
                     type="button"
