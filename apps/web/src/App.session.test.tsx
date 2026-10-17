@@ -201,7 +201,8 @@ describe('combate', () => {
     const { campaign } = await setUpTable();
     const user = renderApp(gm, `#/campanhas/${campaign.id}`);
     await user.click(await screen.findByRole('button', { name: 'Iniciar sessão' }));
-    await user.click(screen.getByRole('button', { name: 'Iniciar combate' }));
+    // A sessão abre em segundo plano: o combate aparece quando ela está aberta.
+    await user.click(await screen.findByRole('button', { name: 'Iniciar combate' }));
     await user.type(screen.getByRole('textbox', { name: 'Criatura' }), 'Goblin');
     await user.type(screen.getByRole('textbox', { name: 'Iniciativa' }), '5');
     await user.click(screen.getByRole('button', { name: 'Adicionar' }));
