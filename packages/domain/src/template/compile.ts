@@ -178,6 +178,27 @@ export function compileTemplate(template: SystemTemplate): Result<CompiledTempla
     validateFieldDefaults(field, ['fields', index], issues);
     if (field.type === 'list') {
       checkUnique(field.itemFields, ['fields', index, 'itemFields'], issues);
+      if (field.attack) {
+        const typeOf = (id: string) => field.itemFields.find((item) => item.id === id)?.type;
+        if (typeOf(field.attack.bonus) !== 'number') {
+          issues.push(
+            issue(
+              'ataque-invalido',
+              ['fields', index, 'attack', 'bonus'],
+              'O bônus de ataque precisa ser um campo de número do item',
+            ),
+          );
+        }
+        if (field.attack.damage !== undefined && typeOf(field.attack.damage) !== 'dice') {
+          issues.push(
+            issue(
+              'ataque-invalido',
+              ['fields', index, 'attack', 'damage'],
+              'O dano precisa ser um campo de dados do item',
+            ),
+          );
+        }
+      }
       field.itemFields.forEach((item, itemIndex) =>
         validateFieldDefaults(item, ['fields', index, 'itemFields', itemIndex], issues),
       );
