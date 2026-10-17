@@ -28,8 +28,19 @@ const NOTES: Record<Exclude<SoundCue, 'rolagem'>, Note[]> = {
   ],
 };
 
-/** Batidas curtas de ruído: dados rolando na mesa. */
-const DICE_HITS = [0, 0.07, 0.15, 0.26];
+/**
+ * Dados na mesa: dois dados, cada um quicando com intervalos e força cada vez menores, como
+ * um dado de verdade perdendo energia.
+ */
+const DICE_BOUNCES = [
+  { at: 0, gain: 1 },
+  { at: 0.09, gain: 0.7 },
+  { at: 0.16, gain: 0.5 },
+  { at: 0.21, gain: 0.35 },
+  { at: 0.245, gain: 0.22 },
+  { at: 0.27, gain: 0.12 },
+];
+const SECOND_DIE_DELAY = 0.035;
 
 /**
  * Sons gerados na hora (Web Audio), sem arquivos: funcionam igual na web e no desktop.
@@ -61,7 +72,11 @@ export function createWebAudioPlayer(): SoundPlayer {
       if (!audio || audio.state !== 'running' || volume <= 0) return;
       const start = audio.currentTime + 0.01;
       if (cue === 'rolagem') {
-        for (const at of DICE_HITS) hit(audio, start + at, volume);
+        for (const delay of [0, SECOND_DIE_DELAY]) {
+          for (const bounce of DICE_BOUNCES) {
+            hit(audio, start + delay + bounce.at, volume * bounce.gain);
+          }
+        }
         return;
       }
       for (const note of NOTES[cue]) tone(audio, start, note, volume);
@@ -84,18 +99,33 @@ function tone(audio: AudioContext, start: number, note: Note, volume: number): v
   oscillator.stop(begin + note.duration + 0.02);
 }
 
+/** Um quique: estalo curto de plástico (ruído filtrado) com um leve baque da mesa. */
 function hit(audio: AudioContext, at: number, volume: number): void {
-  const length = Math.floor(audio.sampleRate * 0.04);
+  const length = Math.floor(audio.sampleRate * 0.025);
   const buffer = audio.createBuffer(1, length, audio.sampleRate);
   const samples = buffer.getChannelData(0);
-  for (let i = 0; i < length; i++) samples[i] = (Math.random() * 2 - 1) * (1 - i / length);
+  // Decaimento rápido: o estalo é quase só o ataque.
+  for (let i = 0; i < length; i++) samples[i] = (Math.random() * 2 - 1) * (1 - i / length) ** 3;
   const source = audio.createBufferSource();
   source.buffer = buffer;
   const filter = audio.createBiquadFilter();
   filter.type = 'bandpass';
-  filter.frequency.value = 2200;
+  // Cada quique soa um pouco diferente (o dado cai em outra face).
+  filter.frequency.value = 2400 + Math.random() * 1600;
+  filter.Q.value = 1.4;
   const gain = audio.createGain();
-  gain.gain.value = 0.6 * volume;
+  gain.gain.value = 0.9 * volume;
   source.connect(filter).connect(gain).connect(audio.destination);
   source.start(at);
+
+  const thud = audio.createOscillator();
+  const thudGain = audio.createGain();
+  thud.type = 'sine';
+  thud.frequency.setValueAtTime(190, at);
+  thud.frequency.exponentialRampToValueAtTime(90, at + 0.05);
+  thudGain.gain.setValueAtTime(0.25 * volume, at);
+  thudGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.06);
+  thud.connect(thudGain).connect(audio.destination);
+  thud.start(at);
+  thud.stop(at + 0.07);
 }

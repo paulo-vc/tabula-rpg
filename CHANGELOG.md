@@ -2,6 +2,10 @@
 
 As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
+## Próxima versão
+
+- **Som de dados:** rolar dados (pela ficha, pelo painel ou com `/r` no chat) toca o som de dois dados quicando na mesa, também fora da sessão. As rolagens de outras pessoas da mesa tocam o mesmo som. Várias rolagens de uma vez (como várias criaturas rolando a iniciativa) tocam um som só.
+
 ## v0.3.4
 
 Melhorias pedidas depois do teste com o app desktop: o painel do Mestre reorganizado, o aviso da vez mais chamativo e o combate aceitando quem chega depois.
