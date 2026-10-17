@@ -4,6 +4,7 @@ As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos
 
 ## Próxima versão
 
+- **Jogadores no combate em andamento:** quem entra na sessão depois de o combate começar aparece em "Fora do combate", no painel do Mestre, e entra na ordem com um clique, sem encerrar o combate. A vez continua com quem estava, e o jogador que entrou vê o botão "Rolar iniciativa" enquanto a dele estiver em 0.
 - **Sua vez, mais chamativo:** quando chega a vez do jogador, uma faixa grande aparece no topo de qualquer tela, com a rodada, até ele fechar ou a vez passar. Se o app estiver em outra janela ou aba, o título pisca "⚔ Sua vez!" até ele voltar; no app desktop, o ícone também pisca na barra de tarefas; na versão web, dá para ativar uma notificação do sistema no ícone de som do cabeçalho.
 
 ## v0.3.3
