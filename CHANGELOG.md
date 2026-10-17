@@ -5,7 +5,6 @@ As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos
 ## Próxima versão
 
 - **Jogadores no combate em andamento:** quem entra na sessão depois de o combate começar aparece em "Fora do combate", no painel do Mestre, e entra na ordem com um clique, sem encerrar o combate. A vez continua com quem estava, e o jogador que entrou vê o botão "Rolar iniciativa" enquanto a dele estiver em 0.
-- **Painel do Mestre novo:** a página da campanha deixa de ser uma lista longa. No topo, a sessão (abrir e encerrar) fica sempre à mão. À esquerda, abas: Jogadores (com o convite, que se recolhe quando a mesa enche), Cutscene, Diário e Campanha (capa, convite e excluir). À direita, o combate e as rolagens ficam sempre à vista, acompanhando a página. No celular, o combate e as rolagens também viram abas.
 
 ## v0.3.3
 

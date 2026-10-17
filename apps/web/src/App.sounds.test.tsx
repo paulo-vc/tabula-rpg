@@ -14,6 +14,8 @@ let gm: Services;
 let player: Services;
 /** Os sons que a jogadora ouviu (e o volume). */
 let heard: [SoundCue, number][];
+/** Os avisos fora do app que a jogadora recebeu. */
+let notified: string[];
 
 beforeEach(() => {
   window.location.hash = '';
@@ -24,10 +26,12 @@ beforeEach(() => {
   // Dados previsíveis: sempre 4.
   gm = createServices(gmDb, { createTransport, dieRoller: () => 4 });
   heard = [];
+  notified = [];
   player = createServices(playerDb, {
     createTransport,
     dieRoller: () => 4,
     soundPlayer: { play: (cue, volume) => heard.push([cue, volume]) },
+    attention: { notify: (title, body) => notified.push(`${title} ${body}`) },
   });
 });
 
@@ -123,9 +127,20 @@ describe('sons', () => {
       ],
     }));
     await until(() => {
-      expect(screen.getByText('É a sua vez!')).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent('É a sua vez!');
     });
+    expect(screen.getByRole('alert')).toHaveTextContent('Rodada 1 · Lia');
     expect(cues()).toEqual(['mensagem', 'sussurro', 'rolagem', 'sua-vez']);
+    expect(notified).toEqual(['Sua vez! Rodada 1: é a vez de Lia.']);
+
+    // Fechar a faixa vale para esta vez; na próxima rodada, ela volta.
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Fechar aviso' }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    gm.session.updateInitiative(campaign.id, (t) => t && { ...t, round: 2 });
+    await until(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Rodada 2');
+    });
+    expect(notified).toHaveLength(2);
     expect(heard.every(([, volume]) => volume === 0.5)).toBe(true);
   });
 

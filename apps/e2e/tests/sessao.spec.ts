@@ -102,6 +102,9 @@ test.describe('mesa ao vivo, de ponta a ponta', () => {
 
     await gm.getByRole('button', { name: 'Próximo turno' }).click();
     await expect(player.getByText('É a sua vez!').first()).toBeVisible();
+    // A faixa grande no topo, em qualquer tela (aqui, a da campanha).
+    const banner = player.getByRole('alert').filter({ hasText: 'É a sua vez!' });
+    await expect(banner).toContainText('Rodada 1');
     await expect(playerOrder.getByRole('listitem').first()).toHaveAttribute('aria-current', 'step');
   });
 
