@@ -205,6 +205,23 @@ export function GameMasterInitiative({
 
   const order = turnOrder(tracker.combatants);
   const empty = order.length === 0;
+  // Jogadores da sessão que ainda não estão no combate (ex.: entraram depois do início).
+  const outside = live.players.filter(
+    (player) => !tracker.combatants.some((c) => c.id === player.sheetId),
+  );
+  const addPlayer = (player: (typeof outside)[number]) =>
+    change(
+      (t) =>
+        t &&
+        addCombatant(t, {
+          id: player.sheetId,
+          name: player.sheet?.name ?? player.displayName,
+          initiative: 0,
+          kind: 'jogador',
+          userId: player.userId,
+          hidden: false,
+        }),
+    );
   return (
     <Card>
       <CardHeader>
@@ -236,6 +253,27 @@ export function GameMasterInitiative({
             Encerrar combate
           </Button>
         </div>
+
+        {outside.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Fora do combate:</span>
+            {outside.map((player) => {
+              const name = player.sheet?.name ?? player.displayName;
+              return (
+                <Button
+                  key={player.sheetId}
+                  size="sm"
+                  variant="outline"
+                  className="h-7"
+                  aria-label={`Adicionar ${name} ao combate`}
+                  onClick={() => addPlayer(player)}
+                >
+                  <PlusIcon /> {name}
+                </Button>
+              );
+            })}
+          </div>
+        )}
 
         {empty ? (
           <p className="text-muted-foreground text-sm">Ninguém no combate. Adicione abaixo.</p>
@@ -401,7 +439,9 @@ export function PlayerInitiative({
   const userId = live.kind === 'jogador' ? live.userId : null;
   const mine = tracker?.combatants.find((c) => c.id === tracker.activeId)?.userId === userId;
   const myTurn = tracker?.phase === 'combate' && mine;
-  const inCombat = tracker?.combatants.some((c) => c.userId === userId) ?? false;
+  const me = tracker?.combatants.find((c) => c.userId === userId);
+  // Rola na preparação, ou durante o combate quem entrou depois (ainda com iniciativa 0).
+  const canRoll = me !== undefined && (tracker?.phase === 'preparando' || me.initiative === 0);
   // O aviso (e o som) de "é a sua vez" vale em qualquer tela: ver `SessionNotices`.
 
   if (!tracker) return null;
@@ -421,7 +461,7 @@ export function PlayerInitiative({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {tracker.phase === 'preparando' && initiativeRoll && inCombat && (
+        {canRoll && initiativeRoll && (
           <Button
             onClick={() =>
               void session
