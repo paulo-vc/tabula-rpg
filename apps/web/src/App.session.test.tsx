@@ -196,6 +196,60 @@ describe('combate', () => {
     await user.click(screen.getByRole('button', { name: 'Próximo turno' }));
     expect(within(order).getAllByRole('listitem')[1]).toHaveAttribute('aria-current', 'step');
   });
+
+  it('com o combate em andamento, o Mestre adiciona e tira criaturas', async () => {
+    const { campaign } = await setUpTable();
+    const user = renderApp(gm, `#/campanhas/${campaign.id}`);
+    await user.click(await screen.findByRole('button', { name: 'Iniciar sessão' }));
+    await user.click(screen.getByRole('button', { name: 'Iniciar combate' }));
+    await user.type(screen.getByRole('textbox', { name: 'Criatura' }), 'Goblin');
+    await user.type(screen.getByRole('textbox', { name: 'Iniciativa' }), '5');
+    await user.click(screen.getByRole('button', { name: 'Adicionar' }));
+    await user.click(screen.getByRole('button', { name: 'Começar' }));
+    await user.type(screen.getByRole('textbox', { name: 'Criatura' }), 'Orc');
+    await user.type(screen.getByRole('textbox', { name: 'Iniciativa' }), '20');
+    await user.click(screen.getByRole('button', { name: 'Adicionar' }));
+    const order = screen.getByRole('list', { name: 'Ordem de turno' });
+    await waitFor(() => expect(order).toHaveTextContent('Orc'));
+    await user.click(screen.getByRole('button', { name: 'Tirar Goblin do combate' }));
+    await waitFor(() => expect(order).not.toHaveTextContent('Goblin'));
+  });
+
+  it('quem entra na sessão depois do início entra no combate pelo Mestre e rola a iniciativa', async () => {
+    const { campaign } = await setUpTable();
+    await gm.session.startAsGameMaster(campaign.id);
+    gm.session.updateInitiative(campaign.id, () => ({
+      phase: 'combate',
+      round: 2,
+      activeId: 'orc',
+      combatants: [{ id: 'orc', name: 'Orc', initiative: 12, kind: 'npc', hidden: false }],
+    }));
+    await player.session.joinAsPlayer(campaign.id);
+    const user = renderApp(gm, `#/campanhas/${campaign.id}`);
+
+    await until(() => {
+      expect(screen.getByRole('button', { name: 'Adicionar Lia ao combate' })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: 'Adicionar Lia ao combate' }));
+    const order = screen.getByRole('list', { name: 'Ordem de turno' });
+    expect(order).toHaveTextContent('Lia');
+    expect(
+      screen.queryByRole('button', { name: 'Adicionar Lia ao combate' }),
+    ).not.toBeInTheDocument();
+    // A vez continua com quem estava.
+    expect(within(order).getByText('Orc').closest('li')).toHaveAttribute('aria-current', 'step');
+
+    // A jogadora recebe a ordem com ela, e pode rolar a iniciativa (ainda está com 0).
+    await until(() => {
+      const snapshot = player.session.getSnapshot();
+      expect(snapshot.kind === 'jogador' && snapshot.initiative?.combatants).toContainEqual(
+        expect.objectContaining({ name: 'Lia', initiative: 0 }),
+      );
+    });
+    cleanup();
+    renderApp(player, `#/campanhas/${campaign.id}`);
+    expect(await screen.findByRole('button', { name: /^Rolar iniciativa/ })).toBeInTheDocument();
+  });
 });
 
 describe('combate, do lado da jogadora', () => {
