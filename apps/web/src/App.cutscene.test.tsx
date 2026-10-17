@@ -74,6 +74,7 @@ describe('cutscene', () => {
       expect(screen.getByRole('article', { name: 'Jogador Ana' })).toBeInTheDocument();
     });
 
+    await user.click(screen.getByRole('tab', { name: /Cutscene/ }));
     const file = new File([fakePng(2000)], 'dragao-vermelho.png', { type: 'image/png' });
     await user.upload(screen.getByLabelText('Escolher imagem'), file);
     const dialog = await screen.findByRole('dialog', { name: 'Adicionar imagem' });
@@ -103,7 +104,8 @@ describe('cutscene', () => {
   it('sem sessão, o Mestre guarda imagens mas não consegue mostrar', async () => {
     const { campaign } = await setUpTable();
     await gm.gallery.add(campaign.id, new Blob([fakePng(1000)]), { title: 'Mapa', caption: '' });
-    renderApp(gm, `#/campanhas/${campaign.id}`);
+    const user = renderApp(gm, `#/campanhas/${campaign.id}`);
+    await user.click(await screen.findByRole('tab', { name: /Cutscene/ }));
     expect(await screen.findByRole('button', { name: 'Mostrar Mapa à mesa' })).toBeDisabled();
   });
 });

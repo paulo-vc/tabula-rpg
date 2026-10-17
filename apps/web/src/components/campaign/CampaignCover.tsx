@@ -2,21 +2,32 @@ import type { Campaign } from '@tabula/domain';
 import { ImageIcon, ImagePlusIcon, LoaderCircleIcon, Trash2Icon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { useServices } from '@/app/services-context';
 import { Button } from '@/components/ui/button';
 
 const ACCEPT = 'image/png,image/jpeg,image/webp';
 
 /** Capa da campanha, em faixa (o corte acompanha a largura da tela). */
-export function CampaignCover({ campaign }: { campaign: Campaign }) {
+export function CampaignCover({
+  campaign,
+  className = 'h-40 sm:h-56',
+  alt,
+}: {
+  campaign: Campaign;
+  /** Texto alternativo (padrão: "Capa de <campanha>"). */
+  alt?: string;
+  /** Altura da faixa. */
+  className?: string | undefined;
+}) {
   if (!campaign.cover) return null;
   return (
     <img
       src={campaign.cover.src}
-      alt={`Capa de ${campaign.name}`}
+      alt={alt ?? `Capa de ${campaign.name}`}
       width={campaign.cover.width}
       height={campaign.cover.height}
-      className="h-40 w-full rounded-xl object-cover sm:h-56"
+      className={cn('w-full rounded-xl object-cover', className)}
     />
   );
 }
@@ -74,7 +85,7 @@ export function CampaignCoverEditor({ campaign }: { campaign: Campaign }) {
   return (
     <div className="relative">
       {picker}
-      <CampaignCover campaign={campaign} />
+      <CampaignCover campaign={campaign} alt="Prévia da capa" />
       <div className="absolute right-3 bottom-3 flex gap-2">
         <Button
           size="sm"
