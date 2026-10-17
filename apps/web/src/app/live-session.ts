@@ -158,6 +158,7 @@ export class LiveSessionManager {
     setCutscene?: (cutscene: { info: Cutscene; data: Uint8Array } | null) => void;
   } | null = null;
   private readonly rollListeners = new Set<(entry: RollEntry) => void>();
+  private readonly ownRollListeners = new Set<(entry: RollEntry) => void>();
   private readonly chatListeners = new Set<(message: ChatMessage) => void>();
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
   /** Mantém a sala aberta um tempo depois de sair, para reentrar na hora. */
@@ -599,12 +600,19 @@ export class LiveSessionManager {
       active.shareRoll(entry);
       await this.rollLog.add(active.campaignId, [entry]);
     }
+    for (const listener of this.ownRollListeners) listener(entry);
     return ok(entry);
   }
 
   /** Registro de rolagens de uma campanha, da mais antiga para a mais recente. */
   rolls(campaignId: string): Promise<RollEntry[]> {
     return this.rollLog.list(campaignId);
+  }
+
+  /** Avisa quando este aparelho rola (pela ficha, pelo painel ou pelo chat; com ou sem sessão). */
+  onOwnRoll(listener: (entry: RollEntry) => void): () => void {
+    this.ownRollListeners.add(listener);
+    return () => this.ownRollListeners.delete(listener);
   }
 
   /** Avisa quando chega uma rolagem de outra pessoa da mesa. */
