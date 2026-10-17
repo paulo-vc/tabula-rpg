@@ -113,6 +113,8 @@ function PlayerSheet({
       ...roller,
       roll: (label: string, expression: string) =>
         roller.roll(`${player.sheet.name}: ${label}`, expression),
+      rollAll: (title: string, rolls: readonly { name: string; expression: string }[]) =>
+        roller.rollAll(`${player.sheet.name}: ${title}`, rolls),
     }),
     [roller, player.sheet.name],
   );

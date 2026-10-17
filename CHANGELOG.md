@@ -2,6 +2,10 @@
 
 As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
+## Próxima versão
+
+- **Ataques pela ficha:** na lista de ataques (aba Combate), cada arma ganha "Ataque", que rola o d20 com o bônus de ataque, e "Ataque + dano", que rola os dois e mostra num aviso só (ex.: "Machado de batalha: ataque 21 · dano 9"). O botão de rolar só o dano continua no campo de dano. Vale no D&D 5e (1.5.0) e no Lendas d20 (1.4.0); as fichas existentes se atualizam sozinhas. Quem cria sistemas pode ligar o mesmo recurso a qualquer lista (`attack` no arquivo do sistema).
+
 ## v0.3.4
 
 Melhorias pedidas depois do teste com o app desktop: o painel do Mestre reorganizado, o aviso da vez mais chamativo e o combate aceitando quem chega depois.

@@ -134,6 +134,16 @@ describe('compileTemplate', () => {
     ['iniciativa-invalida', (t) => (t.initiative = 'f_fantasma')],
     ['iniciativa-invalida', (t) => (t.initiative = 'f_nome')],
     [
+      'ataque-invalido',
+      (t) => Object.assign(field(t, 'f_inventario'), { attack: { bonus: 'i_nome' } }),
+    ],
+    [
+      'ataque-invalido',
+      (t) =>
+        Object.assign(field(t, 'f_inventario'), { attack: { bonus: 'i_qtd', damage: 'i_qtd' } }),
+    ],
+    ['ataque-invalido', (t) => Object.assign(field(t, 'f_inventario'), { attack: { bonus: 'x' } })],
+    [
       'marcadores-invalidos',
       (t) => Object.assign(field(t, 'f_for'), { display: 'marcadores' }), // sem máximo
     ],
@@ -195,6 +205,16 @@ describe('compileTemplate', () => {
         },
       ],
     });
+  });
+
+  it('aceita uma lista de ataques (bônus de número, dano de dados)', () => {
+    const template = variant((t) => {
+      const list = field(t, 'f_inventario') as { itemFields: unknown[] };
+      list.itemFields.push({ id: 'i_dano', key: 'dano', label: 'Dano', type: 'dice' });
+      Object.assign(list, { attack: { bonus: 'i_qtd', damage: 'i_dano' } });
+    });
+    expect(SystemTemplateSchema.safeParse(template).success).toBe(true);
+    expect(codesOf(template)).toEqual([]);
   });
 
   it('aceita marcadores em números inteiros de 0 a até 10 e em recursos', () => {

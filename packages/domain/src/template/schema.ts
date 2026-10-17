@@ -118,6 +118,11 @@ const ListFieldSchema = z.object({
   type: z.literal('list'),
   itemFields: z.array(ListItemFieldSchema).min(1).max(LIMITS.listItemFields),
   maxItems: z.number().int().min(1).max(LIMITS.listItems).optional(),
+  /**
+   * Lista de ataques: o campo de número que é o bônus de ataque e, opcional, o de dados que é
+   * o dano. Com isso, cada item ganha "Atacar" (o dado dos testes + o bônus) e "Ataque e dano".
+   */
+  attack: z.object({ bonus: IdSchema, damage: IdSchema.optional() }).optional(),
 });
 
 export const FieldDefSchema = z.discriminatedUnion('type', [
