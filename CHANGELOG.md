@@ -2,6 +2,10 @@
 
 As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
+## Próxima versão
+
+- **Jogadores no combate em andamento:** quem entra na sessão depois de o combate começar aparece em "Fora do combate", no painel do Mestre, e entra na ordem com um clique, sem encerrar o combate. A vez continua com quem estava, e o jogador que entrou vê o botão "Rolar iniciativa" enquanto a dele estiver em 0.
+
 ## v0.3.3
 
 - **Sons:** avisos curtos na sessão: a sua vez no combate, rolagens de outras pessoas, mensagens e sussurros do chat. No ícone de som do cabeçalho dá para desligar, ajustar o volume e testar; a escolha fica guardada no aparelho.
