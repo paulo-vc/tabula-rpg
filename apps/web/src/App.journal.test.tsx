@@ -85,6 +85,7 @@ describe('diário da campanha', () => {
     const user = renderApp(gm, `#/campanhas/${campaign.id}`);
     await user.click(await screen.findByRole('button', { name: 'Iniciar sessão' }));
     await player.session.joinAsPlayer(campaign.id);
+    await user.click(screen.getByRole('tab', { name: /Diário/ }));
 
     await writeEntry(user, 'Sessão 1', 'A mesa chegou à mina.', true);
     await writeEntry(user, 'O vilão é o prefeito', 'Não contar ainda.', false);

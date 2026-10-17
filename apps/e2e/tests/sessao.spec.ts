@@ -179,6 +179,7 @@ test.describe('mesa ao vivo, de ponta a ponta', () => {
     await joinWithInvite(player, await inviteLink(gm), 'Ana', 'Lia');
     await startTable(gm, player, 'Ana');
 
+    await gm.getByRole('tab', { name: /Diário/ }).click();
     const write = async (title: string, text: string, shared: boolean) => {
       await gm.getByRole('button', { name: 'Nova entrada' }).click();
       const dialog = gm.getByRole('dialog', { name: 'Nova entrada' });
@@ -210,6 +211,7 @@ test.describe('mesa ao vivo, de ponta a ponta', () => {
     // Uma imagem de verdade (PNG): uma captura da própria tela. A redução (canvas → WebP)
     // e o IndexedDB são os do navegador.
     const png = await gm.screenshot();
+    await gm.getByRole('tab', { name: /Cutscene/ }).click();
     await gm.getByLabel('Escolher imagem').setInputFiles({
       name: 'mapa-da-mina.png',
       mimeType: 'image/png',
@@ -315,6 +317,7 @@ test.describe('mesa ao vivo, de ponta a ponta', () => {
     await joinWithInvite(player, await inviteLink(gm), 'Ana', 'Lia');
     await startTable(gm, player, 'Ana');
 
+    await gm.getByRole('tab', { name: /Campanha/ }).click();
     await gm.getByLabel('Arquivo da capa').setInputFiles({
       name: 'mina.png',
       mimeType: 'image/png',

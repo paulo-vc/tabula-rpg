@@ -1,7 +1,6 @@
 import {
   computeDerived,
   initiativeExpression,
-  inviteFor,
   linkedSheetId,
   roleOf,
   type Campaign,
@@ -9,55 +8,31 @@ import {
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   ArrowLeftIcon,
-  CopyIcon,
   DownloadIcon,
   FileUpIcon,
   LoaderCircleIcon,
   LogOutIcon,
   ScrollTextIcon,
-  Trash2Icon,
   TriangleAlertIcon,
 } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
-import { Link, useLocation } from 'wouter';
-import { encodeInvite } from '@/app/invite-link';
+import { Link } from 'wouter';
 import { useServices } from '@/app/services-context';
 import { useDeviceId } from '@/components/use-device';
-import { CampaignCover, CampaignCoverEditor } from '@/components/campaign/CampaignCover';
-import { CutscenePanel } from '@/components/campaign/CutscenePanel';
-import { GameMasterJournal, PlayerJournal } from '@/components/campaign/JournalPanel';
-import { GameMasterInitiative, PlayerInitiative } from '@/components/live/InitiativePanel';
+import { CampaignCover } from '@/components/campaign/CampaignCover';
+import { PlayerJournal } from '@/components/campaign/JournalPanel';
+import { PlayerInitiative } from '@/components/live/InitiativePanel';
 import { RollLog } from '@/components/live/RollLog';
-import { GameMasterSession, PlayerSession } from '@/components/live/SessionPanels';
+import { PlayerSession } from '@/components/live/SessionPanels';
+import { DangerZone } from '@/components/campaign/DangerZone';
+import { GameMasterView } from '@/components/campaign/GameMasterView';
 import { useImport } from '@/components/use-import';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { publicAppUrl } from '@/lib/public-url';
-
-async function copy(text: string, what: string) {
-  try {
-    await navigator.clipboard.writeText(text);
-    toast.success(`${what} copiado`);
-  } catch {
-    toast.error('Não foi possível copiar', {
-      description: 'Selecione o texto e copie manualmente.',
-    });
-  }
-}
 
 export function CampaignPage({ id }: { id: string }) {
   const { campaignRepository } = useServices();
@@ -93,93 +68,15 @@ export function CampaignPage({ id }: { id: string }) {
         <Badge variant="secondary">{campaign.templateName}</Badge>
         <Badge>{role === 'mestre' ? 'Você é o Mestre' : `Mestre: ${campaign.gmName}`}</Badge>
       </div>
-      {role === 'mestre' ? (
-        <CampaignCoverEditor campaign={campaign} />
-      ) : (
-        <CampaignCover campaign={campaign} />
-      )}
+      <CampaignCover
+        campaign={campaign}
+        className={role === 'mestre' ? 'h-24 sm:h-32' : undefined}
+      />
       {role === 'mestre' ? (
         <GameMasterView campaign={campaign} />
       ) : (
         <PlayerView campaign={campaign} userId={deviceId} />
       )}
-    </div>
-  );
-}
-
-function GameMasterView({ campaign }: { campaign: Campaign }) {
-  const { campaigns, catalog } = useServices();
-  // Dado dos testes do sistema: o Mestre rola a iniciativa das criaturas com ele ("+3").
-  const checkDice = useLiveQuery(
-    async () => (await catalog.get(campaign.templateRef.id))?.checkDice,
-    [catalog, campaign.templateRef.id],
-  );
-  const baseUrl = publicAppUrl();
-  const code = encodeInvite(inviteFor(campaign));
-  const link = baseUrl ? campaigns.inviteLink(campaign, baseUrl) : null;
-
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <h2>Convidar jogadores</h2>
-          </CardTitle>
-          <CardDescription>
-            Envie o convite pelo chat do grupo. Quem tiver o convite entra na mesa: compartilhe só
-            com seus jogadores.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {link && (
-            <div className="space-y-2">
-              <Label htmlFor="convite-link">Link</Label>
-              <div className="flex gap-2">
-                <Input id="convite-link" readOnly value={link} onFocus={(e) => e.target.select()} />
-                <Button type="button" onClick={() => copy(link, 'Link')}>
-                  <CopyIcon /> Copiar
-                </Button>
-              </div>
-            </div>
-          )}
-          <div className="space-y-2">
-            <Label htmlFor="convite-codigo">{link ? 'Ou só o código' : 'Código do convite'}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="convite-codigo"
-                readOnly
-                value={code}
-                className="font-mono"
-                onFocus={(e) => e.target.select()}
-              />
-              <Button
-                type="button"
-                variant={link ? 'outline' : 'default'}
-                onClick={() => copy(code, 'Código')}
-              >
-                <CopyIcon /> Copiar
-              </Button>
-            </div>
-            <p className="text-muted-foreground text-xs">
-              O jogador cola o código em Campanhas → Entrar com convite.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <GameMasterSession campaign={campaign} />
-      <GameMasterInitiative campaignId={campaign.id} checkDice={checkDice} />
-      <RollLog campaignId={campaign.id} isGameMaster />
-      <CutscenePanel campaignId={campaign.id} />
-      <GameMasterJournal campaignId={campaign.id} />
-
-      <DangerZone
-        campaign={campaign}
-        title="Excluir campanha"
-        description="A campanha será apagada deste dispositivo. As fichas não são apagadas."
-        action="Excluir"
-        icon={<Trash2Icon />}
-      />
     </div>
   );
 }
@@ -353,53 +250,6 @@ function SheetChooser({
           </Button>
         </div>
       </form>
-    </div>
-  );
-}
-
-function DangerZone({
-  campaign,
-  title,
-  description,
-  action,
-  icon,
-}: {
-  campaign: Campaign;
-  title: string;
-  description: string;
-  action: string;
-  icon: React.ReactNode;
-}) {
-  const { campaigns } = useServices();
-  const [, navigate] = useLocation();
-  const [confirm, setConfirm] = useState(false);
-  return (
-    <div className="lg:col-span-2">
-      <Button variant="ghost" className="text-destructive" onClick={() => setConfirm(true)}>
-        {icon} {title}
-      </Button>
-      <AlertDialog open={confirm} onOpenChange={setConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {title}: "{campaign.name}"?
-            </AlertDialogTitle>
-            <AlertDialogDescription>{description}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={async () => {
-                await campaigns.delete(campaign.id);
-                navigate('/campanhas');
-              }}
-            >
-              {action}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

@@ -36,11 +36,72 @@ function useBusy() {
   return [busy, run] as const;
 }
 
-/** Painel do Mestre: abre a sessão e mostra os jogadores ao vivo. */
-export function GameMasterSession({ campaign }: { campaign: Campaign }) {
-  const { session, catalog } = useServices();
+/**
+ * Barra da sessão do Mestre: estado e o botão de abrir ou encerrar. Fica no topo da página
+ * da campanha, sempre à vista.
+ */
+export function GameMasterSessionBar({ campaign }: { campaign: Campaign }) {
+  const { session } = useServices();
   const live = useLiveSession();
   const [busy, run] = useBusy();
+  const active = live.kind === 'mestre' && live.campaignId === campaign.id;
+
+  const start = () =>
+    run(async () => {
+      const result = await session.startAsGameMaster(campaign.id);
+      if (!result.ok)
+        toast.error('Não foi possível iniciar a sessão', { description: result.error.message });
+    });
+
+  const online = active ? live.players.filter((p) => p.online).length : 0;
+  return (
+    <section
+      aria-label="Sessão"
+      className="bg-card flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border px-4 py-3"
+    >
+      {active ? (
+        <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+          <RadioIcon className="size-4" /> Ao vivo · {online} online
+        </span>
+      ) : (
+        <span className="text-muted-foreground text-sm">
+          Sessão fechada. Abra quando o jogo começar: os jogadores entram pela campanha deles.
+        </span>
+      )}
+      {active ? (
+        <Button
+          size="sm"
+          variant="outline"
+          className="ml-auto"
+          disabled={busy}
+          onClick={() => run(() => session.stop())}
+        >
+          <SquareIcon /> Encerrar sessão
+        </Button>
+      ) : (
+        <Button size="sm" className="ml-auto" disabled={busy} onClick={start}>
+          <PlayIcon /> Iniciar sessão
+        </Button>
+      )}
+      {active && live.connectionFailures > 0 && (
+        <p role="alert" className="flex w-full gap-2 text-sm text-amber-600 dark:text-amber-400">
+          <TriangleAlertIcon className="size-4 shrink-0" />
+          <span>
+            {live.connectionFailures === 1
+              ? 'Um jogador não conseguiu se conectar.'
+              : `${live.connectionFailures} tentativas de conexão falharam.`}{' '}
+            {DIRECT_FAILURE}
+          </span>
+        </p>
+      )}
+    </section>
+  );
+}
+
+/** Os jogadores da sessão, ao vivo (cards com a ficha de cada um). */
+export function GameMasterPlayers({ campaign }: { campaign: Campaign }) {
+  const { catalog } = useServices();
+  const live = useLiveSession();
   const active = live.kind === 'mestre' && live.campaignId === campaign.id;
   const template = useLiveQuery(
     () => catalog.get(campaign.templateRef.id),
@@ -50,82 +111,37 @@ export function GameMasterSession({ campaign }: { campaign: Campaign }) {
     () => (template ? catalog.compile(template) : undefined),
     [catalog, template],
   );
-
-  const start = () =>
-    run(async () => {
-      const result = await session.startAsGameMaster(campaign.id);
-      if (!result.ok)
-        toast.error('Não foi possível iniciar a sessão', { description: result.error.message });
-    });
-
   const players = active ? live.players : [];
-  const online = players.filter((p) => p.online).length;
 
+  if (!active) {
+    return (
+      <p className="text-muted-foreground py-6 text-center text-sm">
+        Os jogadores aparecem aqui quando a sessão estiver aberta, com a ficha de cada um em tempo
+        real.
+      </p>
+    );
+  }
+  if (players.length === 0) {
+    return (
+      <div className="text-muted-foreground flex flex-col items-center gap-2 py-6 text-center text-sm">
+        <UsersIcon className="size-8" />
+        Aguardando jogadores. Eles aparecem aqui ao entrar na sessão.
+      </div>
+    );
+  }
   return (
-    <Card className="lg:col-span-2">
-      <CardHeader>
-        <CardTitle className="flex flex-wrap items-center gap-3">
-          <h2>Sessão</h2>
-          {active ? (
-            <>
-              <span className="flex items-center gap-1.5 text-sm font-normal text-emerald-500">
-                <RadioIcon className="size-4" /> Ao vivo · {online} online
-              </span>
-              <Button
-                size="sm"
-                variant="outline"
-                className="ml-auto"
-                disabled={busy}
-                onClick={() => run(() => session.stop())}
-              >
-                <SquareIcon /> Encerrar sessão
-              </Button>
-            </>
-          ) : (
-            <Button size="sm" className="ml-auto" disabled={busy} onClick={start}>
-              <PlayIcon /> Iniciar sessão
-            </Button>
-          )}
-        </CardTitle>
-        <CardDescription>
-          {active
-            ? 'Mantenha esta janela aberta durante o jogo. As fichas dos jogadores atualizam em tempo real.'
-            : 'Inicie a sessão quando o jogo começar. Os jogadores entram pela campanha deles.'}
-        </CardDescription>
-      </CardHeader>
-      {active && (
-        <CardContent className="space-y-4">
-          {live.connectionFailures > 0 && (
-            <p role="alert" className="flex gap-2 text-sm text-amber-600 dark:text-amber-400">
-              <TriangleAlertIcon className="size-4 shrink-0" />
-              {live.connectionFailures === 1
-                ? 'Um jogador não conseguiu se conectar.'
-                : `${live.connectionFailures} tentativas de conexão falharam.`}{' '}
-              {DIRECT_FAILURE}
-            </p>
-          )}
-          {players.length === 0 ? (
-            <div className="text-muted-foreground flex flex-col items-center gap-2 py-6 text-center text-sm">
-              <UsersIcon className="size-8" />
-              Aguardando jogadores. Eles aparecem aqui ao entrar na sessão.
-            </div>
-          ) : (
-            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {players.map((player) => (
-                <li key={player.sheetId}>
-                  <PlayerCard
-                    player={player}
-                    compiled={compiled}
-                    campaignId={campaign.id}
-                    connection={active ? live.connections[player.sheetId] : undefined}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      )}
-    </Card>
+    <ul className="grid gap-3 sm:grid-cols-2">
+      {players.map((player) => (
+        <li key={player.sheetId}>
+          <PlayerCard
+            player={player}
+            compiled={compiled}
+            campaignId={campaign.id}
+            connection={live.connections[player.sheetId]}
+          />
+        </li>
+      ))}
+    </ul>
   );
 }
 

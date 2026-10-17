@@ -91,6 +91,7 @@ describe('capa da campanha', () => {
     const user = renderApp(gm, `#/campanhas/${campaign.id}`);
     await user.click(await screen.findByRole('button', { name: 'Iniciar sessão' }));
     await connect(campaign.id);
+    await user.click(screen.getByRole('tab', { name: /Campanha/ }));
 
     await user.upload(
       screen.getByLabelText('Arquivo da capa'),
