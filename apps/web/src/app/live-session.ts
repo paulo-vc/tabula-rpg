@@ -1,4 +1,6 @@
 import {
+  BonusSchema,
+  type Bonus,
   type ChatMessage,
   type ChatRepository,
   CHAT_TEXT_LIMIT,
@@ -145,6 +147,8 @@ export class LiveSessionManager {
     save: () => Promise<void>;
     /** Só na sessão do Mestre: altera a ficha de um jogador. */
     setPlayerValues?: (sheetId: string, values: Record<string, FieldValue>) => boolean;
+    /** Só na sessão do Mestre: troca os bônus da ficha de um jogador. */
+    setPlayerBonuses?: (sheetId: string, bonuses: Bonus[]) => boolean;
     campaignId: string;
     /** Quem rola nesta sessão (nome exibido no registro). */
     author: { id: string; name: string };
@@ -327,6 +331,7 @@ export class LiveSessionManager {
         await host.stop();
       },
       setPlayerValues: (sheetId, values) => host.setValues(sheetId, values),
+      setPlayerBonuses: (sheetId, bonuses) => host.setBonuses(sheetId, bonuses),
       campaignId,
       author: { id: campaign.gmId, name: campaign.gmName },
       shareRoll: (entry) => host.roll(entry),
@@ -395,6 +400,18 @@ export class LiveSessionManager {
           applyGmChanges(changes).catch((error: unknown) =>
             console.error('Falha ao gravar alteração do Mestre', error),
           );
+        },
+        // O Mestre mudou os bônus (ex.: uma maldição): grava os que valem para este sistema.
+        onRemoteBonuses: (bonuses) => {
+          const accepted = compiled ? acceptedBonuses(compiled, bonuses) : [];
+          void this.sheets
+            .update(sheetId, { bonuses: accepted, updatedAt: this.clock.now() })
+            .then(() => {
+              const fieldIds = accepted.flatMap((b) => b.targets.map((t) => t.fieldId));
+              gmChange = { fieldIds, count: (gmChange?.count ?? 0) + 1 };
+              publish();
+            })
+            .catch((error: unknown) => console.error('Falha ao gravar os bônus do Mestre', error));
         },
         onRolls: (entries) => this.recordRolls(campaignId, entries),
         onChat: (messages) => this.recordChat(campaignId, messages),
@@ -561,6 +578,28 @@ export class LiveSessionManager {
       return failure('sem-sessao', 'Abra a sessão para alterar as fichas dos jogadores.');
     }
     if (!this.active?.setPlayerValues?.(sheetId, { [fieldId]: value })) {
+      return failure('ficha-ausente', 'Esta ficha não faz parte da sessão.');
+    }
+    return ok(undefined);
+  }
+
+  /** O Mestre troca os bônus da ficha de um jogador (ex.: aplica uma maldição ou bênção). */
+  async setPlayerBonuses(
+    campaignId: string,
+    sheetId: string,
+    bonuses: Bonus[],
+  ): Promise<Result<void, Issue>> {
+    const campaign = await this.campaigns.get(campaignId);
+    const compiled = campaign ? await this.compiledFor(campaign) : undefined;
+    if (!compiled) return failure('campanha-ausente', 'Campanha não encontrada.');
+    if (bonuses.some((bonus) => !BonusSchema.safeParse(bonus).success)) {
+      return failure('bonus-invalido', 'Bônus inválido: confira o nome e os valores.');
+    }
+    const snapshot = this.snapshot;
+    if (snapshot.kind !== 'mestre' || snapshot.campaignId !== campaignId) {
+      return failure('sem-sessao', 'Abra a sessão para alterar as fichas dos jogadores.');
+    }
+    if (!this.active?.setPlayerBonuses?.(sheetId, acceptedBonuses(compiled, bonuses))) {
       return failure('ficha-ausente', 'Esta ficha não faz parte da sessão.');
     }
     return ok(undefined);
@@ -829,6 +868,26 @@ function acceptedChanges(
     const field = compiled.fieldsById.get(fieldId);
     if (!field || field.type === 'computed' || field.visibility === 'gm') continue;
     if (valueProblem(field, value) === undefined) accepted[fieldId] = value;
+  }
+  return accepted;
+}
+
+/**
+ * Bônus aceitos numa ficha: só os alvos que são campos de número ou calculados do sistema, e
+ * não secretos. Um bônus sem nenhum alvo válido sai (o conteúdo pode ter vindo da rede).
+ */
+export function acceptedBonuses(compiled: CompiledTemplate, bonuses: readonly Bonus[]): Bonus[] {
+  const accepted: Bonus[] = [];
+  for (const bonus of bonuses) {
+    const targets = bonus.targets.filter(({ fieldId }) => {
+      const field = compiled.fieldsById.get(fieldId);
+      return (
+        field !== undefined &&
+        (field.type === 'number' || field.type === 'computed') &&
+        field.visibility !== 'gm'
+      );
+    });
+    if (targets.length > 0) accepted.push({ ...bonus, targets });
   }
   return accepted;
 }

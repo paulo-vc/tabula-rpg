@@ -9,6 +9,7 @@ import {
   PortraitSchema,
   type Issue,
   type Result,
+  type Bonus,
   type CharacterSheet,
   type CompiledTemplate,
   type DeviceRepository,
@@ -112,6 +113,11 @@ export class SheetService {
 
   async removePortrait(id: string): Promise<void> {
     await this.sheets.update(id, { portrait: null, updatedAt: this.clock.now() });
+  }
+
+  /** Troca os bônus da ficha (a lista inteira). */
+  async setBonuses(id: string, bonuses: Bonus[]): Promise<void> {
+    await this.sheets.update(id, { bonuses, updatedAt: this.clock.now() });
   }
 
   async rename(id: string, name: string): Promise<void> {

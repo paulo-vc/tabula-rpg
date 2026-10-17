@@ -10,6 +10,7 @@ export { validateTemplate } from './template/validate';
 
 export * from './sheet/schema';
 export * from './sheet/portrait';
+export * from './sheet/bonuses';
 export { embeddedImageSchema } from './image/embedded';
 export { defaultValue, listItemValue, valueProblem } from './sheet/values';
 export { computeDerived, type DerivedValues } from './sheet/compute';

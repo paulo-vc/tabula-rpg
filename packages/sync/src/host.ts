@@ -2,6 +2,7 @@ import {
   canSee,
   CHAT_CATCH_UP,
   CHAT_LIMIT,
+  type Bonus,
   type ChatMessage,
   type Cover,
   LIMITS,
@@ -37,7 +38,7 @@ import {
   type Hello,
   type Reject,
 } from './protocol';
-import { deepEqual, readSheet, VALUES, type SheetSnapshot } from './sheet-doc';
+import { deepEqual, readSheet, VALUES, writeBonuses, type SheetSnapshot } from './sheet-doc';
 import type { ConnectionInfo, SyncTransport } from './transport';
 
 export interface HostCampaign {
@@ -209,6 +210,18 @@ export class SessionHost {
         if (!deepEqual(map.get(fieldId), value)) map.set(fieldId, value);
       }
     }, GM_EDIT);
+    return true;
+  }
+
+  /**
+   * O Mestre troca os bônus da ficha de um jogador (ex.: aplica uma maldição). Como os
+   * valores, seguem na hora se ele estiver online, ou quando reconectar.
+   * @returns `false` se a ficha não é conhecida nesta campanha.
+   */
+  setBonuses(sheetId: string, bonuses: readonly Bonus[]): boolean {
+    const entry = this.entries.get(sheetId);
+    if (!entry || this.stopped) return false;
+    entry.doc.transact(() => writeBonuses(entry.doc, bonuses), GM_EDIT);
     return true;
   }
 

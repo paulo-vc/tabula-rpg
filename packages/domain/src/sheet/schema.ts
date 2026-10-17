@@ -7,6 +7,7 @@ import {
   TimestampSchema,
 } from '../schema/primitives';
 import { TemplateRefSchema } from '../template/schema';
+import { BonusSchema, BONUS_LIMIT } from './bonuses';
 import { PortraitSchema } from './portrait';
 
 /** Valor de um campo simples (também usado dentro de itens de lista). */
@@ -49,6 +50,8 @@ export const CharacterSheetSchema = z.object({
   templateRef: TemplateRefSchema,
   /** Retrato do personagem (opcional). Vai junto com a ficha para o Mestre e na exportação. */
   portrait: PortraitSchema.optional(),
+  /** Bônus de itens, maldições e bênçãos (ver `BonusSchema`). */
+  bonuses: z.array(BonusSchema).max(BONUS_LIMIT).optional(),
   /** Valores indexados pelo ID estável do campo. Campos calculados nunca aparecem aqui. */
   values: z.record(IdSchema, FieldValueSchema),
   /**

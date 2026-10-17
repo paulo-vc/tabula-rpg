@@ -129,12 +129,13 @@ export class DexieSheetRepository implements SheetRepository {
     if (!parsed.success) {
       throw new InvalidDataError('Alteração inválida', zodIssues(parsed.error.issues));
     }
-    const { name, values, portrait, updatedAt } = parsed.data;
+    const { name, values, portrait, bonuses, updatedAt } = parsed.data;
     // Caminhos `values.<id>` alteram só aqueles campos. IDs não contêm ".", então são seguros.
     const spec: Record<string, unknown> = { updatedAt };
     if (name !== undefined) spec.name = name;
     // `undefined` numa atualização do Dexie remove a propriedade.
     if (portrait !== undefined) spec.portrait = portrait ?? undefined;
+    if (bonuses !== undefined) spec.bonuses = bonuses;
     for (const [fieldId, value] of Object.entries(values ?? {})) spec[`values.${fieldId}`] = value;
     const updated = await this.db.sheets.update(id, spec as UpdateSpec<CharacterSheet>);
     return updated > 0;
@@ -149,8 +150,9 @@ const SheetChangesSchema = CharacterSheetSchema.pick({
   name: true,
   values: true,
   updatedAt: true,
+  bonuses: true,
 })
-  .partial({ name: true, values: true })
+  .partial({ name: true, values: true, bonuses: true })
   .extend({ portrait: PortraitSchema.nullable().optional() });
 
 export class DexieCampaignRepository implements CampaignRepository {

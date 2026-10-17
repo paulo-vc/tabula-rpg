@@ -106,7 +106,11 @@ function PlayerView({ campaign, userId }: { campaign: Campaign; userId: string }
   const initiativeRoll = useMemo(() => {
     if (!linked || !linkedTemplate) return null;
     const compiled = catalog.compile(linkedTemplate);
-    return initiativeExpression(compiled, linked.values, computeDerived(compiled, linked.values));
+    return initiativeExpression(
+      compiled,
+      linked.values,
+      computeDerived(compiled, linked.values, linked.bonuses),
+    );
   }, [catalog, linked, linkedTemplate]);
 
   // `null`: sem ficha vinculada (ou a vinculada foi apagada). `undefined`: carregando.

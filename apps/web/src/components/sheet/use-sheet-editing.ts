@@ -1,5 +1,6 @@
 import {
   computeDerived,
+  type Bonus,
   type CompiledTemplate,
   type FieldValue,
   type SheetValues,
@@ -23,10 +24,15 @@ export function useSheetEditing(
   compiled: CompiledTemplate,
   stored: SheetValues | undefined,
   persist: (fieldId: string, value: FieldValue) => Promise<void>,
+  /** Bônus de itens, maldições e bênçãos, que entram nos cálculos. */
+  bonuses?: readonly Bonus[],
 ) {
   const [pending, setPending] = useState<Record<string, FieldValue>>({});
   const values = useMemo(() => ({ ...stored, ...pending }), [stored, pending]);
-  const derived = useMemo(() => computeDerived(compiled, values), [compiled, values]);
+  const derived = useMemo(
+    () => computeDerived(compiled, values, bonuses),
+    [compiled, values, bonuses],
+  );
 
   const queue = useRef(new Map<string, FieldValue>());
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());

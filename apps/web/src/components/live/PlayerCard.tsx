@@ -111,9 +111,10 @@ export function PlayerCard({
   campaignId?: string;
 }) {
   const values = player.sheet?.values;
+  const bonuses = player.sheet?.bonuses;
   const derived = useMemo(
-    () => (compiled && values ? computeDerived(compiled, values) : undefined),
-    [compiled, values],
+    () => (compiled && values ? computeDerived(compiled, values, bonuses) : undefined),
+    [compiled, values, bonuses],
   );
 
   return (

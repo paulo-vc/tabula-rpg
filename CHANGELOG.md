@@ -2,6 +2,10 @@
 
 As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
+## Próxima versão
+
+- **Bônus de itens, maldições e bênçãos:** o botão "Bônus", no topo da ficha, guarda o que muda valores fixos: um item com +2 de Força, uma bênção com +1 no bônus de proficiência, uma maldição com −2 em Sabedoria e −1 na CA. Cada bônus tem nome, origem e um ou mais campos, e liga e desliga. Vale para qualquer número ou valor calculado de qualquer sistema, e o que depende dele acompanha: +2 de Força muda o modificador, as perícias e os testes de Força. O campo mostra o valor com bônus e, ao passar o mouse, de onde ele vem. Na sessão, o Mestre também aplica bônus na ficha do jogador (pela ficha que ele abre no painel), e chega na hora.
+
 ## v0.3.4
 
 Melhorias pedidas depois do teste com o app desktop: o painel do Mestre reorganizado, o aviso da vez mais chamativo e o combate aceitando quem chega depois.

@@ -1,8 +1,10 @@
 import {
+  BonusSchema,
   FieldValueSchema,
   IdSchema,
   PortraitSchema,
   TemplateRefSchema,
+  type Bonus,
   type CharacterSheet,
   type FieldValue,
   type Portrait,
@@ -14,7 +16,9 @@ import { z } from 'zod';
 /**
  * Representação de uma ficha num documento Yjs:
  * - `meta`: id, nome, dono, template e retrato;
- * - `values`: um valor por campo (o último a escrever vence, por campo).
+ * - `values`: um valor por campo (o último a escrever vence, por campo);
+ * - `bonuses`: um bônus por ID (itens, maldições, bênçãos; o último a escrever vence, por bônus).
+ *   O dono e o Mestre podem mexer em bônus diferentes ao mesmo tempo sem perder nada.
  *
  * Listas e recursos são valores inteiros: o dono e o Mestre podem alterar a ficha
  * (Fase 7), e se os dois mudarem o MESMO campo ao mesmo tempo, um dos valores vence por
@@ -22,6 +26,7 @@ import { z } from 'zod';
  */
 export const META = 'meta';
 export const VALUES = 'values';
+export const BONUSES = 'bonuses';
 const PORTRAIT = 'portrait';
 
 /** Retrato da ficha como recebida pela rede (já validado). */
@@ -32,6 +37,8 @@ export interface SheetSnapshot {
   templateRef: TemplateRef;
   /** Retrato do personagem, se houver um válido. */
   portrait?: Portrait;
+  /** Bônus válidos, em ordem de nome. */
+  bonuses: Bonus[];
   values: Record<string, FieldValue>;
   /** Quantos valores recebidos foram descartados por serem inválidos. */
   invalidValues: number;
@@ -88,7 +95,33 @@ export function reconcile(doc: Y.Doc, sheet: CharacterSheet, origin?: unknown): 
     for (const fieldId of [...values.keys()]) {
       if (!Object.hasOwn(sheet.values, fieldId)) values.delete(fieldId);
     }
+    writeBonuses(doc, sheet.bonuses ?? []);
   }, origin);
+}
+
+/**
+ * Escreve os bônus no documento: só os que mudaram, e remove os que não existem mais. Chamado
+ * dentro de uma transação (do dono, em `reconcile`, ou do Mestre).
+ */
+export function writeBonuses(doc: Y.Doc, bonuses: readonly Bonus[]): void {
+  const map = doc.getMap<unknown>(BONUSES);
+  const wanted = new Map(bonuses.map((bonus) => [bonus.id, bonus]));
+  for (const [id, bonus] of wanted) {
+    if (!deepEqual(map.get(id), bonus)) map.set(id, bonus);
+  }
+  for (const id of [...map.keys()]) {
+    if (!wanted.has(id)) map.delete(id);
+  }
+}
+
+/** Lê os bônus do documento, validados (o conteúdo veio de outro participante). */
+export function readBonuses(doc: Y.Doc): Bonus[] {
+  const bonuses: Bonus[] = [];
+  for (const [id, raw] of doc.getMap<unknown>(BONUSES).entries()) {
+    const bonus = BonusSchema.safeParse(raw);
+    if (bonus.success && bonus.data.id === id) bonuses.push(bonus.data);
+  }
+  return bonuses.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 }
 
 /** Lê a ficha do documento, validando tudo (o conteúdo veio de outro participante). */
@@ -110,6 +143,7 @@ export function readSheet(doc: Y.Doc): SheetSnapshot | null {
     ...meta.data,
     ...(portrait.success && { portrait: portrait.data }),
     values,
+    bonuses: readBonuses(doc),
     invalidValues,
   };
 }

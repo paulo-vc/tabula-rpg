@@ -153,6 +153,25 @@ describe('DexieSheetRepository', () => {
     expect(removed?.values).toMatchObject({ forca: 1 });
   });
 
+  it('grava os bônus (a lista inteira) e recusa bônus inválido', async () => {
+    const bonus = {
+      id: 'b1',
+      name: 'Cinto de Força',
+      kind: 'item' as const,
+      active: true,
+      targets: [{ fieldId: 'forca', value: 2 }],
+    };
+    await sheets.save(sheet('s1', 1));
+    await sheets.update('s1', { bonuses: [bonus], updatedAt: 2 });
+    expect((await sheets.get('s1'))?.bonuses).toEqual([bonus]);
+    await expect(
+      sheets.update('s1', { bonuses: [{ ...bonus, targets: [] }], updatedAt: 3 }),
+    ).rejects.toThrow(InvalidDataError);
+    await sheets.update('s1', { bonuses: [], updatedAt: 4 });
+    expect((await sheets.get('s1'))?.bonuses).toEqual([]);
+    expect((await sheets.get('s1'))?.values).toMatchObject({ forca: 1 });
+  });
+
   it('recusa ficha inválida', async () => {
     const invalid = { ...sheet('s1', 1), name: '' };
     await expect(sheets.save(invalid)).rejects.toThrow(InvalidDataError);

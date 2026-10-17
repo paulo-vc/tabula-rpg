@@ -17,6 +17,7 @@ import { SheetLayout } from '@/components/sheet/SheetLayout';
 import { pinnedFieldIds, SheetVitals } from '@/components/sheet/SheetVitals';
 import { useDraft } from '@/components/sheet/use-draft';
 import { useSheetEditing } from '@/components/sheet/use-sheet-editing';
+import { BonusContext, BonusesButton, useBonusEffects } from '@/components/sheet/Bonuses';
 import { RollContext } from '@/components/sheet/roll-context';
 import { useRoller } from '@/components/live/use-roller';
 import { useDeviceId } from '@/components/use-device';
@@ -121,7 +122,13 @@ function SheetEditor({ id, compiled }: { id: string; compiled: OpenedReady['comp
     (fieldId: string, value: FieldValue) => services.sheets.setValue(id, fieldId, value),
     [services, id],
   );
-  const { values, derived, onChange } = useSheetEditing(compiled, sheet?.values, persist);
+  const { values, derived, onChange } = useSheetEditing(
+    compiled,
+    sheet?.values,
+    persist,
+    sheet?.bonuses,
+  );
+  const bonusEffects = useBonusEffects(sheet?.bonuses);
   const roller = useRoller(compiled);
   // Ficha de jogador numa campanha: os campos secretos são do Mestre. Escondidos também
   // enquanto a consulta carrega, para não piscarem na tela.
@@ -172,9 +179,17 @@ function SheetEditor({ id, compiled }: { id: string; compiled: OpenedReady['comp
           className="h-10 max-w-md flex-1 border-transparent text-xl font-bold shadow-none hover:border-input"
         />
         <Badge variant="secondary">{template.name}</Badge>
+        <div className="ml-auto">
+          <BonusesButton
+            compiled={compiled}
+            bonuses={sheet.bonuses ?? []}
+            onChange={(bonuses) => void services.sheets.setBonuses(id, bonuses)}
+            newId={() => crypto.randomUUID()}
+          />
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Ações da ficha" className="ml-auto">
+            <Button variant="ghost" size="icon" aria-label="Ações da ficha">
               <EllipsisVerticalIcon />
             </Button>
           </DropdownMenuTrigger>
@@ -203,22 +218,24 @@ function SheetEditor({ id, compiled }: { id: string; compiled: OpenedReady['comp
       </div>
 
       <RollContext value={roller}>
-        <SheetVitals
-          compiled={compiled}
-          values={values}
-          derived={derived}
-          onChange={onChange}
-          hiddenFieldIds={hidden}
-        />
-        <SheetLayout
-          compiled={compiled}
-          values={values}
-          derived={derived}
-          onChange={onChange}
-          newItemId={() => crypto.randomUUID()}
-          {...(hidden && { hiddenFieldIds: hidden })}
-          pinnedFieldIds={pinnedFieldIds(compiled, hidden)}
-        />
+        <BonusContext value={bonusEffects}>
+          <SheetVitals
+            compiled={compiled}
+            values={values}
+            derived={derived}
+            onChange={onChange}
+            hiddenFieldIds={hidden}
+          />
+          <SheetLayout
+            compiled={compiled}
+            values={values}
+            derived={derived}
+            onChange={onChange}
+            newItemId={() => crypto.randomUUID()}
+            {...(hidden && { hiddenFieldIds: hidden })}
+            pinnedFieldIds={pinnedFieldIds(compiled, hidden)}
+          />
+        </BonusContext>
       </RollContext>
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
