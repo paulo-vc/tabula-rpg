@@ -2,6 +2,10 @@
 
 As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
+## Próxima versão
+
+- **Sua vez, mais chamativo:** quando chega a vez do jogador, uma faixa grande aparece no topo de qualquer tela, com a rodada, até ele fechar ou a vez passar. Se o app estiver em outra janela ou aba, o título pisca "⚔ Sua vez!" até ele voltar; no app desktop, o ícone também pisca na barra de tarefas; na versão web, dá para ativar uma notificação do sistema no ícone de som do cabeçalho.
+
 ## v0.3.3
 
 - **Sons:** avisos curtos na sessão: a sua vez no combate, rolagens de outras pessoas, mensagens e sussurros do chat. No ícone de som do cabeçalho dá para desligar, ajustar o volume e testar; a escolha fica guardada no aparelho.

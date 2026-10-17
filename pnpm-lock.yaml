@@ -250,6 +250,9 @@ importers:
       '@tabula/templates':
         specifier: workspace:*
         version: link:../../packages/templates
+      '@tauri-apps/api':
+        specifier: ^2.12.1
+        version: 2.12.1
       '@tauri-apps/plugin-opener':
         specifier: ^2.7.0
         version: 2.7.0

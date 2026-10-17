@@ -23,6 +23,7 @@ import { FileService } from './files';
 import { JournalService } from './journal';
 import { SoundService } from './sounds';
 import { createWebAudioPlayer, type SoundPlayer } from '@/lib/sounds';
+import { createBrowserAttention, type Attention } from '@/lib/attention';
 import { GalleryService } from './gallery';
 import { processImage as browserProcessImage, type ImageProcessor } from '@/lib/image-processing';
 import { randomSecret } from './invite-link';
@@ -57,6 +58,8 @@ export interface Services {
   /** Diário da campanha (notas do Mestre e entradas compartilhadas). */
   journal: JournalService;
   sounds: SoundService;
+  /** Avisa fora do app (título piscando, barra de tarefas, notificação do sistema). */
+  attention: Attention;
   /** Galeria de imagens da campanha (cutscene). */
   gallery: GalleryService;
   device: DexieDeviceRepository;
@@ -75,6 +78,7 @@ export interface ServiceOptions {
   processImage?: ImageProcessor;
   /** Toca os avisos sonoros (nos testes, um que só anota). */
   soundPlayer?: SoundPlayer;
+  attention?: Attention;
   /** Transporte da sessão ao vivo: WebRTC no app; rede em memória nos testes. */
   createTransport?: TransportFactory;
   /** Repositório de sistemas da comunidade: CDN no app; memória nos testes. */
@@ -94,6 +98,7 @@ export function createServices(
     newGmKey = generateGmKeyPair,
     processImage = browserProcessImage,
     soundPlayer,
+    attention,
     createTransport = () => {
       throw new Error('Transporte da sessão não configurado');
     },
@@ -153,6 +158,7 @@ export function createServices(
     ),
     journal: new JournalService(journal, clock, ids),
     sounds: new SoundService(device, soundPlayer ?? createWebAudioPlayer()),
+    attention: attention ?? createBrowserAttention(),
     gallery: new GalleryService(images, processImage, clock, ids),
     campaigns: new CampaignService(
       campaignRepository,

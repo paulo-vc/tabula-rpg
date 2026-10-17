@@ -1,6 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { PlayIcon, Volume2Icon, VolumeXIcon } from 'lucide-react';
-import { useId } from 'react';
+import { useId, useState } from 'react';
+import {
+  askNotificationPermission,
+  notificationState,
+  type NotificationState,
+} from '@/lib/attention';
 import { useServices } from '@/app/services-context';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,6 +18,7 @@ export function SoundSettingsButton() {
   const base = useId();
   const settings = useLiveQuery(() => sounds.settings(), [sounds]);
   const muted = settings ? !settings.enabled || settings.volume === 0 : false;
+  const [notifications, setNotifications] = useState<NotificationState>(notificationState);
 
   return (
     <Popover>
@@ -29,7 +35,7 @@ export function SoundSettingsButton() {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64 space-y-4">
         <div>
-          <h2 className="text-sm font-semibold">Sons</h2>
+          <h2 className="text-sm font-semibold">Sons e avisos</h2>
           <p className="text-muted-foreground text-xs">
             Avisos curtos na sessão: sua vez no combate, rolagens da mesa, mensagens e sussurros do
             chat.
@@ -75,7 +81,35 @@ export function SoundSettingsButton() {
             </div>
           </>
         )}
+        <OutsideApp
+          state={notifications}
+          onAsk={() => void askNotificationPermission().then(setNotifications)}
+        />
       </PopoverContent>
     </Popover>
+  );
+}
+
+/** Como o app avisa a vez quando está em outra janela ou aba. */
+function OutsideApp({ state, onAsk }: { state: NotificationState; onAsk: () => void }) {
+  if (state === 'indisponivel') return null;
+  return (
+    <div className="space-y-1.5 border-t pt-3">
+      <h3 className="text-sm font-medium">Fora do app</h3>
+      <p className="text-muted-foreground text-xs">
+        {state === 'desktop'
+          ? 'Na sua vez, o título da janela e o ícone na barra de tarefas piscam.'
+          : state === 'granted'
+            ? 'Na sua vez, o título da aba pisca e chega uma notificação do sistema.'
+            : state === 'denied'
+              ? 'Na sua vez, o título da aba pisca. As notificações estão bloqueadas: libere nas configurações do site.'
+              : 'Na sua vez, o título da aba pisca. Ative as notificações para receber o aviso mesmo em outra janela.'}
+      </p>
+      {state === 'default' && (
+        <Button size="sm" variant="outline" onClick={onAsk}>
+          Ativar notificações
+        </Button>
+      )}
+    </div>
   );
 }
