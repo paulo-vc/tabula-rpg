@@ -2,7 +2,9 @@
 
 As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos ficam nos PRs e em [`docs/`](docs/).
 
-## Próxima versão
+## v0.3.5
+
+Mais recursos para a ficha: ataques com um clique, bônus de itens, maldições e bênçãos, e o som dos dados.
 
 - **Som de dados:** rolar dados (pela ficha, pelo painel ou com `/r` no chat) toca o som de dois dados quicando na mesa, também fora da sessão. As rolagens de outras pessoas da mesa tocam o mesmo som. Várias rolagens de uma vez (como várias criaturas rolando a iniciativa) tocam um som só.
 - **Ataques pela ficha:** na lista de ataques (aba Combate), cada arma ganha "Ataque", que rola o d20 com o bônus de ataque, e "Ataque + dano", que rola os dois e mostra num aviso só (ex.: "Machado de batalha: ataque 21 · dano 9"). O botão de rolar só o dano continua no campo de dano. Vale no D&D 5e (1.5.0) e no Lendas d20 (1.4.0); as fichas existentes se atualizam sozinhas. Quem cria sistemas pode ligar o mesmo recurso a qualquer lista (`attack` no arquivo do sistema).
