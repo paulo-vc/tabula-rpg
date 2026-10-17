@@ -126,3 +126,12 @@ Mesmo roteiro (tag `v0.3.3`, conferir o rascunho, publicar como versão normal).
 - [ ] Na v0.3.2 instalada, a atualização chega.
 - [ ] No app instalado, o ícone de som do cabeçalho toca o "Testar" (o WebView do desktop precisa liberar o áudio depois do clique).
 - [ ] Sessão com a ficha aberta: a vez no combate mostra "É a sua vez!" e toca; mensagens, sussurros e rolagens da mesa também tocam.
+
+## v0.3.4
+
+Mesmo roteiro (tag `v0.3.4`, conferir o rascunho, publicar como versão normal). Sem mudança no banco local. Permissão nova no desktop: `core:window:allow-request-user-attention` (piscar o ícone na barra de tarefas).
+
+- [ ] Na v0.3.3 instalada, a atualização chega.
+- [ ] Painel do Mestre: abas à esquerda, combate e rolagens à direita, e o convite se recolhendo quando um jogador entra.
+- [ ] Com o app do jogador em outra janela, na vez dele: o título pisca e, no desktop, o ícone pisca na barra de tarefas.
+- [ ] Um jogador que entra com o combate em andamento aparece em "Fora do combate" e entra na ordem.
