@@ -161,6 +161,14 @@ describe('sons', () => {
     await waitFor(() => expect(cues()).toEqual(['sua-vez']));
   });
 
+  it('rolar pela ficha toca o som dos dados, mesmo sem sessão', async () => {
+    const sheet = await player.sheets.create({ name: 'Lia', templateId: 'dnd5e-srd' });
+    const user = renderApp(player, `#/fichas/${sheet.id}`);
+    const [roll] = await screen.findAllByRole('button', { name: /^Rolar / });
+    await user.click(roll as HTMLElement);
+    await waitFor(() => expect(cues()).toEqual(['rolagem']));
+  });
+
   it('o volume escolhido vale para os avisos', async () => {
     await setUpLiveTable();
     await player.sounds.update({ volume: 0.2 });
