@@ -63,6 +63,8 @@ export interface SheetRepository {
 
 export interface SheetChanges {
   name?: string;
+  /** Bônus de itens, maldições e bênçãos (a lista inteira). */
+  bonuses?: CharacterSheet['bonuses'];
   /** Novo retrato; `null` remove. */
   portrait?: Portrait | null;
   /** Valores a substituir, por ID de campo. Os demais campos ficam intactos. */

@@ -16,6 +16,7 @@ describe('reconcile/readSheet', () => {
       ownerId: 'u1',
       templateRef: sheet.templateRef,
       values: sheet.values,
+      bonuses: [],
       invalidValues: 0,
     });
   });

@@ -8,6 +8,7 @@ import type { Result } from '../result';
 import type { CompiledTemplate } from '../template/compile';
 import type { FieldDef, FieldOf, ListItemFieldDef } from '../template/schema';
 import type { FieldValue, ListItem, ResourceValue, SheetValues } from './schema';
+import { bonusEffects, type Bonus } from './bonuses';
 import { defaultValue, listItemValue } from './values';
 
 /** Resultado do cálculo de cada fórmula, por ID de campo. */
@@ -54,9 +55,18 @@ function primitiveNumber(field: FieldDef | ListItemFieldDef, value: FieldValue |
  * Calcula todos os valores derivados de uma ficha. Função pura: os mesmos valores sempre
  * produzem o mesmo resultado. Um erro numa fórmula não impede o cálculo das demais; as que
  * dependem dela também reportam erro.
+ *
+ * Bônus ativos (`bonuses`) somam ao valor de campos de número (as fórmulas leem o valor com o
+ * bônus) e ao resultado de campos calculados; quem depende deles acompanha.
  */
-export function computeDerived(compiled: CompiledTemplate, values: SheetValues): DerivedValues {
+export function computeDerived(
+  compiled: CompiledTemplate,
+  values: SheetValues,
+  bonuses?: readonly Bonus[],
+): DerivedValues {
   const derived: DerivedValues = { computed: {}, resourceMax: {} };
+  const effects = bonusEffects(bonuses);
+  const bonusOf = (fieldId: string) => effects.get(fieldId)?.total ?? 0;
 
   const valueOf = (field: FieldDef) => values[field.id] ?? defaultValue(field);
   const success = (result: Result<number, EvaluationError> | undefined) =>
@@ -86,6 +96,10 @@ export function computeDerived(compiled: CompiledTemplate, values: SheetValues):
           if (ref.prop === 'temp') return asNumber(resource?.temp) ?? 0;
           return asNumber(resource?.current);
         }
+        case 'number': {
+          const value = primitiveNumber(field, valueOf(field));
+          return value === undefined ? undefined : value + bonusOf(field.id);
+        }
         default:
           return primitiveNumber(field, valueOf(field));
       }
@@ -114,8 +128,13 @@ export function computeDerived(compiled: CompiledTemplate, values: SheetValues):
   // A ordem topológica garante que cada fórmula é calculada depois das que ela usa.
   for (const formula of compiled.formulas) {
     const result = evaluateFormula(formula.ast, environment);
-    const target = formula.target === 'value' ? derived.computed : derived.resourceMax;
-    target[formula.fieldId] = result;
+    if (formula.target === 'value') {
+      const bonus = bonusOf(formula.fieldId);
+      derived.computed[formula.fieldId] =
+        result.ok && bonus !== 0 ? { ok: true, value: result.value + bonus } : result;
+    } else {
+      derived.resourceMax[formula.fieldId] = result;
+    }
   }
   return derived;
 }

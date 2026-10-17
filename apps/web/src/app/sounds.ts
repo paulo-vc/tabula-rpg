@@ -28,8 +28,14 @@ export class SoundService {
     const last = this.lastPlayed.get(cue);
     if (last !== undefined && at - last < REPEAT_GAP_MS) return;
     this.lastPlayed.set(cue, at);
-    const { enabled, volume } = await this.settings();
-    if (enabled) this.player.play(cue, volume);
+    // Um aviso sonoro nunca derruba nada: sem acesso às preferências (ex.: o banco foi
+    // fechado ao sair), fica em silêncio.
+    try {
+      const { enabled, volume } = await this.settings();
+      if (enabled) this.player.play(cue, volume);
+    } catch {
+      // silêncio
+    }
   }
 
   /** "Testar": toca no volume escolhido, mesmo com os sons desligados. */

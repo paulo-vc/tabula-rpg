@@ -4,6 +4,10 @@ As mudanças de cada versão, para quem usa o Tabularium RPG. Detalhes técnicos
 
 ## Próxima versão
 
+- **Som de dados:** rolar dados (pela ficha, pelo painel ou com `/r` no chat) toca o som de dois dados quicando na mesa, também fora da sessão. As rolagens de outras pessoas da mesa tocam o mesmo som. Várias rolagens de uma vez (como várias criaturas rolando a iniciativa) tocam um som só.
+- **Ataques pela ficha:** na lista de ataques (aba Combate), cada arma ganha "Ataque", que rola o d20 com o bônus de ataque, e "Ataque + dano", que rola os dois e mostra num aviso só (ex.: "Machado de batalha: ataque 21 · dano 9"). O botão de rolar só o dano continua no campo de dano. Vale no D&D 5e (1.5.0) e no Lendas d20 (1.4.0); as fichas existentes se atualizam sozinhas. Quem cria sistemas pode ligar o mesmo recurso a qualquer lista (`attack` no arquivo do sistema).
+- **Bônus de itens, maldições e bênçãos:** o botão "Bônus", no topo da ficha, guarda o que muda valores fixos: um item com +2 de Força, uma bênção com +1 no bônus de proficiência, uma maldição com −2 em Sabedoria e −1 na CA. Cada bônus tem nome, origem e um ou mais campos, e liga e desliga. Vale para qualquer número ou valor calculado de qualquer sistema, e o que depende dele acompanha: +2 de Força muda o modificador, as perícias e os testes de Força. O campo mostra o valor com bônus e, ao passar o mouse, de onde ele vem. Na sessão, o Mestre também aplica bônus na ficha do jogador (pela ficha que ele abre no painel), e chega na hora.
+
 ## v0.3.4
 
 Melhorias pedidas depois do teste com o app desktop: o painel do Mestre reorganizado, o aviso da vez mais chamativo e o combate aceitando quem chega depois.

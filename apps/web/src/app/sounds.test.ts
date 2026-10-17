@@ -35,4 +35,14 @@ describe('SoundService', () => {
     await service.play('rolagem');
     expect(played).toEqual([]);
   });
+
+  it('sem acesso às preferências (banco fechado), fica em silêncio sem erro', async () => {
+    const device = {
+      getSoundSettings: () => Promise.reject(new Error('Database has been closed')),
+    } as unknown as DeviceRepository;
+    const played: SoundCue[] = [];
+    const service = new SoundService(device, { play: (cue) => played.push(cue) });
+    await expect(service.play('rolagem')).resolves.toBeUndefined();
+    expect(played).toEqual([]);
+  });
 });

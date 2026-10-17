@@ -10,6 +10,7 @@ import { useId } from 'react';
 import { cn } from '@/lib/utils';
 import { FieldControl, NumberInput, PrimitiveInput, type Derived } from './fields';
 import { formatNumber } from './format';
+import { BonusMark, BonusNote } from './Bonuses';
 import { CheckButton } from './roll-context';
 
 export interface CompactFieldProps {
@@ -45,6 +46,7 @@ function BigComputed({
         {text}
       </output>
       {field.signed && derived?.ok && <CheckButton label={field.label} modifier={derived.value} />}
+      <BonusMark field={field} />
     </span>
   );
 }
@@ -70,14 +72,18 @@ export function StatTile({
   const body = (() => {
     if (field.type === 'computed') return <BigComputed field={field} derived={main.derived} />;
     if (field.type === 'number') {
+      const current = currentOf(field, main.value);
       return (
-        <NumberInput
-          id={`${id}-main`}
-          field={field}
-          label={field.label}
-          value={currentOf(field, main.value) as PrimitiveValue}
-          onChange={(value) => main.onChange(value as FieldValue)}
-        />
+        <>
+          <NumberInput
+            id={`${id}-main`}
+            field={field}
+            label={field.label}
+            value={current as PrimitiveValue}
+            onChange={(value) => main.onChange(value as FieldValue)}
+          />
+          <BonusNote field={field} base={typeof current === 'number' ? current : undefined} />
+        </>
       );
     }
     // Sim/não: só o marcador (o rótulo já está no topo do bloco).
@@ -101,15 +107,19 @@ export function StatTile({
 export function SecondaryValue({ field, value, derived, onChange }: CompactFieldProps) {
   if (field.type === 'computed') return <BigComputed field={field} derived={derived} size="md" />;
   if (field.type === 'number') {
+    const current = currentOf(field, value);
     return (
-      <div className="w-16">
-        <NumberInput
-          compact
-          field={field}
-          label={field.label}
-          value={currentOf(field, value) as PrimitiveValue}
-          onChange={(next) => onChange(next as FieldValue)}
-        />
+      <div className="flex flex-col items-center gap-0.5">
+        <div className="w-16">
+          <NumberInput
+            compact
+            field={field}
+            label={field.label}
+            value={current as PrimitiveValue}
+            onChange={(next) => onChange(next as FieldValue)}
+          />
+        </div>
+        <BonusNote field={field} base={typeof current === 'number' ? current : undefined} />
       </div>
     );
   }

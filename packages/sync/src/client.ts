@@ -1,5 +1,6 @@
 import {
   canSee,
+  type Bonus,
   type ChatMessage,
   type Cover,
   FieldValueSchema,
@@ -27,7 +28,7 @@ import {
 } from './protocol';
 import { newChallenge, verifyChallenge } from './identity';
 import { ImageAssembler } from './image-transfer';
-import { reconcile, VALUES } from './sheet-doc';
+import { BONUSES, readBonuses, reconcile, VALUES } from './sheet-doc';
 import type { ConnectionInfo, SyncTransport } from './transport';
 
 export type ClientStatus =
@@ -65,6 +66,8 @@ export type RemoteChanges = Record<string, FieldValue>;
 export interface ClientCallbacks {
   /** O Mestre alterou valores da ficha (Fase 7a). */
   onRemoteChange?: (changes: RemoteChanges) => void;
+  /** O Mestre mudou os bônus da ficha: a lista inteira, já validada. */
+  onRemoteBonuses?: (bonuses: Bonus[]) => void;
   /** Rolagens da mesa chegaram (de outros jogadores, do Mestre ou do histórico recente). */
   onRolls?: (entries: RollEntry[]) => void;
   /** Mensagens do chat chegaram (da mesa, sussurros do Mestre ou o histórico recente). */
@@ -149,6 +152,10 @@ export class SessionClient {
         if (value.success) changes[fieldId] = value.data;
       }
       if (Object.keys(changes).length > 0) this.callbacks.onRemoteChange?.(changes);
+    });
+    this.doc.getMap<unknown>(BONUSES).observe((event) => {
+      if (event.transaction.origin === LOCAL || !this.ready || this.stopped) return;
+      this.callbacks.onRemoteBonuses?.(readBonuses(this.doc));
     });
     this.doc.on('update', (update: Uint8Array, origin: unknown) => {
       if (origin === this.gmPeer || this.gmPeer === null || this.stopped) return;

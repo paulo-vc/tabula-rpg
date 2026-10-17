@@ -36,6 +36,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatNumber, parseNumber } from './format';
 import { markCount, Marks } from './Marks';
+import { BonusMark, BonusNote } from './Bonuses';
 import { AttackButtons, CheckButton, RollButton } from './roll-context';
 import { useDraft } from './use-draft';
 
@@ -286,10 +287,18 @@ function ComputedDisplay({ field, derived }: { field: FieldOf<'computed'>; deriv
     </output>
   );
   // Modificadores (com sinal) viram testes: o dado do sistema + o valor.
-  if (!field.signed || !derived?.ok) return output;
+  if (!field.signed || !derived?.ok) {
+    return (
+      <div className="flex items-center gap-1">
+        <div className="min-w-0 flex-1">{output}</div>
+        <BonusMark field={field} />
+      </div>
+    );
+  }
   return (
     <div className="flex items-center gap-1">
       <div className="min-w-0 flex-1">{output}</div>
+      <BonusMark field={field} />
       <CheckButton label={field.label} modifier={derived.value} />
     </div>
   );
@@ -630,12 +639,17 @@ export function FieldControl({
         );
       default:
         return (
-          <PrimitiveInput
-            id={id}
-            field={field}
-            value={current as PrimitiveValue}
-            onChange={onChange}
-          />
+          <>
+            <PrimitiveInput
+              id={id}
+              field={field}
+              value={current as PrimitiveValue}
+              onChange={onChange}
+            />
+            {field.type === 'number' && (
+              <BonusNote field={field} base={typeof current === 'number' ? current : undefined} />
+            )}
+          </>
         );
     }
   })();
